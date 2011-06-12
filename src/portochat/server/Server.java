@@ -4,14 +4,19 @@
  */
 package portochat.server;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import portochat.common.protocol.ChatMessage;
+import portochat.common.protocol.DefaultData;
+import portochat.common.protocol.Ping;
+import portochat.common.protocol.Pong;
+import portochat.common.protocol.ServerMessage;
+import portochat.common.protocol.UserData;
+import portochat.common.socket.TCPSocket;
+import portochat.common.socket.event.NetEvent;
+import portochat.common.socket.event.NetListener;
 
 /**
  *
@@ -20,23 +25,27 @@ import java.util.logging.Logger;
 public class Server {
 
     private static final Logger logger = Logger.getLogger(Server.class.getName());
-    private ServerSocket serverSocket = null;
-    private AcceptThread acceptThread = null;
-    private boolean listening = false;
-    private final Object lock = new Object();
-    
+    private TCPSocket tcpSocket = null;
+    private UserDatabase userDatabase = null;
+
     public Server() {
+        userDatabase = UserDatabase.getInstance();
     }
 
-    public boolean listen(int port) {
+    public boolean bind(int port) {
 
         boolean success = true;
 
         try {
-            serverSocket = new ServerSocket(port);
-            logger.log(Level.INFO, "Listening on port: {0}", port);
-            acceptThread = new AcceptThread();
-            acceptThread.start();
+            tcpSocket = new TCPSocket("Server");
+            success = tcpSocket.bind(port);
+
+            if (success) {
+                tcpSocket.addListener(new ServerHandler());
+                logger.log(Level.INFO, "Server bound to port: {0}", port);
+            } else {
+                logger.log(Level.SEVERE, "Server unable to bind to port: {0}", port);
+            }
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Couldn't listen on port: " + port, ex);
             success = false;
@@ -46,74 +55,54 @@ public class Server {
     }
 
     public void shutdown() {
-        listening = false;
     }
 
-    private class AcceptThread extends Thread {
-
-        public AcceptThread() {
-            super("AcceptThread");
-        }
+    private class ServerHandler implements NetListener {
 
         @Override
-        public void run() {
-            synchronized (lock) {
-                listening = true;
-
-                while (listening) {
-                    try {
-                        new ServerThread(serverSocket.accept()).start();
-                    } catch (IOException ex) {
-                        logger.log(Level.SEVERE, "Unable to accept client", ex);
-                    }
+        public void incomingMessage(NetEvent event) {
+            Socket socket = (Socket)event.getSource();
+            DefaultData defaultData = event.getData();
+            
+            String user = userDatabase.getSocketUser(socket);
+            if (user == null) {
+                // Users must send a UserData packet first
+                if (defaultData instanceof UserData) {
+                    // Add
+                    UserData userData = (UserData)defaultData;
+                    boolean success = userDatabase.addUser(userData.getUser(), socket);
+                    
+                    ServerMessage serverMessage = new ServerMessage();
+                    serverMessage.setMessage("Set user to: " + userData.getUser());
+                    tcpSocket.writeData(socket, serverMessage);
+                    // TODO username in use
+                } else {
+                    ServerMessage serverMessage = new ServerMessage();
+                    serverMessage.setMessage("You must first send a username!");
+                    tcpSocket.writeData(socket, serverMessage);
                 }
-                try {
-                    serverSocket.close();
-                } catch (IOException ex) {
-                    logger.log(Level.SEVERE, "Could not close the server socket", ex);
+            } else if (defaultData instanceof UserData) {
+                // Rename
+                UserData userData = (UserData)defaultData;
+                boolean success = userDatabase.renameUser(user, userData.getUser(), socket);
+                // TODO username in use
+            } else if (defaultData instanceof Ping) {
+                // Send a pong
+                Pong pong = new Pong();
+                pong.setTimestamp(((Ping)defaultData).getTimestamp());
+                tcpSocket.writeData(socket, pong);
+            } else if (defaultData instanceof ChatMessage) {
+                ChatMessage chatMessage = ((ChatMessage)defaultData);
+                // Fill out who sent it
+                chatMessage.setFromUser(user);
+                Socket toUserSocket = userDatabase.getUserSocket(chatMessage.getToUser());
+                if (toUserSocket != null) {
+                    tcpSocket.writeData(toUserSocket, chatMessage);
+                } else {
+                    ServerMessage serverMessage = new ServerMessage();
+                    serverMessage.setMessage("No such Nick/Channel: " + chatMessage.getToUser());
+                    tcpSocket.writeData(socket, serverMessage);
                 }
-                
-                logger.log(Level.INFO, "The server has shut down.");
-            }
-        }
-    }
-
-    private class ServerThread extends Thread {
-
-        private Socket socket = null;
-
-        public ServerThread(Socket socket) {
-            super("ServerThread-" + socket.getInetAddress());
-            logger.log(Level.INFO, "Accepting connection from: {0}",
-                    socket.getInetAddress());
-            this.socket = socket;
-        }
-
-        @Override
-        public void run() {
-            try {
-                PrintWriter out = new PrintWriter(
-                        socket.getOutputStream(),
-                        true);
-                BufferedReader in = new BufferedReader(
-                        new InputStreamReader(
-                        socket.getInputStream()));
-
-                String input = null;
-
-                while ((input = in.readLine()) != null) {
-                    // Process input
-                    System.out.println(socket.getInetAddress() + ": " + input);
-                    //out.println(outputLine);
-                }
-                
-                logger.log(Level.INFO, "{0} has disconnected", socket.getInetAddress());
-                out.close();
-                in.close();
-                socket.close();
-
-            } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Error on server stream.", ex);
             }
         }
     }

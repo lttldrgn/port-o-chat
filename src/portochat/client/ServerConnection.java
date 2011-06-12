@@ -4,16 +4,17 @@
  */
 package portochat.client;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.logging.Level;
 import java.util.logging.Logger;
-import portochat.common.ProtocolDefinitions;
+import portochat.common.protocol.ChatMessage;
+import portochat.common.protocol.DefaultData;
+import portochat.common.protocol.Ping;
+import portochat.common.protocol.Pong;
+import portochat.common.protocol.ServerMessage;
+import portochat.common.protocol.UserData;
+import portochat.common.socket.TCPSocket;
+import portochat.common.socket.event.NetEvent;
+import portochat.common.socket.event.NetListener;
 
 /**
  * Handles all the client interaction with the server
@@ -22,81 +23,74 @@ import portochat.common.ProtocolDefinitions;
 public class ServerConnection {
     private static final Logger logger = 
             Logger.getLogger(ServerConnection.class.getName());
-    private Socket socket = null;
-    private PrintWriter outWriter = null;
-    private BufferedReader reader = null;
-    private volatile boolean connected = false;
+    private TCPSocket socket = null;
     
     public ServerConnection() {
-        
     }
     
-    public synchronized boolean connectToServer(String serverAddress) {
-        if (connected) {
-            return false;
-        }
-        
+    public boolean connectToServer(String serverAddress, int port) {
         boolean successful = true;
-        try {
-            socket = new Socket(serverAddress, ClientSettings.DEFAULT_SERVER_PORT);
-            outWriter = new PrintWriter(socket.getOutputStream(), true);
-            reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            connected = true;
-            IncomingProcessingThread incomingThread = new IncomingProcessingThread();
-            incomingThread.start();
-            
-        } catch (UnknownHostException ex) {
-            logger.log(Level.SEVERE, null, ex);
-            successful = false;
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, null, ex);
-            successful = false;
+        socket = new TCPSocket("Client");
+        successful = socket.connect(serverAddress, port);
+        if (successful) {
+            socket.addListener(new ClientHandler());
         }
         return successful;
     }
     
-    public synchronized void disconnectFromServer() {
-        try {
-            outWriter.close();
-            reader.close();
-            socket.close();
-            connected = false;
-        } catch (IOException ex) {
-            logger.log(Level.WARNING, null, ex);
-        }
+    public void sendUsername(String username) {
+        UserData userData = new UserData();
+        userData.setUser(username);
+        socket.writeData(socket.getClientSocket(),userData);
     }
     
-    public synchronized void sendPrivateMessage(String username, String message) {
-        
+    public void sendPing() {
+        Ping ping = new Ping();
+        socket.writeData(socket.getClientSocket(),ping);
     }
     
-    public synchronized void joinChannel(String channel) {
-        outWriter.println(ProtocolDefinitions.JOIN_CHANNEL + channel);
+    public void sendMessage(String username, String message) {
+        ChatMessage chatMessage = new ChatMessage();
+        chatMessage.setToUser(username);
+        chatMessage.setMessage(message);
+        socket.writeData(socket.getClientSocket(),chatMessage);
     }
     
-    public synchronized void leaveChannel(String channel) {
-        outWriter.println(ProtocolDefinitions.LEAVE_CHANNEL + channel);
+    public void joinChannel(String channel) {
+        //outWriter.println(ProtocolDefinitions.JOIN_CHANNEL + channel);
     }
     
-    public synchronized ArrayList<String> channelWho(String channel) {
-        outWriter.println(ProtocolDefinitions.LEAVE_CHANNEL + channel);
+    public void leaveChannel(String channel) {
+        //outWriter.println(ProtocolDefinitions.LEAVE_CHANNEL + channel);
+    }
+    
+    public ArrayList<String> channelWho(String channel) {
+        //outWriter.println(ProtocolDefinitions.LEAVE_CHANNEL + channel);
+        //try {
+        //    reader.readLine();
+        //} catch (IOException ex) {
+        //    logger.log(Level.SEVERE, null, ex);
+        //}
+        //return new ArrayList<String>();
+        return null;
+    }
+    
+     private class ClientHandler implements NetListener {
 
-        return new ArrayList<String>();
-    }
-    
-    private class IncomingProcessingThread extends Thread {
-        public IncomingProcessingThread() {
-            super("Incoming processing thread");
-        }
-        
-        public void run() {
-            while (connected) {
-                try {
-                    System.out.println(reader.readLine());
-                } catch (IOException ex) {
-                    logger.log(Level.SEVERE, null, ex);
-                }
+        @Override
+        public void incomingMessage(NetEvent event) {
+            DefaultData defaultData = event.getData();
+            
+            if (defaultData instanceof Pong) {
+                System.out.println("Server lag: " + 
+                        (System.currentTimeMillis() -
+                        ((Pong)defaultData).getTimestamp()) + "ms");
+            } else if (defaultData instanceof ServerMessage) {
+                System.out.println(((ServerMessage)defaultData));
+            } else if (defaultData instanceof ChatMessage) {
+                System.out.println(((ChatMessage)defaultData));
             }
         }
     }
+    
 }
