@@ -26,7 +26,11 @@ public class Client extends JFrame {
     private JList channelList = new JList();
  
     public Client(String username) {
-        
+        ServerConnection connection = new ServerConnection();
+        connection.connectToServer("localhost", ClientSettings.DEFAULT_SERVER_PORT);
+        connection.sendUsername(username);
+        connection.sendPing();
+        connection.sendMessage("user2", "the bird is the word");
     }
     
     public void init() {

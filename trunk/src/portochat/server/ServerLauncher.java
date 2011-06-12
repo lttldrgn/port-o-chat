@@ -13,6 +13,6 @@ import portochat.common.Settings;
 public class ServerLauncher {
     public static void main (String args[]) {
         Server server = new Server();
-        server.listen(Settings.DEFAULT_SERVER_PORT);
+        server.bind(Settings.DEFAULT_SERVER_PORT);
     }
 }
