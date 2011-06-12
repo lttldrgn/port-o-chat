@@ -11,11 +11,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import portochat.common.protocol.DefaultData;
@@ -35,14 +34,14 @@ public class TCPSocket {
     private ServerSocket serverSocket = null;
     private Socket clientSocket = null;
     private List listeners = null;
-    private CopyOnWriteArrayList<NetData> writeQueue = null;
+    private LinkedBlockingQueue<NetData> writeQueue = null;
     private AcceptThread acceptThread = null;
     private ProtocolHandler protocolHandler = null;
     private OutgoingThread outgoingThread = null;
     
     public TCPSocket(String name) {
         this.name = name;
-        writeQueue = new CopyOnWriteArrayList<NetData>();
+        writeQueue = new LinkedBlockingQueue<NetData>();
         protocolHandler = ProtocolHandler.getInstance();
     }
 
@@ -87,7 +86,7 @@ public class TCPSocket {
         netData.socket = socket;
         defaultData.populate();
         netData.data = defaultData.toByteArray();
-        writeQueue.add(netData);
+        writeQueue.offer(netData);
     }
 
     public void addListener(NetListener listener) {
@@ -204,28 +203,22 @@ public class TCPSocket {
         public void run() {
             //TODO do something when disconnecting everyone?
             while (true) {
-                if (writeQueue.size() > 0) {
-
-                    // Write the data
-                    try {
-                        for (NetData netData : writeQueue) {
-                            BufferedOutputStream bos = 
-                                    new BufferedOutputStream(netData.socket.getOutputStream());
-                            bos.write(netData.data);
-                            bos.flush();
-                        }
-                    } catch (IOException ex) {
-                        logger.log(Level.SEVERE, null, ex);
-                    }
-
-                    // Clear the queue
-                    writeQueue.clear();
-                }
+                
+                // Write the data
                 try {
-                    Thread.sleep(50);
-                } catch (InterruptedException ex) {
+                    NetData netData = writeQueue.take();
+                    BufferedOutputStream bos = 
+                            new BufferedOutputStream(netData.socket.getOutputStream());
+                    bos.write(netData.data);
+                    bos.flush();
+
+                } catch (IOException ex) {
                     logger.log(Level.SEVERE, null, ex);
+                } catch (InterruptedException ie) {
+                    // TODO: interruption probably means stop listening
+                    // return;
                 }
+
             }
         }
     }
