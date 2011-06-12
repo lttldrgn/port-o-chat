@@ -18,8 +18,6 @@ public class ClientLauncher {
                String name = JOptionPane.showInputDialog("Enter your user name");
                Client client = new Client(name);
                client.init();
-               client.setSize(400, 600);
-               //client.pack();
                client.setVisible(true);
             } 
         });
