@@ -28,9 +28,9 @@ public interface ServerDataListener {
      * This method is called when a chat message is received.  If the channel
      * is non-null then it is associated with a channel, otherwise it is a 
      * user to user message.
-     * @param user User the message came from
+     * @param fromUser User the message came from
      * @param message
      * @param channel Which channel the message was sent on
      */
-    public void receiveChatMessage(String user, String message, String channel);
+    public void receiveChatMessage(String fromUser, String message, String channel);
 }

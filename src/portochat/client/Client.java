@@ -256,27 +256,27 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
     }
 
     @Override
-    public void receiveChatMessage(final String user, final String message, 
+    public void receiveChatMessage(final String fromUser, final String message, 
             final String channel) {
         
         // user to user message
         if (channel == null) {
-            SingleChatPane pane = chatPaneMap.get(user);
+            SingleChatPane pane = chatPaneMap.get(fromUser);
         
             if (pane == null) {
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
                         SingleChatPane pane = SingleChatPane.createChatPane(connection, 
-                                        user, myUserName);
-                        chatPaneMap.put(user, pane);
+                                        fromUser, myUserName);
+                        chatPaneMap.put(fromUser, pane);
                         tabbedChatPane.add(pane.getPaneTitle(), pane);
-                        pane.receiveMessage(user, message);
+                        pane.receiveMessage(fromUser, message);
                     }
                 });
             } else {
                 // update existing pane
-                pane.receiveMessage(user, message);
+                pane.receiveMessage(fromUser, message);
             }
         } else {
             ChannelPane pane = channelPaneMap.get(channel);
@@ -288,12 +288,12 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
                                         channel, myUserName);
                         channelPaneMap.put(channel, pane);
                         tabbedChatPane.add(pane.getPaneTitle(), pane);
-                        pane.receiveMessage(user, message);
+                        pane.receiveMessage(fromUser, message);
                     }
                 });
             } else {
                 // update existing pane
-                pane.receiveMessage(user, message);
+                pane.receiveMessage(fromUser, message);
             }
         }
 

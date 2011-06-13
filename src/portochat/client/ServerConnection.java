@@ -4,7 +4,6 @@
  */
 package portochat.client;
 
-import java.util.ArrayList;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Logger;
 import portochat.common.protocol.ChannelJoinPart;
@@ -110,9 +109,10 @@ public class ServerConnection {
                 System.out.println(((ServerMessage)defaultData));
             } else if (defaultData instanceof ChatMessage) {
                 ChatMessage message = (ChatMessage)defaultData;
+                String channel = message.isChannel() ? message.getTo() : null;
                 for (ServerDataListener listener : listeners) {
                     listener.receiveChatMessage(message.getFromUser(), 
-                            message.getMessage(), null);
+                            message.getMessage(), channel);
                 }
                 System.out.println(((ChatMessage)defaultData));
             } else if (defaultData instanceof UserList) {
