@@ -33,4 +33,12 @@ public interface ServerDataListener {
      * @param channel Which channel the message was sent on
      */
     public void receiveChatMessage(String fromUser, String message, String channel);
+    
+    /**
+     * This method is called after a channel list is received from the server
+     * @param channels List of created channels on the server
+     */
+    public void channelListReceived(List<String> channels);
+    
+    public void receiveChannelJoinPart(String user, String channel, boolean join);
 }
