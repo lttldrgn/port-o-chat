@@ -12,6 +12,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.HashMap;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
@@ -34,23 +35,26 @@ import javax.swing.SwingUtilities;
 public class Client extends JFrame implements ActionListener {
     private static final String EXIT_COMMAND = "EXIT";
     private static final String CONNECT = "CONNECT";
+    private HashMap<String, SingleChatPane> chatPaneMap = 
+            new HashMap<String, SingleChatPane>();
+    private HashMap<String, ChannelPane> channelPaneMap = 
+            new HashMap<String, ChannelPane>();
     private DefaultListModel contactListModel = new DefaultListModel();
     private DefaultListModel channelListModel = new DefaultListModel();
     private JList contactList = new JList(contactListModel);
     private JList channelList = new JList(channelListModel);
-    private JTabbedPane chatPane = new JTabbedPane(JTabbedPane.BOTTOM, 
+    private JTabbedPane tabbedChatPane = new JTabbedPane(JTabbedPane.BOTTOM, 
             JTabbedPane.SCROLL_TAB_LAYOUT);
     private String myUserName = null;
     private ServerConnection connection = null;
     private boolean connected = false;
  
-    public Client(String username) {
-        myUserName = username;
+    public Client() {
         
     }
     
     public void init() {
-        setSize(800, 600);
+        setSize(1024, 768);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
         // add menu bar
@@ -105,9 +109,14 @@ public class Client extends JFrame implements ActionListener {
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() >= 2) {
                     String contact = (String) contactList.getSelectedValue();
-                    SingleChatPane pane = SingleChatPane.createChatPane(
-                            connection, contact, myUserName);
-                    chatPane.add(pane.getPaneTitle(), pane);
+                    SingleChatPane pane = chatPaneMap.get(contact);
+                    if (pane == null) {
+                        pane = SingleChatPane.createChatPane(
+                                connection, contact, myUserName);
+                        chatPaneMap.put(contact, pane);
+                        tabbedChatPane.add(pane.getPaneTitle(), pane);
+                    }
+                    tabbedChatPane.setSelectedComponent(pane);
                 }
             }
         });
@@ -115,14 +124,23 @@ public class Client extends JFrame implements ActionListener {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() >= 2) {
-                    System.out.println(channelList.getSelectedValue());
+                    String channel = (String) channelList.getSelectedValue();
+                    ChannelPane pane = channelPaneMap.get(channel);
+                    if (pane == null) {
+                        pane = ChannelPane.createChannelPane(connection, 
+                                channel, myUserName);
+                        
+                        channelPaneMap.put(channel, pane);
+                        tabbedChatPane.add(pane.getPaneTitle(), pane);
+                    }
+                    tabbedChatPane.setSelectedComponent(pane);
                 }
             }
         });
         
         // set up right panel
         rightPane.setLayout(new BorderLayout());
-        rightPane.add(chatPane);
+        rightPane.add(tabbedChatPane);
 
     }
     
@@ -147,6 +165,11 @@ public class Client extends JFrame implements ActionListener {
         if (connected)
             return true;
         
+        String name = JOptionPane.showInputDialog("Enter your user name");
+        if (name == null || name.isEmpty())
+            return false;
+        
+        myUserName = name;
         boolean success = true;
         try {
             connection = new ServerConnection();
@@ -156,6 +179,7 @@ public class Client extends JFrame implements ActionListener {
             connected = true;
             // populate fake data
             SwingUtilities.invokeLater(new Runnable() {
+                @Override
                 public void run() {
                     contactListModel.addElement("test");
                     contactListModel.addElement("test2");
