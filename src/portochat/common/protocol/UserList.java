@@ -31,7 +31,6 @@ public class UserList extends DefaultData {
         super.parse(dis);
 
         try {
-            userList = new ArrayList<String>();
             boolean isChannel = dis.readBoolean();
             if (isChannel) {
                 int channelLength = dis.readInt();
@@ -42,6 +41,9 @@ public class UserList extends DefaultData {
                 channel = sb.toString();
             }
             int numUsers = dis.readInt();
+            if (numUsers > 0) {
+                userList = new ArrayList<String>();
+            }
             for (int i = 0; i < numUsers; i++) {
                 int userLength = dis.readInt();
 
@@ -75,8 +77,17 @@ public class UserList extends DefaultData {
                     dos.writeBoolean(false);
                     dos.writeInt(0);
                 }
+            } else if (channel != null) {
+                dos.writeBoolean(true);
+                dos.writeInt(channel.length());
+                for (int i = 0; i < channel.length(); i++) {
+                    dos.writeByte(channel.charAt(i));
+                }
             } else {
                 dos.writeBoolean(false);
+            }
+
+            if (userList != null) {
                 dos.writeInt(userList.size());
                 for (String user : userList) {
                     dos.writeInt(user.length());
@@ -84,7 +95,11 @@ public class UserList extends DefaultData {
                         dos.writeByte(user.charAt(i));
                     }
                 }
+            } else {
+                // Filled out by server
+                dos.writeInt(0);
             }
+
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to write data", ex);
         }
