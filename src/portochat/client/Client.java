@@ -12,6 +12,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.HashMap;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -186,6 +187,7 @@ public class Client extends JFrame implements ActionListener {
                     channelListModel.addElement("#channel1");
                 }
             });
+            connection.sendUserListRequest();
             
         } catch (Exception e) {
             success = false;

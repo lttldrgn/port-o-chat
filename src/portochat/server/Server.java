@@ -14,6 +14,7 @@ import portochat.common.protocol.Ping;
 import portochat.common.protocol.Pong;
 import portochat.common.protocol.ServerMessage;
 import portochat.common.protocol.UserData;
+import portochat.common.protocol.UserList;
 import portochat.common.socket.TCPSocket;
 import portochat.common.socket.event.NetEvent;
 import portochat.common.socket.event.NetListener;
@@ -103,6 +104,11 @@ public class Server {
                     serverMessage.setMessage("No such Nick/Channel: " + chatMessage.getToUser());
                     tcpSocket.writeData(socket, serverMessage);
                 }
+            } else if (defaultData instanceof UserList) {
+                UserList userList = ((UserList)defaultData);
+                // Fill out the user list
+                userList.setUserList(userDatabase.getUserList());
+                tcpSocket.writeData(socket, userList);
             }
         }
     }
