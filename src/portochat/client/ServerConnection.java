@@ -5,6 +5,7 @@
 package portochat.client;
 
 import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Logger;
 import portochat.common.protocol.ChatMessage;
 import portochat.common.protocol.DefaultData;
@@ -24,6 +25,8 @@ import portochat.common.socket.event.NetListener;
 public class ServerConnection {
     private static final Logger logger = 
             Logger.getLogger(ServerConnection.class.getName());
+    private CopyOnWriteArrayList<ServerDataListener> listeners = 
+            new CopyOnWriteArrayList<ServerDataListener>();
     private TCPSocket socket = null;
     
     public ServerConnection() {
@@ -80,6 +83,10 @@ public class ServerConnection {
         //return new ArrayList<String>();
         return null;
     }
+
+    public void addDataListener(ServerDataListener listener) {
+        listeners.add(listener);
+    }
     
      private class ClientHandler implements NetListener {
 
@@ -96,7 +103,10 @@ public class ServerConnection {
             } else if (defaultData instanceof ChatMessage) {
                 System.out.println(((ChatMessage)defaultData));
             } else if (defaultData instanceof UserList) {
-                System.out.println((UserList)defaultData);
+                UserList userList = (UserList) defaultData;
+                for (ServerDataListener listener : listeners) {
+                    listener.userListReceived(userList.getUserList());
+                }
             }
         }
     }
