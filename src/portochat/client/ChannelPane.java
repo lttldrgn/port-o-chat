@@ -4,11 +4,16 @@
  */
 package portochat.client;
 
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import javax.swing.DefaultListModel;
+import javax.swing.JFrame;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -17,16 +22,18 @@ import javax.swing.JTextArea;
  *
  * @author Brandon
  */
-public class SingleChatPane extends JPanel {
+public class ChannelPane extends JPanel {
+    private DefaultListModel participantListModel = new DefaultListModel();
+    private JList participantList = new JList(participantListModel);
     private JTextArea viewPane = new JTextArea();
     private JTextArea textEntry = new JTextArea();
-    private String recipient = null;
+    private String channelName = null;
     private String myUserName = null;
     private ServerConnection serverConnection = null;
     
-    private SingleChatPane(ServerConnection server, String recipient, String myName) {
+    private ChannelPane(ServerConnection server, String channel, String myName) {
         serverConnection = server;
-        this.recipient = recipient;
+        this.channelName = channel;
         this.myUserName = myName;
     }
     
@@ -42,12 +49,18 @@ public class SingleChatPane extends JPanel {
         c.weighty = 0.9;
         add(new JScrollPane(viewPane), c);
         viewPane.setEditable(false);
+
+        c.gridx = 1;
+        c.weightx = 0.1;
+        participantList.setPreferredSize(new Dimension(75, 300));
+        add(new JScrollPane(participantList), c);
         
         c.gridx = 0;
         c.gridy = 1;
+        c.gridwidth = 2;
         c.weighty = 0.1;
         add(new JScrollPane(textEntry), c);
- 
+
         textEntry.addKeyListener(new KeyAdapter() {
 
             @Override
@@ -60,26 +73,42 @@ public class SingleChatPane extends JPanel {
             }
         });
 
-        textEntry.requestFocus();
+        ArrayList<String> me = new ArrayList<String>();
+        me.add(myUserName);
+        addContacts(me);
     }
     
     private void sendMessage(String messageText) {
-        serverConnection.sendMessage(recipient, messageText);
+        serverConnection.sendMessage(channelName, messageText);
     }
 
     public String getPaneTitle() {
-        return recipient;
+        return channelName;
     }
     
-    public static SingleChatPane createChatPane(
+    public static ChannelPane createChannelPane(
             ServerConnection serverConnection,
-            String recipient, 
+            String channel, 
             String myName) {
         
-        SingleChatPane chatPane = new SingleChatPane(serverConnection, 
-                recipient, myName);
-        chatPane.init();
-        return chatPane;
+        ChannelPane channelPane = new ChannelPane(serverConnection, 
+                channel, myName);
+        channelPane.init();
+        return channelPane;
     }
     
+    public void addContacts(ArrayList<String> contacts) {
+        for(String contact : contacts) {
+            participantListModel.addElement(contact);
+        }
+    }
+    
+    // main for visual test purposes only
+    public static void main(String args[]) {
+        JFrame frame = new JFrame();
+        frame.setSize(600,400);
+        frame.getContentPane().add(createChannelPane(null, "channel", "bob"));
+        frame.setVisible(true);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    }
 }
