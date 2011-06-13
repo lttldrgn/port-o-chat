@@ -46,6 +46,7 @@ public class ProtocolHandler {
         protocolClassMap.put((byte)0x3, "portochat.common.protocol.Pong");
         protocolClassMap.put((byte)0x4, "portochat.common.protocol.UserData");
         protocolClassMap.put((byte)0x5, "portochat.common.protocol.ChatMessage");
+        protocolClassMap.put((byte)0x6, "portochat.common.protocol.UserList");
 
         protocolHeaderMap = new HashMap<String, Byte>();
         protocolHeaderMap.put("portochat.common.protocol.ServerMessage", (byte)0x1);
@@ -53,6 +54,7 @@ public class ProtocolHandler {
         protocolHeaderMap.put("portochat.common.protocol.Pong", (byte)0x3);
         protocolHeaderMap.put("portochat.common.protocol.UserData", (byte)0x4);
         protocolHeaderMap.put("portochat.common.protocol.ChatMessage", (byte)0x5);
+        protocolHeaderMap.put("portochat.common.protocol.UserList", (byte)0x6);
     }
     
     public List<DefaultData> processData(byte[] data, int length) {

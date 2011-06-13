@@ -5,6 +5,9 @@
 package portochat.server;
 
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -69,5 +72,14 @@ public class UserDatabase {
     
     public String getSocketUser(Socket socket) {
         return socketMap.get(socket);
+    }
+    
+    public List<String> getUserList() {
+        List<String> userList = new ArrayList<String>();
+        Object[] objectList = userMap.keySet().toArray();
+        for (Object o : objectList) {
+            userList.add((String)o);
+        }
+        return userList;
     }
 }
