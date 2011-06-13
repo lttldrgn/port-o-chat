@@ -4,7 +4,6 @@
  */
 package portochat.client;
 
-import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 /**
@@ -15,8 +14,7 @@ public class ClientLauncher {
     public static void main(String args[]) {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-               String name = JOptionPane.showInputDialog("Enter your user name");
-               Client client = new Client(name);
+               Client client = new Client();
                client.init();
                client.setVisible(true);
             } 
