@@ -15,6 +15,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextPane;
+import javax.swing.SwingUtilities;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
@@ -26,6 +27,8 @@ import javax.swing.text.StyledDocument;
  * @author Brandon
  */
 public class SingleChatPane extends JPanel {
+    private final static Logger logger = 
+            Logger.getLogger(SingleChatPane.class.getName());
     private JTextPane viewPane = new JTextPane();
     private JTextArea textEntry = new JTextArea();
     private String recipient = null;
@@ -65,11 +68,11 @@ public class SingleChatPane extends JPanel {
                     StyledDocument doc = viewPane.getStyledDocument();
                     try {
                         doc.insertString(doc.getLength(), 
-                                myUserName+": ", doc.getStyle("bold"));
+                                myUserName + ": ", doc.getStyle("bold"));
                         doc.insertString(doc.getLength(), 
                                 textEntry.getText(), doc.getStyle("normal"));
                     } catch (BadLocationException ex) {
-                        Logger.getLogger(SingleChatPane.class.getName()).log(Level.SEVERE, null, ex);
+                        logger.log(Level.SEVERE, null, ex);
                     }
                     sendMessage(textEntry.getText());
                     textEntry.setText("");
@@ -91,6 +94,30 @@ public class SingleChatPane extends JPanel {
     
     private void sendMessage(String messageText) {
         serverConnection.sendMessage(recipient, messageText);
+    }
+    
+    /**
+     * Updates the pane with the received message.  This update is thrown on 
+     * the EDT.
+     * 
+     * @param user
+     * @param message 
+     */
+    public void receiveMessage(final String user, final String message) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                StyledDocument doc = viewPane.getStyledDocument();
+                    try {
+                        doc.insertString(doc.getLength(), 
+                                user + ": ", doc.getStyle("bold"));
+                        doc.insertString(doc.getLength(), message,
+                                doc.getStyle("normal"));
+                    } catch (BadLocationException ex) {
+                        logger.log(Level.SEVERE, null, ex);
+                    }
+            }
+        });
     }
 
     public String getPaneTitle() {
