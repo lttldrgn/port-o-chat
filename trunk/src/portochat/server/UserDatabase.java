@@ -89,21 +89,11 @@ public class UserDatabase {
     }
     
     public List<String> getUserList() {
-        List<String> userList = new ArrayList<String>();
-        Object[] objectList = userMap.keySet().toArray();
-        for (Object o : objectList) {
-            userList.add((String)o);
-        }
-        return userList;
+        return new ArrayList<String>(userMap.keySet());
     }
     
     public List<Socket> getSocketList() {
-        List<Socket> socketList = new ArrayList<Socket>();
-        Object[] objectList = socketMap.keySet().toArray();
-        for (Object o : objectList) {
-            socketList.add((Socket)o);
-        }
-        return socketList;
+        return new ArrayList<Socket>(socketMap.keySet());
     }
     
     public List<Socket> getSocketList(List<String> userList) {

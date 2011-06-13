@@ -7,10 +7,10 @@ package portochat.server;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import portochat.common.protocol.ChannelJoinPart;
+import portochat.common.protocol.ChannelList;
 import portochat.common.protocol.ChatMessage;
 import portochat.common.protocol.DefaultData;
 import portochat.common.protocol.Ping;
@@ -122,15 +122,14 @@ public class Server {
 
                 // Fill out who sent it
                 chatMessage.setFromUser(user);
-                
+
                 if (chatMessage.isChannel()) {
                     // Send to all users in channel
-                    ArrayList<Socket> userSocketList = 
-                            (ArrayList<Socket>)channelDatabase.
-                                getSocketsOfUsersInChannel(
-                                    chatMessage.getTo(),
-                                    chatMessage.getFromUser());
-                    
+                    ArrayList<Socket> userSocketList =
+                            (ArrayList<Socket>) channelDatabase.getSocketsOfUsersInChannel(
+                            chatMessage.getTo(),
+                            chatMessage.getFromUser());
+
                     if (userSocketList != null) {
                         for (Socket userSocket : userSocketList) {
                             tcpSocket.writeData(userSocket, chatMessage);
@@ -155,14 +154,19 @@ public class Server {
             } else if (defaultData instanceof UserList) {
                 UserList userList = ((UserList) defaultData);
                 // Fill out the user list
-                userList.setUserList(userDatabase.getUserList());
+                String channel = userList.getChannel();
+                if (channel != null) {
+                    userList.setUserList(channelDatabase.getUsersInChannel(channel));
+                } else {
+                    userList.setUserList(userDatabase.getUserList());
+                }
                 tcpSocket.writeData(socket, userList);
             } else if (defaultData instanceof UserConnection) {
-                UserConnection userConnection = ((UserConnection)defaultData);
+                UserConnection userConnection = ((UserConnection) defaultData);
 
                 // Shouldn't have connects here anyways
                 if (!userConnection.isConnected()) {
-                    boolean success = 
+                    boolean success =
                             userDatabase.removeUser(userConnection.getUser());
                     channelDatabase.removeUserFromAllChannels(userConnection.getUser());
                 }
@@ -173,15 +177,19 @@ public class Server {
                 for (Socket userSocket : userSocketList) {
                     tcpSocket.writeData(userSocket, userConnection);
                 }
-                
+
                 // Log the connection
                 logger.info(userConnection.toString());
+            } else if (defaultData instanceof ChannelList) {
+                ChannelList channelList = ((ChannelList) defaultData);
+                channelList.setChannelList(channelDatabase.getListOfChannels());
+                tcpSocket.writeData(socket, channelList);
             } else if (defaultData instanceof ChannelJoinPart) {
-                ChannelJoinPart channelJoinPart = ((ChannelJoinPart)defaultData);
-                
+                ChannelJoinPart channelJoinPart = ((ChannelJoinPart) defaultData);
+
                 // Fill out the user
                 channelJoinPart.setUser(user);
-                
+
                 if (channelJoinPart.hasJoined()) {
                     // joining
                     channelDatabase.addUserToChannel(
@@ -193,20 +201,19 @@ public class Server {
                             channelJoinPart.getChannel(),
                             channelJoinPart.getUser());
                 }
-                
+
                 // Notify users in that channel
-                ArrayList<Socket> userSocketList = 
-                        (ArrayList<Socket>)
-                        channelDatabase.getSocketsOfUsersInChannel(
-                            channelJoinPart.getChannel(),
-                            channelJoinPart.getUser());
-                
+                ArrayList<Socket> userSocketList =
+                        (ArrayList<Socket>) channelDatabase.getSocketsOfUsersInChannel(
+                        channelJoinPart.getChannel(),
+                        channelJoinPart.getUser());
+
                 if (userSocketList != null) {
                     for (Socket userSocket : userSocketList) {
                         tcpSocket.writeData(userSocket, channelJoinPart);
                     }
                 }
-                
+
                 // Log the join/part
                 logger.info(channelJoinPart.toString());
             } else {

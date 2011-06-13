@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Logger;
 import portochat.common.protocol.ChannelJoinPart;
+import portochat.common.protocol.ChannelList;
 import portochat.common.protocol.ChatMessage;
 import portochat.common.protocol.DefaultData;
 import portochat.common.protocol.Ping;
@@ -81,15 +82,15 @@ public class ServerConnection {
         socket.writeData(socket.getClientSocket(), channelJoinPart);
     }
     
-    public ArrayList<String> channelWho(String channel) {
-        //outWriter.println(ProtocolDefinitions.LEAVE_CHANNEL + channel);
-        //try {
-        //    reader.readLine();
-        //} catch (IOException ex) {
-        //    logger.log(Level.SEVERE, null, ex);
-        //}
-        //return new ArrayList<String>();
-        return null;
+    public void requsetListOfChannels() {
+        ChannelList channelList = new ChannelList();
+        socket.writeData(socket.getClientSocket(), channelList);
+    }
+    
+    public void requestUsersInChannel(String channel) {
+        UserList userList = new UserList();
+        userList.setChannel(channel);
+        socket.writeData(socket.getClientSocket(), userList);        
     }
 
     public void addDataListener(ServerDataListener listener) {
@@ -119,6 +120,7 @@ public class ServerConnection {
                 for (ServerDataListener listener : listeners) {
                     listener.userListReceived(userList.getUserList());
                 }
+                System.out.println((UserList)defaultData);
             } else if (defaultData instanceof UserConnection) {
                 // if user is null it's the server disconnecting
                 UserConnection user = (UserConnection) defaultData;
@@ -126,6 +128,8 @@ public class ServerConnection {
                     listener.userConnectionEvent(user.getUser(), user.isConnected());
                 }
                 System.out.println((UserConnection)defaultData);
+            } else if (defaultData instanceof ChannelList) {
+                System.out.println(((ChannelList)defaultData));
             } else if (defaultData instanceof ChannelJoinPart) {
                 System.out.println((ChannelJoinPart)defaultData);
             } else {
