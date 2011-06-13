@@ -71,7 +71,7 @@ public class UserDatabase {
         boolean success = false;
         
         if (userMap.containsKey(user)) {
-            Socket userSocket = getUserSocket(user);
+            Socket userSocket = getUserOfSocket(user);
             userMap.remove(user);
             socketMap.remove(userSocket);
             success = true;
@@ -80,11 +80,11 @@ public class UserDatabase {
         return success;
     }
     
-    public Socket getUserSocket(String user) {
+    public Socket getUserOfSocket(String user) {
         return userMap.get(user);
     }
     
-    public String getSocketUser(Socket socket) {
+    public String getSocketOfUser(Socket socket) {
         return socketMap.get(socket);
     }
     
@@ -105,4 +105,13 @@ public class UserDatabase {
         }
         return socketList;
     }
+    
+    public List<Socket> getSocketList(List<String> userList) {
+        List<Socket> socketList = new ArrayList<Socket>();
+        for (String user : userList) {
+            socketList.add(getUserOfSocket(user));
+        }
+        return socketList;
+    }
+    
 }

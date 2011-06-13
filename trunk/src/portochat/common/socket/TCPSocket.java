@@ -200,7 +200,7 @@ public class TCPSocket {
             UserConnection userConnection = new UserConnection();
             if (serverSocket != null) {
                 // Get the user who disconnected
-                String user = userDatabase.getSocketUser(socket);
+                String user = userDatabase.getSocketOfUser(socket);
                 if (user == null) {
                     // Hasn't set a username yet
                     user = socket.getInetAddress().toString();

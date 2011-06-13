@@ -7,8 +7,10 @@ package portochat.server;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import portochat.common.protocol.ChannelJoinPart;
 import portochat.common.protocol.ChatMessage;
 import portochat.common.protocol.DefaultData;
 import portochat.common.protocol.Ping;
@@ -30,9 +32,11 @@ public class Server {
     private static final Logger logger = Logger.getLogger(Server.class.getName());
     private TCPSocket tcpSocket = null;
     private UserDatabase userDatabase = null;
+    private ChannelDatabase channelDatabase = null;
 
     public Server() {
         userDatabase = UserDatabase.getInstance();
+        channelDatabase = ChannelDatabase.getInstance();
     }
 
     public boolean bind(int port) {
@@ -67,7 +71,7 @@ public class Server {
             Socket socket = (Socket) event.getSource();
             DefaultData defaultData = event.getData();
 
-            String user = userDatabase.getSocketUser(socket);
+            String user = userDatabase.getSocketOfUser(socket);
             if (user == null) {
                 // Users must send a UserData packet first
                 if (defaultData instanceof UserData) {
@@ -115,15 +119,38 @@ public class Server {
                 tcpSocket.writeData(socket, pong);
             } else if (defaultData instanceof ChatMessage) {
                 ChatMessage chatMessage = ((ChatMessage) defaultData);
+
                 // Fill out who sent it
                 chatMessage.setFromUser(user);
-                Socket toUserSocket = userDatabase.getUserSocket(chatMessage.getToUser());
-                if (toUserSocket != null) {
-                    tcpSocket.writeData(toUserSocket, chatMessage);
+                
+                if (chatMessage.isChannel()) {
+                    // Send to all users in channel
+                    ArrayList<Socket> userSocketList = 
+                            (ArrayList<Socket>)channelDatabase.
+                                getSocketsOfUsersInChannel(
+                                    chatMessage.getTo(),
+                                    chatMessage.getFromUser());
+                    
+                    if (userSocketList != null) {
+                        for (Socket userSocket : userSocketList) {
+                            tcpSocket.writeData(userSocket, chatMessage);
+                        }
+                    } else {
+                        ServerMessage serverMessage = new ServerMessage();
+                        serverMessage.setMessage("Can't send message to a "
+                                + "non-existant channel: " + chatMessage.getTo());
+                        tcpSocket.writeData(socket, serverMessage);
+                    }
                 } else {
-                    ServerMessage serverMessage = new ServerMessage();
-                    serverMessage.setMessage("No such Nick/Channel: " + chatMessage.getToUser());
-                    tcpSocket.writeData(socket, serverMessage);
+                    Socket toUserSocket = userDatabase.getUserOfSocket(chatMessage.getTo());
+                    if (toUserSocket != null) {
+                        tcpSocket.writeData(toUserSocket, chatMessage);
+                    } else {
+                        ServerMessage serverMessage = new ServerMessage();
+                        serverMessage.setMessage("Can't send message to a "
+                                + "non-existant user: " + chatMessage.getTo());
+                        tcpSocket.writeData(socket, serverMessage);
+                    }
                 }
             } else if (defaultData instanceof UserList) {
                 UserList userList = ((UserList) defaultData);
@@ -137,6 +164,7 @@ public class Server {
                 if (!userConnection.isConnected()) {
                     boolean success = 
                             userDatabase.removeUser(userConnection.getUser());
+                    channelDatabase.removeUserFromAllChannels(userConnection.getUser());
                 }
 
                 // Send to all other clients
@@ -148,6 +176,39 @@ public class Server {
                 
                 // Log the connection
                 logger.info(userConnection.toString());
+            } else if (defaultData instanceof ChannelJoinPart) {
+                ChannelJoinPart channelJoinPart = ((ChannelJoinPart)defaultData);
+                
+                // Fill out the user
+                channelJoinPart.setUser(user);
+                
+                if (channelJoinPart.hasJoined()) {
+                    // joining
+                    channelDatabase.addUserToChannel(
+                            channelJoinPart.getChannel(),
+                            channelJoinPart.getUser());
+                } else {
+                    // leaving
+                    channelDatabase.removeUserFromChannel(
+                            channelJoinPart.getChannel(),
+                            channelJoinPart.getUser());
+                }
+                
+                // Notify users in that channel
+                ArrayList<Socket> userSocketList = 
+                        (ArrayList<Socket>)
+                        channelDatabase.getSocketsOfUsersInChannel(
+                            channelJoinPart.getChannel(),
+                            channelJoinPart.getUser());
+                
+                if (userSocketList != null) {
+                    for (Socket userSocket : userSocketList) {
+                        tcpSocket.writeData(userSocket, channelJoinPart);
+                    }
+                }
+                
+                // Log the join/part
+                logger.info(channelJoinPart.toString());
             } else {
                 logger.log(Level.WARNING, "Unhandled message: {0}", defaultData);
             }

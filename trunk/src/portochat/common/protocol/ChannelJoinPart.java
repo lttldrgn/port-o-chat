@@ -15,13 +15,14 @@ import java.util.logging.Logger;
  *
  * @author Mike
  */
-public class UserConnection extends DefaultData {
+public class ChannelJoinPart extends DefaultData {
 
-    private static final Logger logger = Logger.getLogger(UserConnection.class.getName());
+    private static final Logger logger = Logger.getLogger(ChannelJoinPart.class.getName());
     private String user = null;
-    private boolean connected = false;
+    private String channel = null;
+    private boolean joined = false;
     
-    public UserConnection() {
+    public ChannelJoinPart() {
     }
 
     @Override
@@ -35,7 +36,13 @@ public class UserConnection extends DefaultData {
                 sb.append((char) dis.readUnsignedByte());
             }
             user = sb.toString();
-            connected = dis.readBoolean();
+            sb = new StringBuilder();
+            int channelLength = dis.readInt();
+            for (int i = 0; i < channelLength; i++) {
+                sb.append((char) dis.readUnsignedByte());
+            }
+            channel = sb.toString();
+            joined = dis.readBoolean();
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to parse data!", ex);
         }
@@ -44,11 +51,20 @@ public class UserConnection extends DefaultData {
     @Override
     public int writeBody(DataOutputStream dos) {
         try {
-            dos.writeInt(user.length());
-            for (int i = 0; i < user.length(); i++) {
-                dos.writeByte(user.charAt(i));
+            if (user != null) {
+                dos.writeInt(user.length());
+                for (int i = 0; i < user.length(); i++) {
+                    dos.writeByte(user.charAt(i));
+                }
+            } else {
+                // Filled out by server.
+                dos.writeInt(0);
             }
-            dos.writeBoolean(connected);
+            dos.writeInt(channel.length());
+            for (int i = 0; i < channel.length(); i++) {
+                dos.writeByte(channel.charAt(i));
+            }
+            dos.writeBoolean(joined);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to write data", ex);
         }
@@ -64,12 +80,20 @@ public class UserConnection extends DefaultData {
         this.user = user;
     }
 
-    public boolean isConnected() {
-        return connected;
+    public String getChannel() {
+        return channel;
     }
 
-    public void setConnected(boolean connected) {
-        this.connected = connected;
+    public void setChannel(String channel) {
+        this.channel = channel;
+    }
+
+    public boolean hasJoined() {
+        return joined;
+    }
+
+    public void setJoined(boolean joined) {
+        this.joined = joined;
     }
 
     @Override
@@ -79,12 +103,13 @@ public class UserConnection extends DefaultData {
         sb.append(new Date(time));
         sb.append(" User: ");
         sb.append(user);
-        sb.append((connected?" has connected!":" has disconnected!"));
+        sb.append((joined?" has joined ":" has parted "));
+        sb.append(channel);
         return sb.toString();
     }
 
     @Override
     public String getObjectName() {
-        return "UserConnection";
+        return "ChannelJoinPart";
     }
 }

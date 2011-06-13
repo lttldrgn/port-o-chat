@@ -7,7 +7,6 @@ package portochat.common.protocol;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.lang.String;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -22,23 +21,33 @@ public class UserList extends DefaultData {
 
     private static final Logger logger = Logger.getLogger(UserList.class.getName());
     private List<String> userList = null;
-    
+    private String channel = null;
+
     public UserList() {
     }
-    
+
     @Override
     public void parse(DataInputStream dis) {
         super.parse(dis);
 
         try {
             userList = new ArrayList<String>();
+            boolean isChannel = dis.readBoolean();
+            if (isChannel) {
+                int channelLength = dis.readInt();
+                StringBuilder sb = new StringBuilder();
+                for (int j = 0; j < channelLength; j++) {
+                    sb.append((char) dis.readUnsignedByte());
+                }
+                channel = sb.toString();
+            }
             int numUsers = dis.readInt();
-            for (int i = 0;i < numUsers;i++) {
+            for (int i = 0; i < numUsers; i++) {
                 int userLength = dis.readInt();
 
                 StringBuilder sb = new StringBuilder();
-                for (int j = 0;j < userLength;j++) {
-                    sb.append((char)dis.readUnsignedByte());
+                for (int j = 0; j < userLength; j++) {
+                    sb.append((char) dis.readUnsignedByte());
                 }
                 String user = sb.toString();
                 userList.add(user);
@@ -47,19 +56,31 @@ public class UserList extends DefaultData {
             logger.log(Level.SEVERE, "Unable to parse data!", ex);
         }
     }
-    
+
     @Override
     public int writeBody(DataOutputStream dos) {
-        
+
         try {
             // The server fills this out, from the client this will be null.
             if (userList == null) {
-                dos.writeInt(0);
+                if (channel != null) {
+                    // Requesting users from channel
+                    dos.writeBoolean(true);
+                    dos.writeInt(channel.length());
+                    for (int i = 0; i < channel.length(); i++) {
+                        dos.writeByte(channel.charAt(i));
+                    }
+                } else {
+                    // Requseting users from server
+                    dos.writeBoolean(false);
+                    dos.writeInt(0);
+                }
             } else {
+                dos.writeBoolean(false);
                 dos.writeInt(userList.size());
                 for (String user : userList) {
                     dos.writeInt(user.length());
-                    for (int i = 0;i < user.length();i++) {
+                    for (int i = 0; i < user.length(); i++) {
                         dos.writeByte(user.charAt(i));
                     }
                 }
@@ -67,7 +88,7 @@ public class UserList extends DefaultData {
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to write data", ex);
         }
-        
+
         return dos.size();
     }
 
@@ -79,11 +100,23 @@ public class UserList extends DefaultData {
         this.userList = userList;
     }
 
+    public String getChannel() {
+        return channel;
+    }
+
+    public void setChannel(String channel) {
+        this.channel = channel;
+    }
+
     @Override
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
         sb.append(new Date(time));
+        if (channel != null) {
+            sb.append(" ");
+            sb.append(channel);
+        }
         sb.append(" Num Users: ");
         if (userList != null) {
             sb.append(userList.size());
@@ -94,12 +127,12 @@ public class UserList extends DefaultData {
         } else {
             sb.append("0");
         }
-        
+
         return sb.toString();
     }
 
     @Override
-    public String getName() {
+    public String getObjectName() {
         return "UserList";
     }
 }
