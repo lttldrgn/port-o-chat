@@ -9,16 +9,24 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextPane;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyleContext;
+import javax.swing.text.StyledDocument;
 
 /**
  *
  * @author Brandon
  */
 public class SingleChatPane extends JPanel {
-    private JTextArea viewPane = new JTextArea();
+    private JTextPane viewPane = new JTextPane();
     private JTextArea textEntry = new JTextArea();
     private String recipient = null;
     private String myUserName = null;
@@ -48,12 +56,21 @@ public class SingleChatPane extends JPanel {
         c.weighty = 0.1;
         add(new JScrollPane(textEntry), c);
  
+        // add listener for text entry
         textEntry.addKeyListener(new KeyAdapter() {
 
             @Override
             public void keyReleased(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    viewPane.append(myUserName + ":" + textEntry.getText());
+                    StyledDocument doc = viewPane.getStyledDocument();
+                    try {
+                        doc.insertString(doc.getLength(), 
+                                myUserName+":", doc.getStyle("bold"));
+                        doc.insertString(doc.getLength(), 
+                                textEntry.getText(), doc.getStyle("normal"));
+                    } catch (BadLocationException ex) {
+                        Logger.getLogger(SingleChatPane.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                     sendMessage(textEntry.getText());
                     textEntry.setText("");
                 }
@@ -61,6 +78,15 @@ public class SingleChatPane extends JPanel {
         });
 
         textEntry.requestFocus();
+        
+        // add text styles
+        Style def = StyleContext.getDefaultStyleContext().
+                        getStyle(StyleContext.DEFAULT_STYLE);
+        StyledDocument doc = viewPane.getStyledDocument();
+        Style s = doc.addStyle("normal", def);
+        // bold font
+        s = doc.addStyle("bold", def);
+        StyleConstants.setBold(s, true);
     }
     
     private void sendMessage(String messageText) {

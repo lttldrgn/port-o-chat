@@ -12,8 +12,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
@@ -33,7 +33,7 @@ import javax.swing.SwingUtilities;
  *
  * @author Brandon
  */
-public class Client extends JFrame implements ActionListener {
+public class Client extends JFrame implements ActionListener, ServerDataListener {
     private static final String EXIT_COMMAND = "EXIT";
     private static final String CONNECT = "CONNECT";
     private HashMap<String, SingleChatPane> chatPaneMap = 
@@ -174,6 +174,7 @@ public class Client extends JFrame implements ActionListener {
         boolean success = true;
         try {
             connection = new ServerConnection();
+            connection.addDataListener(this);
             connection.connectToServer("localhost", ClientSettings.DEFAULT_SERVER_PORT);
             connection.sendUsername(myUserName);
             connection.sendPing();
@@ -194,5 +195,16 @@ public class Client extends JFrame implements ActionListener {
         }
         return success;
     }
-    
+
+    @Override
+    public void userListReceived(final List<String> users) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                for (String user: users) {
+                    contactListModel.addElement(user);
+                }
+            }
+        });
+    }
 }
