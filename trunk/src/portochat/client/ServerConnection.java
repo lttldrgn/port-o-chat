@@ -12,6 +12,7 @@ import portochat.common.protocol.Ping;
 import portochat.common.protocol.Pong;
 import portochat.common.protocol.ServerMessage;
 import portochat.common.protocol.UserData;
+import portochat.common.protocol.UserList;
 import portochat.common.socket.TCPSocket;
 import portochat.common.socket.event.NetEvent;
 import portochat.common.socket.event.NetListener;
@@ -41,19 +42,24 @@ public class ServerConnection {
     public void sendUsername(String username) {
         UserData userData = new UserData();
         userData.setUser(username);
-        socket.writeData(socket.getClientSocket(),userData);
+        socket.writeData(socket.getClientSocket(), userData);
     }
     
     public void sendPing() {
         Ping ping = new Ping();
-        socket.writeData(socket.getClientSocket(),ping);
+        socket.writeData(socket.getClientSocket(), ping);
     }
     
     public void sendMessage(String username, String message) {
         ChatMessage chatMessage = new ChatMessage();
         chatMessage.setToUser(username);
         chatMessage.setMessage(message);
-        socket.writeData(socket.getClientSocket(),chatMessage);
+        socket.writeData(socket.getClientSocket(), chatMessage);
+    }
+    
+    public void sendUserListRequest() {
+        UserList userList = new UserList();
+        socket.writeData(socket.getClientSocket(), userList);
     }
     
     public void joinChannel(String channel) {
@@ -89,6 +95,8 @@ public class ServerConnection {
                 System.out.println(((ServerMessage)defaultData));
             } else if (defaultData instanceof ChatMessage) {
                 System.out.println(((ChatMessage)defaultData));
+            } else if (defaultData instanceof UserList) {
+                System.out.println((UserList)defaultData);
             }
         }
     }
