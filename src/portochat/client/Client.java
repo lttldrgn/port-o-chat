@@ -142,6 +142,7 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
                         
                         channelPaneMap.put(channel, pane);
                         tabbedChatPane.add(pane.getPaneTitle(), pane);
+                        connection.requestUsersInChannel(channel);
                     }
                     tabbedChatPane.setSelectedComponent(pane);
                 }
@@ -195,13 +196,7 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
             connection.sendUsername(myUserName);
             connection.sendPing();
             connected = true;
-            // populate fake data
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    channelListModel.addElement("#channel1");
-                }
-            });
+
             //connection.sendUserListRequest();
             connection.joinChannel("#test");
             connection.joinChannel("#test2");
@@ -234,6 +229,16 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
             public void run() {
                 if (contactListModel.contains(user))
                     contactListModel.removeElement(user);
+            }
+        });
+    }
+    
+    private void addChannel(final String channel) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                if (!channelListModel.contains(channel))
+                    channelListModel.addElement(channel);
             }
         });
     }
@@ -280,6 +285,8 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
             }
         } else {
             ChannelPane pane = channelPaneMap.get(channel);
+            // TODO: If user has not joined a channel then should not create
+            // a panel if an unsubscribed message is received from it
             if (pane == null) {
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
@@ -297,5 +304,17 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
             }
         }
 
+    }
+
+    @Override
+    public void channelListReceived(List<String> channels) {
+        for (String channel : channels) {
+            addChannel(channel);
+        }
+    }
+
+    @Override
+    public void receiveChannelJoinPart(String user, String channel, boolean join) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }
