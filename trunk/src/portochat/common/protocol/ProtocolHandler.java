@@ -44,17 +44,19 @@ public class ProtocolHandler {
         protocolClassMap.put((byte)0x1, "portochat.common.protocol.ServerMessage");
         protocolClassMap.put((byte)0x2, "portochat.common.protocol.Ping");
         protocolClassMap.put((byte)0x3, "portochat.common.protocol.Pong");
-        protocolClassMap.put((byte)0x4, "portochat.common.protocol.UserData");
-        protocolClassMap.put((byte)0x5, "portochat.common.protocol.ChatMessage");
-        protocolClassMap.put((byte)0x6, "portochat.common.protocol.UserList");
+        protocolClassMap.put((byte)0x4, "portochat.common.protocol.UserConnection");
+        protocolClassMap.put((byte)0x5, "portochat.common.protocol.UserData");
+        protocolClassMap.put((byte)0x6, "portochat.common.protocol.ChatMessage");
+        protocolClassMap.put((byte)0x7, "portochat.common.protocol.UserList");
 
         protocolHeaderMap = new HashMap<String, Byte>();
         protocolHeaderMap.put("portochat.common.protocol.ServerMessage", (byte)0x1);
         protocolHeaderMap.put("portochat.common.protocol.Ping", (byte)0x2);
         protocolHeaderMap.put("portochat.common.protocol.Pong", (byte)0x3);
-        protocolHeaderMap.put("portochat.common.protocol.UserData", (byte)0x4);
-        protocolHeaderMap.put("portochat.common.protocol.ChatMessage", (byte)0x5);
-        protocolHeaderMap.put("portochat.common.protocol.UserList", (byte)0x6);
+        protocolHeaderMap.put("portochat.common.protocol.UserConnection", (byte)0x4);
+        protocolHeaderMap.put("portochat.common.protocol.UserData", (byte)0x5);
+        protocolHeaderMap.put("portochat.common.protocol.ChatMessage", (byte)0x6);
+        protocolHeaderMap.put("portochat.common.protocol.UserList", (byte)0x7);
     }
     
     public List<DefaultData> processData(byte[] data, int length) {

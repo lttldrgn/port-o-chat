@@ -7,6 +7,7 @@ package portochat.common.protocol;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -14,12 +15,13 @@ import java.util.logging.Logger;
  *
  * @author Mike
  */
-public class UserData extends DefaultData {
+public class UserConnection extends DefaultData {
 
-    private static final Logger logger = Logger.getLogger(UserData.class.getName());
+    private static final Logger logger = Logger.getLogger(UserConnection.class.getName());
     private String user = null;
-
-    public UserData() {
+    private boolean connected = false;
+    
+    public UserConnection() {
     }
 
     @Override
@@ -33,6 +35,7 @@ public class UserData extends DefaultData {
                 sb.append((char) dis.readUnsignedByte());
             }
             user = sb.toString();
+            connected = dis.readBoolean();
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to parse data!", ex);
         }
@@ -45,6 +48,7 @@ public class UserData extends DefaultData {
             for (int i = 0; i < user.length(); i++) {
                 dos.writeByte(user.charAt(i));
             }
+            dos.writeBoolean(connected);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to write data", ex);
         }
@@ -60,19 +64,27 @@ public class UserData extends DefaultData {
         this.user = user;
     }
 
+    public boolean isConnected() {
+        return connected;
+    }
+
+    public void setConnected(boolean connected) {
+        this.connected = connected;
+    }
+
     @Override
     public String toString() {
 
         StringBuilder sb = new StringBuilder();
-        sb.append(super.toString());
-        sb.append("User: ");
+        sb.append(new Date(time));
+        sb.append(" User: ");
         sb.append(user);
-
+        sb.append((connected?" has connected!":" has disconnected!"));
         return sb.toString();
     }
 
     @Override
     public String getName() {
-        return "UserData";
+        return "UserConnection";
     }
 }
