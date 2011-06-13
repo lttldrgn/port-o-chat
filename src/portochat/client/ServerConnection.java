@@ -12,6 +12,7 @@ import portochat.common.protocol.DefaultData;
 import portochat.common.protocol.Ping;
 import portochat.common.protocol.Pong;
 import portochat.common.protocol.ServerMessage;
+import portochat.common.protocol.UserConnection;
 import portochat.common.protocol.UserData;
 import portochat.common.protocol.UserList;
 import portochat.common.socket.TCPSocket;
@@ -96,8 +97,7 @@ public class ServerConnection {
             
             if (defaultData instanceof Pong) {
                 System.out.println("Server lag: " + 
-                        (System.currentTimeMillis() -
-                        ((Pong)defaultData).getTimestamp()) + "ms");
+                        ((Pong)defaultData).getCalculatedLag() + "ms");
             } else if (defaultData instanceof ServerMessage) {
                 System.out.println(((ServerMessage)defaultData));
             } else if (defaultData instanceof ChatMessage) {
@@ -107,6 +107,10 @@ public class ServerConnection {
                 for (ServerDataListener listener : listeners) {
                     listener.userListReceived(userList.getUserList());
                 }
+            } else if (defaultData instanceof UserConnection) {
+                System.out.println((UserConnection)defaultData);
+            } else {
+                System.out.println("Unknown message: " + defaultData);
             }
         }
     }
