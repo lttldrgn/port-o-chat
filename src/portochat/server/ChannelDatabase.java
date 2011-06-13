@@ -116,8 +116,8 @@ public class ChannelDatabase {
         
         return exists;
     }
+    
     public void removeUserFromAllChannels(String user) {
-        userChannelMap.remove(user);
         for (String channel : channelMap.keySet()) {
             if (isUserInChannel(channel, user)) {
                 removeUserFromChannel(channel, user);
@@ -127,6 +127,10 @@ public class ChannelDatabase {
     
     public List<String> getUsersInChannel(String channel) {
         return channelMap.get(channel);
+    }
+    
+    public List<String> getListOfChannels() {
+        return new ArrayList<String>(channelMap.keySet());
     }
 
     public List<Socket> getSocketsOfUsersInChannel(String channel, String filterUser) {
