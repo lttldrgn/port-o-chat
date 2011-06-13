@@ -36,6 +36,7 @@ import javax.swing.SwingUtilities;
 public class Client extends JFrame implements ActionListener, ServerDataListener {
     private static final String EXIT_COMMAND = "EXIT";
     private static final String CONNECT = "CONNECT";
+    private static final String CREATE_CHANNEL = "CREATE_CHANNEL";
     private HashMap<String, SingleChatPane> chatPaneMap = 
             new HashMap<String, SingleChatPane>();
     private HashMap<String, ChannelPane> channelPaneMap = 
@@ -74,6 +75,11 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
         connectMenu.addActionListener(this);
         fileMenu.add(connectMenu);
 
+        JMenuItem createChannelMenu = new JMenuItem("Create Channel...");
+        createChannelMenu.setActionCommand(CREATE_CHANNEL);
+        createChannelMenu.addActionListener(this);
+        fileMenu.add(createChannelMenu);
+        
         JMenuItem exitMenu = new JMenuItem("Exit");
         exitMenu.setMnemonic(KeyEvent.VK_X);
         exitMenu.setActionCommand(EXIT_COMMAND);
@@ -158,6 +164,13 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
             }
         } else if (e.getActionCommand().equals(CONNECT)) {
             connectToServer();
+        } else if (e.getActionCommand().equals(CREATE_CHANNEL)) {
+            String returnVal = JOptionPane.showInputDialog(rootPane, 
+                    "Enter channel name to create", "Channel creation", 
+                    JOptionPane.QUESTION_MESSAGE);
+            if (returnVal != null) {
+                // TODO: Create channel
+            }
         }
     }
     
@@ -238,5 +251,49 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
         } else {
             removeUser(user);
         }
+    }
+
+    @Override
+    public void receiveChatMessage(final String user, final String message, 
+            final String channel) {
+        
+        // user to user message
+        if (channel == null) {
+            SingleChatPane pane = chatPaneMap.get(user);
+        
+            if (pane == null) {
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        SingleChatPane pane = SingleChatPane.createChatPane(connection, 
+                                        user, myUserName);
+                        chatPaneMap.put(user, pane);
+                        tabbedChatPane.add(pane.getPaneTitle(), pane);
+                        pane.receiveMessage(user, message);
+                    }
+                });
+            } else {
+                // update existing pane
+                pane.receiveMessage(user, message);
+            }
+        } else {
+            ChannelPane pane = channelPaneMap.get(channel);
+            if (pane == null) {
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        ChannelPane pane = ChannelPane.createChannelPane(connection, 
+                                        channel, myUserName);
+                        channelPaneMap.put(channel, pane);
+                        tabbedChatPane.add(pane.getPaneTitle(), pane);
+                        pane.receiveMessage(user, message);
+                    }
+                });
+            } else {
+                // update existing pane
+                pane.receiveMessage(user, message);
+            }
+        }
+
     }
 }

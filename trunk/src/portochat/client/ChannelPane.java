@@ -33,6 +33,8 @@ import javax.swing.text.StyledDocument;
  * @author Brandon
  */
 public class ChannelPane extends JPanel {
+    private static final Logger logger = 
+            Logger.getLogger(ChannelPane.class.getName());
     private DefaultListModel participantListModel = new DefaultListModel();
     private JList participantList = new JList(participantListModel);
     private JTextPane viewPane = new JTextPane();
@@ -83,7 +85,7 @@ public class ChannelPane extends JPanel {
                         doc.insertString(doc.getLength(), 
                                 textEntry.getText(), doc.getStyle("normal"));
                     } catch (BadLocationException ex) {
-                        Logger.getLogger(SingleChatPane.class.getName()).log(Level.SEVERE, null, ex);
+                        logger.log(Level.SEVERE, null, ex);
                     }
                     sendMessage(textEntry.getText());
                     textEntry.setText("");
@@ -151,6 +153,30 @@ public class ChannelPane extends JPanel {
                 } else {
                     participantListModel.removeElement(user);
                 }
+            }
+        });
+    }
+
+    /**
+     * Updates the pane with the received message.  This update is thrown on 
+     * the EDT.
+     * 
+     * @param user
+     * @param message 
+     */
+    public void receiveMessage(final String user, final String message) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                StyledDocument doc = viewPane.getStyledDocument();
+                    try {
+                        doc.insertString(doc.getLength(), 
+                                user + ": ", doc.getStyle("bold"));
+                        doc.insertString(doc.getLength(), message,
+                                doc.getStyle("normal"));
+                    } catch (BadLocationException ex) {
+                        logger.log(Level.SEVERE, null, ex);
+                    }
             }
         });
     }
