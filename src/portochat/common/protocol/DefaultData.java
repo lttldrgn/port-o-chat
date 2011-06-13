@@ -93,14 +93,14 @@ public class DefaultData {
         this.length = length;
     }
 
-    public String getName() {
-        return "AbstractData";
+    public String getObjectName() {
+        return "DefaultData";
     }
 
     public String toLogString() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append(getName());
+        sb.append(getObjectName());
         sb.append("\n");
         sb.append("Length: ");
         sb.append(length);
@@ -115,7 +115,7 @@ public class DefaultData {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         
-        sb.append(getName());
+        sb.append(getObjectName());
         sb.append("\n");
         sb.append("Length: ");
         sb.append(length);

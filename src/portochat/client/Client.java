@@ -190,8 +190,14 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
                 }
             });
             connection.sendUserListRequest();
+            connection.joinChannel("#test");
+            connection.joinChannel("#test2");
+            connection.partChannel("#test");
+            connection.sendMessage("#test", "Did you know that");
+            connection.sendMessage("#test2", "The bird is the word");
             
         } catch (Exception e) {
+            e.printStackTrace();
             success = false;
         }
         return success;

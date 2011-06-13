@@ -71,7 +71,7 @@ public class Ping extends DefaultData {
     }
 
     @Override
-    public String getName() {
+    public String getObjectName() {
         return "Ping";
     }
 }

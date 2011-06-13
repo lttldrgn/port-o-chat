@@ -72,7 +72,7 @@ public class UserData extends DefaultData {
     }
 
     @Override
-    public String getName() {
+    public String getObjectName() {
         return "UserData";
     }
 }

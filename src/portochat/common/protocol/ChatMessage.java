@@ -19,7 +19,7 @@ public class ChatMessage extends DefaultData {
 
     private static final Logger logger = Logger.getLogger(ChatMessage.class.getName());
     private String fromUser = null;
-    private String toUser = null;
+    private String to = null;
     private String message = null;
     
     public ChatMessage() {
@@ -43,7 +43,7 @@ public class ChatMessage extends DefaultData {
             for (int i = 0;i < userLength;i++) {
                 sb.append((char)dis.readUnsignedByte());
             }
-            toUser = sb.toString();
+            to = sb.toString();
             
             int messageLength = dis.readInt();
             sb = new StringBuilder();
@@ -71,9 +71,9 @@ public class ChatMessage extends DefaultData {
                 }
             }
             
-            dos.writeInt(toUser.length());
-            for (int i = 0;i < toUser.length();i++) {
-                dos.writeByte(toUser.charAt(i));
+            dos.writeInt(to.length());
+            for (int i = 0;i < to.length();i++) {
+                dos.writeByte(to.charAt(i));
             }
             
             dos.writeInt(message.length());
@@ -96,14 +96,21 @@ public class ChatMessage extends DefaultData {
         length = message.length();
     }
 
-    public String getToUser() {
-        return toUser;
+    public String getTo() {
+        return to;
     }
 
-    public void setToUser(String toUser) {
-        this.toUser = toUser;
+    public void setTo(String to) {
+        this.to = to;
     }
 
+    public boolean isChannel() {
+        if (to != null && to.startsWith("#")) {
+            return true;
+        } else {
+            return false;
+        }
+    }
     public String getFromUser() {
         return fromUser;
     }
@@ -118,15 +125,20 @@ public class ChatMessage extends DefaultData {
         StringBuilder sb = new StringBuilder();
         sb.append(new Date(time));
         sb.append(" ");
+        if (isChannel()) {
+            sb.append(to);
+            sb.append(" ");
+        }
+        sb.append("<");
         sb.append(fromUser);
-        sb.append(": ");
+        sb.append("> ");
         sb.append(message);
         
         return sb.toString();
     }
 
     @Override
-    public String getName() {
+    public String getObjectName() {
         return "ChatMessage";
     }
 }

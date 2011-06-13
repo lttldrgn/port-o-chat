@@ -75,7 +75,7 @@ public class ServerMessage extends DefaultData {
     }
 
     @Override
-    public String getName() {
+    public String getObjectName() {
         return "ServerMessage";
     }
 }

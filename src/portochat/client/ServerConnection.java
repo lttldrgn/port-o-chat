@@ -7,6 +7,7 @@ package portochat.client;
 import java.util.ArrayList;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Logger;
+import portochat.common.protocol.ChannelJoinPart;
 import portochat.common.protocol.ChatMessage;
 import portochat.common.protocol.DefaultData;
 import portochat.common.protocol.Ping;
@@ -56,7 +57,7 @@ public class ServerConnection {
     
     public void sendMessage(String username, String message) {
         ChatMessage chatMessage = new ChatMessage();
-        chatMessage.setToUser(username);
+        chatMessage.setTo(username);
         chatMessage.setMessage(message);
         socket.writeData(socket.getClientSocket(), chatMessage);
     }
@@ -67,11 +68,17 @@ public class ServerConnection {
     }
     
     public void joinChannel(String channel) {
-        //outWriter.println(ProtocolDefinitions.JOIN_CHANNEL + channel);
+        ChannelJoinPart channelJoinPart = new ChannelJoinPart();
+        channelJoinPart.setChannel(channel);
+        channelJoinPart.setJoined(true);
+        socket.writeData(socket.getClientSocket(), channelJoinPart);
     }
     
-    public void leaveChannel(String channel) {
-        //outWriter.println(ProtocolDefinitions.LEAVE_CHANNEL + channel);
+    public void partChannel(String channel) {
+        ChannelJoinPart channelJoinPart = new ChannelJoinPart();
+        channelJoinPart.setChannel(channel);
+        channelJoinPart.setJoined(false);
+        socket.writeData(socket.getClientSocket(), channelJoinPart);
     }
     
     public ArrayList<String> channelWho(String channel) {
@@ -108,11 +115,14 @@ public class ServerConnection {
                     listener.userListReceived(userList.getUserList());
                 }
             } else if (defaultData instanceof UserConnection) {
+                // if user is null it's the server disconnecting
                 UserConnection user = (UserConnection) defaultData;
                 for (ServerDataListener listener : listeners) {
                     listener.userConnectionEvent(user.getUser(), user.isConnected());
                 }
                 System.out.println((UserConnection)defaultData);
+            } else if (defaultData instanceof ChannelJoinPart) {
+                System.out.println((ChannelJoinPart)defaultData);
             } else {
                 System.out.println("Unknown message: " + defaultData);
             }
