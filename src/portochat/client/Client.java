@@ -54,6 +54,9 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
         
     }
     
+    /**
+     * Initializes the GUI and listeners
+     */
     public void init() {
         setSize(1024, 768);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -183,8 +186,6 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                    contactListModel.addElement("test");
-                    contactListModel.addElement("test2");
                     channelListModel.addElement("#channel1");
                 }
             });
@@ -196,15 +197,40 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
         return success;
     }
 
-    @Override
-    public void userListReceived(final List<String> users) {
+    private void addUser(final String user) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                for (String user: users) {
+                if (!contactListModel.contains(user))
                     contactListModel.addElement(user);
-                }
             }
         });
+    }
+    
+    private void removeUser(final String user) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                if (contactListModel.contains(user))
+                    contactListModel.removeElement(user);
+            }
+        });
+    }
+    
+    @Override
+    public void userListReceived(final List<String> users) {
+    
+        for (String user: users) {
+            addUser(user);
+        }
+    }
+    
+    @Override
+    public void userConnectionEvent(String user, boolean connected) {
+        if (connected) {
+            addUser(user);
+        } else {
+            removeUser(user);
+        }
     }
 }
