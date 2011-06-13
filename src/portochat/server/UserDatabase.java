@@ -66,6 +66,20 @@ public class UserDatabase {
         return success;
     }
     
+    public boolean removeUser(String user) {
+        
+        boolean success = false;
+        
+        if (userMap.containsKey(user)) {
+            Socket userSocket = getUserSocket(user);
+            userMap.remove(user);
+            socketMap.remove(userSocket);
+            success = true;
+        }
+        
+        return success;
+    }
+    
     public Socket getUserSocket(String user) {
         return userMap.get(user);
     }
@@ -81,5 +95,14 @@ public class UserDatabase {
             userList.add((String)o);
         }
         return userList;
+    }
+    
+    public List<Socket> getSocketList() {
+        List<Socket> socketList = new ArrayList<Socket>();
+        Object[] objectList = socketMap.keySet().toArray();
+        for (Object o : objectList) {
+            socketList.add((Socket)o);
+        }
+        return socketList;
     }
 }

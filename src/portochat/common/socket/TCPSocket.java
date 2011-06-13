@@ -19,8 +19,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import portochat.common.protocol.DefaultData;
 import portochat.common.protocol.ProtocolHandler;
+import portochat.common.protocol.UserConnection;
 import portochat.common.socket.event.NetEvent;
 import portochat.common.socket.event.NetListener;
+import portochat.server.UserDatabase;
 
 /**
  *
@@ -38,11 +40,13 @@ public class TCPSocket {
     private AcceptThread acceptThread = null;
     private ProtocolHandler protocolHandler = null;
     private OutgoingThread outgoingThread = null;
-    
+    private UserDatabase userDatabase = null;
+
     public TCPSocket(String name) {
         this.name = name;
         writeQueue = new LinkedBlockingQueue<NetData>();
         protocolHandler = ProtocolHandler.getInstance();
+        userDatabase = UserDatabase.getInstance();
     }
 
     public boolean bind(int port) throws IOException {
@@ -172,7 +176,6 @@ public class TCPSocket {
                 try {
                     length = bis.read(buffer);
                 } catch (SocketException ex) {
-                    System.out.println("Connection interrupted");
                     break;
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, null, ex);
@@ -186,11 +189,27 @@ public class TCPSocket {
             }
 
             try {
+                sendUserConnectionUpdate(incomingSocket);
                 incomingSocket.close();
-                System.out.println("Closing down read socket");
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, null, ex);
             }
+        }
+
+        private void sendUserConnectionUpdate(Socket socket) {
+            UserConnection userConnection = new UserConnection();
+            if (serverSocket != null) {
+                // Get the user who disconnected
+                String user = userDatabase.getSocketUser(socket);
+                if (user == null) {
+                    // Hasn't set a username yet
+                    user = socket.getInetAddress().toString();
+                }
+                userConnection.setUser(user);
+            }
+            userConnection.setConnected(false);
+            userConnection.populate();
+            fireIncomingMessage(socket, userConnection);
         }
     }
 
@@ -203,11 +222,11 @@ public class TCPSocket {
         public void run() {
             //TODO do something when disconnecting everyone?
             while (true) {
-                
+
                 // Write the data
                 try {
                     NetData netData = writeQueue.take();
-                    BufferedOutputStream bos = 
+                    BufferedOutputStream bos =
                             new BufferedOutputStream(netData.socket.getOutputStream());
                     bos.write(netData.data);
                     bos.flush();
@@ -222,8 +241,9 @@ public class TCPSocket {
             }
         }
     }
-    
+
     private class NetData {
+
         private Socket socket = null;
         byte[] data = null;
     }

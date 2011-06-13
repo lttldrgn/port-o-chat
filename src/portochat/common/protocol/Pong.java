@@ -53,6 +53,10 @@ public class Pong extends DefaultData {
         this.timestamp = timestamp;
     }
     
+    public long getCalculatedLag() {
+        return (System.currentTimeMillis() - timestamp);
+    }
+    
     @Override
     public String toString() {
 
