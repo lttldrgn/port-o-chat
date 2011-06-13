@@ -108,6 +108,11 @@ public class ServerConnection {
             } else if (defaultData instanceof ServerMessage) {
                 System.out.println(((ServerMessage)defaultData));
             } else if (defaultData instanceof ChatMessage) {
+                ChatMessage message = (ChatMessage)defaultData;
+                for (ServerDataListener listener : listeners) {
+                    listener.receiveChatMessage(message.getFromUser(), 
+                            message.getMessage(), null);
+                }
                 System.out.println(((ChatMessage)defaultData));
             } else if (defaultData instanceof UserList) {
                 UserList userList = (UserList) defaultData;
