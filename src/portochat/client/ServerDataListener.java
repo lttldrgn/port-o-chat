@@ -16,4 +16,6 @@ public interface ServerDataListener {
      * @param users 
      */
     public void userListReceived(List<String> users);
+    
+    public void userConnectionEvent(String user, boolean connected);
 }
