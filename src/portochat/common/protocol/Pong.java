@@ -69,7 +69,7 @@ public class Pong extends DefaultData {
     }
 
     @Override
-    public String getName() {
+    public String getObjectName() {
         return "Pong";
     }
 }
