@@ -108,6 +108,10 @@ public class ServerConnection {
                     listener.userListReceived(userList.getUserList());
                 }
             } else if (defaultData instanceof UserConnection) {
+                UserConnection user = (UserConnection) defaultData;
+                for (ServerDataListener listener : listeners) {
+                    listener.userConnectionEvent(user.getUser(), user.isConnected());
+                }
                 System.out.println((UserConnection)defaultData);
             } else {
                 System.out.println("Unknown message: " + defaultData);

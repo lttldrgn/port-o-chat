@@ -11,12 +11,22 @@ import java.awt.Insets;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextPane;
+import javax.swing.SwingUtilities;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Style;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyleContext;
+import javax.swing.text.StyledDocument;
 
 /**
  *
@@ -25,7 +35,7 @@ import javax.swing.JTextArea;
 public class ChannelPane extends JPanel {
     private DefaultListModel participantListModel = new DefaultListModel();
     private JList participantList = new JList(participantListModel);
-    private JTextArea viewPane = new JTextArea();
+    private JTextPane viewPane = new JTextPane();
     private JTextArea textEntry = new JTextArea();
     private String channelName = null;
     private String myUserName = null;
@@ -66,7 +76,15 @@ public class ChannelPane extends JPanel {
             @Override
             public void keyReleased(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    viewPane.append(myUserName + ":" + textEntry.getText());
+                    StyledDocument doc = viewPane.getStyledDocument();
+                    try {
+                        doc.insertString(doc.getLength(), 
+                                myUserName+": ", doc.getStyle("bold"));
+                        doc.insertString(doc.getLength(), 
+                                textEntry.getText(), doc.getStyle("normal"));
+                    } catch (BadLocationException ex) {
+                        Logger.getLogger(SingleChatPane.class.getName()).log(Level.SEVERE, null, ex);
+                    }
                     sendMessage(textEntry.getText());
                     textEntry.setText("");
                 }
@@ -75,7 +93,16 @@ public class ChannelPane extends JPanel {
 
         ArrayList<String> me = new ArrayList<String>();
         me.add(myUserName);
-        addContacts(me);
+        addParticipants(me);
+        
+        // add text styles
+        Style def = StyleContext.getDefaultStyleContext().
+                        getStyle(StyleContext.DEFAULT_STYLE);
+        StyledDocument doc = viewPane.getStyledDocument();
+        Style s = doc.addStyle("normal", def);
+        // bold font
+        s = doc.addStyle("bold", def);
+        StyleConstants.setBold(s, true);
     }
     
     private void sendMessage(String messageText) {
@@ -97,10 +124,35 @@ public class ChannelPane extends JPanel {
         return channelPane;
     }
     
-    public void addContacts(ArrayList<String> contacts) {
-        for(String contact : contacts) {
-            participantListModel.addElement(contact);
+    /**
+     * Adds a list of participants to this channels list
+     * @param participants List of participants in this channel
+     */
+    public void addParticipants(final List<String> participants) {
+
+        for(String contact : participants) {
+            userConnectionEvent(contact, true);
         }
+    }
+    
+    /**
+     * Handles connection and disconnection of users in the channel.  If joined
+     * is true then the user is added to the channel participant list, otherwise
+     * the user is removed from the list.
+     * @param user
+     * @param joined 
+     */
+    public void userConnectionEvent(final String user, final boolean joined) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                if (joined && !participantListModel.contains(user)) {
+                    participantListModel.addElement(user);
+                } else {
+                    participantListModel.removeElement(user);
+                }
+            }
+        });
     }
     
     // main for visual test purposes only

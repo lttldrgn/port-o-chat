@@ -65,7 +65,7 @@ public class SingleChatPane extends JPanel {
                     StyledDocument doc = viewPane.getStyledDocument();
                     try {
                         doc.insertString(doc.getLength(), 
-                                myUserName+":", doc.getStyle("bold"));
+                                myUserName+": ", doc.getStyle("bold"));
                         doc.insertString(doc.getLength(), 
                                 textEntry.getText(), doc.getStyle("normal"));
                     } catch (BadLocationException ex) {
