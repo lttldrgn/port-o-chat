@@ -12,10 +12,14 @@ import java.util.List;
  */
 public interface ServerDataListener {
     /**
-     * This method is called when a user list is received from the server
+     * This method is called when a user list is received from the server.  If
+     * channel is non-null then this list is associated with the named channel,
+     * otherwise the list is a user list.
      * @param users List of users
+     * @param channel The channel that this list of users is from, null if a 
+     * server user list.
      */
-    public void userListReceived(List<String> users);
+    public void userListReceived(List<String> users, String channel);
     
     /**
      * This method is called when a user joins or leaves the server or channel
@@ -40,5 +44,11 @@ public interface ServerDataListener {
      */
     public void channelListReceived(List<String> channels);
     
+    /**
+     * This method is called when a channel join/part event occurs
+     * @param user User joining or parting
+     * @param channel Channel that is being joined/parted
+     * @param join If true this is a join, otherwise a part event
+     */
     public void receiveChannelJoinPart(String user, String channel, boolean join);
 }

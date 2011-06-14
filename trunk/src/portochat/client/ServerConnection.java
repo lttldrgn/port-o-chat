@@ -6,6 +6,7 @@ package portochat.client;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import portochat.common.protocol.ChannelJoinPart;
 import portochat.common.protocol.ChannelList;
@@ -119,8 +120,9 @@ public class ServerConnection {
                 System.out.println(((ChatMessage)defaultData));
             } else if (defaultData instanceof UserList) {
                 UserList userList = (UserList) defaultData;
+                String channel = userList.getChannel();
                 for (ServerDataListener listener : listeners) {
-                    listener.userListReceived(userList.getUserList());
+                    listener.userListReceived(userList.getUserList(), channel);
                 }
                 System.out.println((UserList)defaultData);
             } else if (defaultData instanceof UserConnection) {
@@ -139,7 +141,14 @@ public class ServerConnection {
                 }
                 System.out.println(((ChannelList)defaultData));
             } else if (defaultData instanceof ChannelJoinPart) {
-                System.out.println((ChannelJoinPart)defaultData);
+                ChannelJoinPart joinPart = (ChannelJoinPart) defaultData;
+                for (ServerDataListener listener : listeners) {
+                    listener.receiveChannelJoinPart(joinPart.getUser(), 
+                            joinPart.getChannel(), joinPart.hasJoined());
+                }
+                if (logger.isLoggable(Level.INFO)) {
+                    logger.info(joinPart.toString());
+                }
             } else if (defaultData instanceof ChannelStatus) {
                 System.out.println((ChannelStatus)defaultData);
             } else {

@@ -12,7 +12,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * This class contains information about a channel join/part event.  It includes
+ * information about the channel, user and whether it is a join.
  * @author Mike
  */
 public class ChannelJoinPart extends DefaultData {
@@ -80,6 +81,10 @@ public class ChannelJoinPart extends DefaultData {
         this.user = user;
     }
 
+    /**
+     * The channel that the user is joining/parting
+     * @return Channel name
+     */
     public String getChannel() {
         return channel;
     }
@@ -88,6 +93,10 @@ public class ChannelJoinPart extends DefaultData {
         this.channel = channel;
     }
 
+    /**
+     * Returns true if this event marks a join event and false if leaving
+     * @return true if user is joining channel, false if leaving
+     */
     public boolean hasJoined() {
         return joined;
     }
