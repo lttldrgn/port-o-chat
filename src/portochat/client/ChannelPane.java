@@ -148,8 +148,10 @@ public class ChannelPane extends JPanel {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                if (joined && !participantListModel.contains(user)) {
-                    participantListModel.addElement(user);
+                if (joined) {
+                    if (!participantListModel.contains(user)) {
+                        participantListModel.addElement(user);
+                    }
                 } else {
                     participantListModel.removeElement(user);
                 }
@@ -179,6 +181,16 @@ public class ChannelPane extends JPanel {
                     }
             }
         });
+    }
+    
+    /**
+     * Updates the list of users in this channel
+     * @param list List of users in the channel
+     */
+    public void updateUserList(final List<String> list) {
+        for (String user : list) {
+            userConnectionEvent(user, true);
+        }
     }
     
     // main for visual test purposes only
