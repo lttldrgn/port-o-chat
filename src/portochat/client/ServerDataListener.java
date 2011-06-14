@@ -51,4 +51,11 @@ public interface ServerDataListener {
      * @param join If true this is a join, otherwise a part event
      */
     public void receiveChannelJoinPart(String user, String channel, boolean join);
+    
+    /**
+     * This method is called when a channel is created or destroyed
+     * @param channel Channel name
+     * @param created True if channel is being created, otherwise destroyed
+     */
+    public void channelStatusReceived(String channel, boolean created);
 }
