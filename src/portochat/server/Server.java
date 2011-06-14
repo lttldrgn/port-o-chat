@@ -7,10 +7,12 @@ package portochat.server;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import portochat.common.protocol.ChannelJoinPart;
 import portochat.common.protocol.ChannelList;
+import portochat.common.protocol.ChannelStatus;
 import portochat.common.protocol.ChatMessage;
 import portochat.common.protocol.DefaultData;
 import portochat.common.protocol.Ping;
@@ -95,9 +97,7 @@ public class Server {
 
                         ArrayList<Socket> userSocketList =
                                 (ArrayList<Socket>) userDatabase.getSocketList();
-                        for (Socket userSocket : userSocketList) {
-                            tcpSocket.writeData(userSocket, userConnection);
-                        }
+                        sendToAllSockets(userSocketList, userConnection);
                     }
                 } else if (defaultData instanceof UserConnection) {
                     // Log the connection
@@ -174,9 +174,7 @@ public class Server {
                 // Send to all other clients
                 ArrayList<Socket> userSocketList =
                         (ArrayList<Socket>) userDatabase.getSocketList();
-                for (Socket userSocket : userSocketList) {
-                    tcpSocket.writeData(userSocket, userConnection);
-                }
+                sendToAllSockets(userSocketList, userConnection);
 
                 // Log the connection
                 logger.info(userConnection.toString());
@@ -192,14 +190,41 @@ public class Server {
 
                 if (channelJoinPart.hasJoined()) {
                     // joining
+                    if (!channelDatabase.channelExists(
+                            channelJoinPart.getChannel())) {
+                        // Creating channel, notify all users
+                        ChannelStatus channelStatus = new ChannelStatus();
+                        channelStatus.setChannel(channelJoinPart.getChannel());
+                        channelStatus.setCreated(true);
+                        
+                        ArrayList<Socket> userSocketList = 
+                                (ArrayList<Socket>)userDatabase.getSocketList();
+                        
+                        sendToAllSockets(userSocketList, channelStatus);
+                    }
                     channelDatabase.addUserToChannel(
                             channelJoinPart.getChannel(),
                             channelJoinPart.getUser());
+                    
+                    
                 } else {
                     // leaving
                     channelDatabase.removeUserFromChannel(
                             channelJoinPart.getChannel(),
                             channelJoinPart.getUser());
+                    
+                    if (!channelDatabase.channelExists(
+                            channelJoinPart.getChannel())) {
+                        // Removing channel, notify all users
+                        ChannelStatus channelStatus = new ChannelStatus();
+                        channelStatus.setChannel(channelJoinPart.getChannel());
+                        channelStatus.setCreated(false);
+                        
+                        ArrayList<Socket> userSocketList = 
+                                (ArrayList<Socket>)userDatabase.getSocketList();
+                        
+                        sendToAllSockets(userSocketList, channelStatus);
+                    }
                 }
 
                 // Notify users in that channel
@@ -208,18 +233,22 @@ public class Server {
                         channelJoinPart.getChannel(),
                         channelJoinPart.getUser());
 
-                if (userSocketList != null) {
-                    for (Socket userSocket : userSocketList) {
-                        tcpSocket.writeData(userSocket, channelJoinPart);
-                    }
-                }
+                sendToAllSockets(userSocketList, channelJoinPart);
 
                 // Log the join/part
                 logger.info(channelJoinPart.toString());
             } else {
                 logger.log(Level.WARNING, "Unhandled message: {0}", defaultData);
             }
-
         }
     }
+    
+    private void sendToAllSockets(List<Socket> userSocketList, DefaultData data) {
+        if (userSocketList != null && userSocketList.size() > 0) {
+            for (Socket userSocket : userSocketList) {
+                tcpSocket.writeData(userSocket, data);
+            }
+        }
+    }
+    
 }
