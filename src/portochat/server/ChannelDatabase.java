@@ -117,6 +117,10 @@ public class ChannelDatabase {
         return exists;
     }
     
+    public List<String> getUserChannels(String user) {
+        return new ArrayList<String>(userChannelMap.get(user));
+    }
+    
     public void removeUserFromAllChannels(String user) {
         for (String channel : channelMap.keySet()) {
             if (isUserInChannel(channel, user)) {
