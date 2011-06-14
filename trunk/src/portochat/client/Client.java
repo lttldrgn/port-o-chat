@@ -17,6 +17,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.List;
+import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
@@ -40,6 +41,7 @@ import javax.swing.SwingUtilities;
  * @author Brandon
  */
 public class Client extends JFrame implements ActionListener, ServerDataListener {
+    private static final Logger logger = Logger.getLogger(Client.class.getName());
     private static final String EXIT_COMMAND = "EXIT";
     private static final String CONNECT = "CONNECT";
     private static final String CREATE_CHANNEL = "CREATE_CHANNEL";
@@ -254,13 +256,7 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
             setTitle("Port-O-Chat: Connected as " + myUserName);
             
             connection.sendUserListRequest();
-            connection.joinChannel("#test");
-            connection.joinChannel("#test2");
-            //connection.partChannel("#test");
-            //connection.sendMessage("#test", "Did you know that");
-            //connection.sendMessage("#test2", "The bird is the word");
-            connection.requsetListOfChannels();
-            connection.requestUsersInChannel("#test2");
+            connection.requestListOfChannels();
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -358,22 +354,11 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
             }
         } else {
             ChannelPane pane = channelPaneMap.get(channel);
-            // TODO: If user has not joined a channel then should not create
-            // a panel if an unsubscribed message is received from it
-            if (pane == null) {
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        ChannelPane pane = ChannelPane.createChannelPane(connection, 
-                                        channel, myUserName);
-                        channelPaneMap.put(channel, pane);
-                        tabbedChatPane.add(pane.getPaneTitle(), pane);
-                        pane.receiveMessage(fromUser, message);
-                    }
-                });
-            } else {
+            if (pane != null) {
                 // update existing pane
                 pane.receiveMessage(fromUser, message);
+            } else {
+                logger.warning("Received a message from a channel that is not joined.");
             }
         }
 
