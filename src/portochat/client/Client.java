@@ -7,6 +7,9 @@ package portochat.client;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -18,6 +21,7 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -27,6 +31,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 /**
@@ -198,7 +204,40 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
         if (connected)
             return true;
         
-        String name = JOptionPane.showInputDialog("Enter your user name");
+        JPanel optionPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+        JTextField userTextField = new JTextField("user");
+        JTextField serverTextField = new JTextField("localhost");
+        c.gridx = 0;
+        c.gridy = 0;
+        c.insets = new Insets(0,0,0,5);
+        optionPanel.add(new JLabel("username", SwingConstants.RIGHT), c);
+        c.gridx++;
+        c.fill = GridBagConstraints.BOTH;
+        c.anchor = GridBagConstraints.LINE_END;
+        c.insets = new Insets(0,0,0,0);
+        optionPanel.add(userTextField, c);
+        c.gridx--;
+        c.gridy++;
+        c.fill = GridBagConstraints.NONE;
+        c.insets = new Insets(0,0,0,5);
+        optionPanel.add(new JLabel("server", SwingConstants.RIGHT), c);
+        c.gridx++;
+        c.weightx = 1.0;
+        c.fill = GridBagConstraints.BOTH;
+        c.insets = new Insets(0,0,0,0);
+        optionPanel.add(serverTextField, c);
+        
+        JOptionPane.showMessageDialog(this, optionPanel, "Enter information", JOptionPane.PLAIN_MESSAGE);
+        String name = userTextField.getText();
+        String server = serverTextField.getText();
+        int port = ClientSettings.DEFAULT_SERVER_PORT;
+        if (server.contains(":")) {
+            String serverArgs[] = server.split(":");
+            server = serverArgs[0];
+            port = Integer.parseInt(serverArgs[1]);
+        }
+        
         if (name == null || name.isEmpty())
             return false;
         
@@ -207,7 +246,7 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
         try {
             connection = new ServerConnection();
             connection.addDataListener(this);
-            connection.connectToServer("localhost", ClientSettings.DEFAULT_SERVER_PORT);
+            connection.connectToServer(server, port);
             connection.sendUsername(myUserName);
             connection.sendPing();
             connected = true;
