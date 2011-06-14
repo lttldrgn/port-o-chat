@@ -45,6 +45,7 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
     private DefaultListModel channelListModel = new DefaultListModel();
     private JList contactList = new JList(contactListModel);
     private JList channelList = new JList(channelListModel);
+    private JMenuItem createChannelMenu = new JMenuItem("Create Channel...");
     private JTabbedPane tabbedChatPane = new JTabbedPane(JTabbedPane.BOTTOM, 
             JTabbedPane.SCROLL_TAB_LAYOUT);
     private String myUserName = null;
@@ -75,10 +76,10 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
         connectMenu.addActionListener(this);
         fileMenu.add(connectMenu);
 
-        JMenuItem createChannelMenu = new JMenuItem("Create Channel...");
         createChannelMenu.setActionCommand(CREATE_CHANNEL);
         createChannelMenu.addActionListener(this);
         fileMenu.add(createChannelMenu);
+        createChannelMenu.setEnabled(false);
         
         JMenuItem exitMenu = new JMenuItem("Exit");
         exitMenu.setMnemonic(KeyEvent.VK_X);
@@ -135,16 +136,7 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() >= 2) {
                     String channel = (String) channelList.getSelectedValue();
-                    ChannelPane pane = channelPaneMap.get(channel);
-                    if (pane == null) {
-                        pane = ChannelPane.createChannelPane(connection, 
-                                channel, myUserName);
-                        
-                        channelPaneMap.put(channel, pane);
-                        tabbedChatPane.add(pane.getPaneTitle(), pane);
-                        connection.requestUsersInChannel(channel);
-                    }
-                    tabbedChatPane.setSelectedComponent(pane);
+                    joinChannel(channel);
                 }
             }
         });
@@ -152,6 +144,26 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
         // set up right panel
         rightPane.setLayout(new BorderLayout());
         rightPane.add(tabbedChatPane);
+
+    }
+    
+    /**
+     * Joins specified channel if not already joined
+     * @param channel Channel to join
+     */
+    private void joinChannel(String channel) {
+                        
+        ChannelPane pane = channelPaneMap.get(channel);
+        if (pane == null) {
+            pane = ChannelPane.createChannelPane(connection, 
+                    channel, myUserName);
+
+            channelPaneMap.put(channel, pane);
+            tabbedChatPane.add(pane.getPaneTitle(), pane);
+            connection.joinChannel(channel);
+            connection.requestUsersInChannel(channel);
+        }
+        tabbedChatPane.setSelectedComponent(pane);
 
     }
     
@@ -170,7 +182,10 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
                     "Enter channel name to create", "Channel creation", 
                     JOptionPane.QUESTION_MESSAGE);
             if (returnVal != null) {
-                // TODO: Create channel
+                String channel = returnVal;
+                if (!channel.startsWith("#"))
+                    channel = "#" + channel;
+                joinChannel(channel);
             }
         }
     }
@@ -196,8 +211,9 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
             connection.sendUsername(myUserName);
             connection.sendPing();
             connected = true;
-
-            //connection.sendUserListRequest();
+            createChannelMenu.setEnabled(true);
+            
+            connection.sendUserListRequest();
             connection.joinChannel("#test");
             connection.joinChannel("#test2");
             //connection.partChannel("#test");
@@ -244,10 +260,18 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
     }
     
     @Override
-    public void userListReceived(final List<String> users) {
+    public void userListReceived(final List<String> users, String channel) {
     
-        for (String user: users) {
-            addUser(user);
+        if (channel == null) {
+            // this is a server list
+            for (String user: users) {
+                addUser(user);
+            }
+        } else {
+            ChannelPane pane = channelPaneMap.get(channel);
+            if (pane != null) {
+                pane.updateUserList(users);
+            }
         }
     }
     
@@ -315,6 +339,9 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
 
     @Override
     public void receiveChannelJoinPart(String user, String channel, boolean join) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        ChannelPane pane = channelPaneMap.get(channel);
+        if (pane != null) {
+            pane.userConnectionEvent(user, join);
+        }
     }
 }
