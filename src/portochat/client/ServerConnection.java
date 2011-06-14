@@ -84,7 +84,7 @@ public class ServerConnection {
         socket.writeData(socket.getClientSocket(), channelJoinPart);
     }
     
-    public void requsetListOfChannels() {
+    public void requestListOfChannels() {
         ChannelList channelList = new ChannelList();
         socket.writeData(socket.getClientSocket(), channelList);
     }
