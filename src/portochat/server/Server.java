@@ -168,7 +168,18 @@ public class Server {
                 if (!userConnection.isConnected()) {
                     boolean success =
                             userDatabase.removeUser(userConnection.getUser());
+
+                    ArrayList<String> userChannelList =
+                            (ArrayList<String>) channelDatabase.getUserChannels(
+                            userConnection.getUser());
+
                     channelDatabase.removeUserFromAllChannels(userConnection.getUser());
+
+                    for (String channel : userChannelList) {
+                        if (!channelDatabase.channelExists(channel)) {
+                            notifyChannelStatusChange(channel, false);
+                        }
+                    }
                 }
 
                 // Send to all other clients
@@ -193,37 +204,23 @@ public class Server {
                     if (!channelDatabase.channelExists(
                             channelJoinPart.getChannel())) {
                         // Creating channel, notify all users
-                        ChannelStatus channelStatus = new ChannelStatus();
-                        channelStatus.setChannel(channelJoinPart.getChannel());
-                        channelStatus.setCreated(true);
-                        
-                        ArrayList<Socket> userSocketList = 
-                                (ArrayList<Socket>)userDatabase.getSocketList();
-                        
-                        sendToAllSockets(userSocketList, channelStatus);
+                        notifyChannelStatusChange(channelJoinPart.getChannel(), true);
                     }
                     channelDatabase.addUserToChannel(
                             channelJoinPart.getChannel(),
                             channelJoinPart.getUser());
-                    
-                    
+
+
                 } else {
                     // leaving
                     channelDatabase.removeUserFromChannel(
                             channelJoinPart.getChannel(),
                             channelJoinPart.getUser());
-                    
+
                     if (!channelDatabase.channelExists(
                             channelJoinPart.getChannel())) {
                         // Removing channel, notify all users
-                        ChannelStatus channelStatus = new ChannelStatus();
-                        channelStatus.setChannel(channelJoinPart.getChannel());
-                        channelStatus.setCreated(false);
-                        
-                        ArrayList<Socket> userSocketList = 
-                                (ArrayList<Socket>)userDatabase.getSocketList();
-                        
-                        sendToAllSockets(userSocketList, channelStatus);
+                        notifyChannelStatusChange(channelJoinPart.getChannel(), false);
                     }
                 }
 
@@ -242,7 +239,7 @@ public class Server {
             }
         }
     }
-    
+
     private void sendToAllSockets(List<Socket> userSocketList, DefaultData data) {
         if (userSocketList != null && userSocketList.size() > 0) {
             for (Socket userSocket : userSocketList) {
@@ -250,5 +247,15 @@ public class Server {
             }
         }
     }
-    
+
+    private void notifyChannelStatusChange(String channel, boolean created) {
+        ChannelStatus channelStatus = new ChannelStatus();
+        channelStatus.setChannel(channel);
+        channelStatus.setCreated(created);
+
+        ArrayList<Socket> userSocketList =
+                (ArrayList<Socket>) userDatabase.getSocketList();
+
+        sendToAllSockets(userSocketList, channelStatus);
+    }
 }
