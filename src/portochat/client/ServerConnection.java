@@ -150,7 +150,14 @@ public class ServerConnection {
                     logger.info(joinPart.toString());
                 }
             } else if (defaultData instanceof ChannelStatus) {
-                System.out.println((ChannelStatus)defaultData);
+                ChannelStatus status = (ChannelStatus) defaultData;
+                for (ServerDataListener listener : listeners) {
+                    listener.channelStatusReceived(status.getChannel(), 
+                            status.isCreated());
+                }
+                if (logger.isLoggable(Level.INFO)) {
+                    logger.info(status.toString());
+                }
             } else {
                 System.out.println("Unknown message: " + defaultData);
             }
