@@ -125,6 +125,10 @@ public class ChannelDatabase {
         }
     }
     
+    public boolean channelExists(String channel) {
+        return (channelMap.get(channel) != null);
+    }
+    
     public List<String> getUsersInChannel(String channel) {
         return channelMap.get(channel);
     }
