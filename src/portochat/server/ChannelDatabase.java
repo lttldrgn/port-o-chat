@@ -118,7 +118,12 @@ public class ChannelDatabase {
     }
     
     public List<String> getUserChannels(String user) {
-        return new ArrayList<String>(userChannelMap.get(user));
+        List<String> channelList = userChannelMap.get(user);
+        List<String> returnList = new ArrayList<String>();
+        if (channelList != null) {
+            returnList.addAll(channelList);
+        }
+        return channelList;
     }
     
     public void removeUserFromAllChannels(String user) {
