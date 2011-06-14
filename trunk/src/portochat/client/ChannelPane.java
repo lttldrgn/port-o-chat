@@ -105,6 +105,8 @@ public class ChannelPane extends JPanel {
         // bold font
         s = doc.addStyle("bold", def);
         StyleConstants.setBold(s, true);
+        s = doc.addStyle("joinpart", def);
+        StyleConstants.setItalic(s, true);
     }
     
     private void sendMessage(String messageText) {
@@ -151,9 +153,25 @@ public class ChannelPane extends JPanel {
                 if (joined) {
                     if (!participantListModel.contains(user)) {
                         participantListModel.addElement(user);
+                        StyledDocument doc = viewPane.getStyledDocument();
+                        String message = user + " has joined the channel\n";
+                        try {
+                            doc.insertString(doc.getLength(), message,
+                                    doc.getStyle("joinpart"));
+                        } catch (BadLocationException ex) {
+                            logger.log(Level.SEVERE, null, ex);
+                        }
                     }
                 } else {
                     participantListModel.removeElement(user);
+                    StyledDocument doc = viewPane.getStyledDocument();
+                        String message = user + " has left the channel\n";
+                        try {
+                            doc.insertString(doc.getLength(), message,
+                                    doc.getStyle("joinpart"));
+                        } catch (BadLocationException ex) {
+                            logger.log(Level.SEVERE, null, ex);
+                        }
                 }
             }
         });

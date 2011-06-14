@@ -53,7 +53,7 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
     private boolean connected = false;
  
     public Client() {
-        
+        setTitle("Port-O-Chat");
     }
     
     /**
@@ -212,6 +212,7 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
             connection.sendPing();
             connected = true;
             createChannelMenu.setEnabled(true);
+            setTitle("Port-O-Chat: Connected as " + myUserName);
             
             connection.sendUserListRequest();
             connection.joinChannel("#test");
@@ -249,12 +250,21 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
         });
     }
     
-    private void addChannel(final String channel) {
+    private void addChannelToList(final String channel) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                 if (!channelListModel.contains(channel))
                     channelListModel.addElement(channel);
+            }
+        });
+    }
+    
+    private void removeChannelFromList(final String channel) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                channelListModel.removeElement(channel);
             }
         });
     }
@@ -333,7 +343,7 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
     @Override
     public void channelListReceived(List<String> channels) {
         for (String channel : channels) {
-            addChannel(channel);
+            addChannelToList(channel);
         }
     }
 
@@ -342,6 +352,15 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
         ChannelPane pane = channelPaneMap.get(channel);
         if (pane != null) {
             pane.userConnectionEvent(user, join);
+        }
+    }
+
+    @Override
+    public void channelStatusReceived(final String channel, boolean created) {
+        if (created) {
+            addChannelToList(channel);
+        } else {
+            removeChannelFromList(channel);
         }
     }
 }

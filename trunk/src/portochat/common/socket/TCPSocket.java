@@ -157,6 +157,7 @@ public class TCPSocket {
         private BufferedInputStream bis = null;
 
         public IncomingThread(Socket incomingSocket) {
+            super("IncomingThread");
             this.incomingSocket = incomingSocket;
             try {
                 bis = new BufferedInputStream(incomingSocket.getInputStream());
@@ -216,6 +217,7 @@ public class TCPSocket {
     private class OutgoingThread extends Thread {
 
         public OutgoingThread() {
+            super("Outgoing Thread");
         }
 
         @Override
