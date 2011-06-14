@@ -9,6 +9,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Logger;
 import portochat.common.protocol.ChannelJoinPart;
 import portochat.common.protocol.ChannelList;
+import portochat.common.protocol.ChannelStatus;
 import portochat.common.protocol.ChatMessage;
 import portochat.common.protocol.DefaultData;
 import portochat.common.protocol.Ping;
@@ -139,6 +140,8 @@ public class ServerConnection {
                 System.out.println(((ChannelList)defaultData));
             } else if (defaultData instanceof ChannelJoinPart) {
                 System.out.println((ChannelJoinPart)defaultData);
+            } else if (defaultData instanceof ChannelStatus) {
+                System.out.println((ChannelStatus)defaultData);
             } else {
                 System.out.println("Unknown message: " + defaultData);
             }
