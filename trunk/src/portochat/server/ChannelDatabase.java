@@ -1,6 +1,18 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ *  This file is a part of port-o-chat.
+ * 
+ *  port-o-chat is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package portochat.server;
 
@@ -14,7 +26,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * This class handles the channel database.
+ * 
  * @author Mike
  */
 public class ChannelDatabase {
@@ -22,16 +35,23 @@ public class ChannelDatabase {
     private static final Logger logger = Logger.getLogger(ChannelDatabase.class.getName());
     private static ChannelDatabase instance = null;
     private Map<String, ArrayList<String>> channelMap = null;
-    private Map<String, ArrayList<String>> userChannelMap = null;
-    
+    private Map<String, ArrayList<String>> userChannelMap = null;   
     private UserDatabase userDatabase = null;
 
+    /**
+     * Private constructor
+     */
     private ChannelDatabase() {
         channelMap = new ConcurrentHashMap<String, ArrayList<String>>();
         userChannelMap = new ConcurrentHashMap<String, ArrayList<String>>();
         userDatabase = UserDatabase.getInstance();
     }
 
+    /**
+     * Method to get the instance of this singleton.
+     * 
+     * @return ProtocolHandler
+     */
     public static synchronized ChannelDatabase getInstance() {
         if (instance == null) {
             instance = new ChannelDatabase();
@@ -39,6 +59,12 @@ public class ChannelDatabase {
         return instance;
     }
 
+    /**
+     * Adds a user to a channel
+     * 
+     * @param channel
+     * @param user
+     */
     public void addUserToChannel(String channel, String user) {
         ArrayList<String> userList = channelMap.get(channel);
         if (userList == null) {
@@ -57,6 +83,12 @@ public class ChannelDatabase {
         userChannelList.add(channel);
     }
 
+    /**
+     * Removes a user from a channel
+     * 
+     * @param channel
+     * @param user
+     */
     public void removeUserFromChannel(String channel, String user) {
         ArrayList<String> userList = channelMap.get(channel);
         if (userList != null) {
@@ -100,6 +132,14 @@ public class ChannelDatabase {
         
     }
 
+    /**
+     * Returns true if the user is in a channel
+     * 
+     * @param channel
+     * @param suer
+     * 
+     * @return true if the user is in the channel
+     */
     public boolean isUserInChannel(String channel, String user) {
         boolean exists = false;
         
@@ -117,15 +157,27 @@ public class ChannelDatabase {
         return exists;
     }
     
+    /**
+     * Returns all the channels a user is in.
+     * 
+     * @param user
+     * 
+     * @return a List<String> containing the user's channels
+     */
     public List<String> getUserChannels(String user) {
         List<String> channelList = userChannelMap.get(user);
         List<String> returnList = new ArrayList<String>();
         if (channelList != null) {
             returnList.addAll(channelList);
         }
-        return channelList;
+        return returnList;
     }
     
+    /**
+     * Removes the user from all channels they're in
+     * 
+     * @param user
+     */
     public void removeUserFromAllChannels(String user) {
         for (String channel : channelMap.keySet()) {
             if (isUserInChannel(channel, user)) {
@@ -134,18 +186,44 @@ public class ChannelDatabase {
         }
     }
     
+    /**
+     * Returns true if the channel exists
+     * 
+     * @param channel
+     * 
+     * @return true if the channel exists
+     */
     public boolean channelExists(String channel) {
         return (channelMap.get(channel) != null);
     }
     
+    /**
+     * Returns the users in a channel
+     * 
+     * @param channel
+     * 
+     * @return a List<String> containing the users in the channel
+     */
     public List<String> getUsersInChannel(String channel) {
         return channelMap.get(channel);
     }
     
+    /**
+     * @return a List<String> containing all the channels
+     */
     public List<String> getListOfChannels() {
         return new ArrayList<String>(channelMap.keySet());
     }
 
+    /**
+     * Gets the sockets of the users in a channel
+     * 
+     * @param channel
+     * @param filterUser Used to filter out a user you don't want in the list
+     *        (e.g. the client)
+     * 
+     * @return a List<Socket> containing all the user's sockets
+     */
     public List<Socket> getSocketsOfUsersInChannel(String channel, String filterUser) {
         ArrayList<Socket> userSocketList = null;
         ArrayList<String> userList = channelMap.get(channel);

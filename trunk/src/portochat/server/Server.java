@@ -1,6 +1,18 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ *  This file is a part of port-o-chat.
+ * 
+ *  port-o-chat is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package portochat.server;
 
@@ -26,7 +38,9 @@ import portochat.common.socket.event.NetEvent;
 import portochat.common.socket.event.NetListener;
 
 /**
- *
+ * This class handles the server connection, and populating the user/channel
+ * databases with the incoming messages.
+ * 
  * @author Mike
  */
 public class Server {
@@ -36,11 +50,21 @@ public class Server {
     private UserDatabase userDatabase = null;
     private ChannelDatabase channelDatabase = null;
 
+    /**
+     * Public constructor
+     */
     public Server() {
         userDatabase = UserDatabase.getInstance();
         channelDatabase = ChannelDatabase.getInstance();
     }
 
+    /**
+     * Binds to a port to listen on
+     * 
+     * @param port the port number
+     * 
+     * @return true if successful
+     */
     public boolean bind(int port) {
 
         boolean success = true;
@@ -63,11 +87,20 @@ public class Server {
         return success;
     }
 
+    /**
+     * Shuts the server down
+     */
     public void shutdown() {
     }
 
+    /**
+     * This class handles incoming messages to the server
+     */
     private class ServerHandler implements NetListener {
 
+        /**
+         * This method handles the incoming events
+         */
         @Override
         public void incomingMessage(NetEvent event) {
             Socket socket = (Socket) event.getSource();
@@ -248,6 +281,12 @@ public class Server {
         }
     }
 
+    /**
+     * Notifies of channel status change (creation/deletions)
+     * 
+     * @param channel
+     * @param created true if created, false if deleted
+     */
     private void notifyChannelStatusChange(String channel, boolean created) {
         ChannelStatus channelStatus = new ChannelStatus();
         channelStatus.setChannel(channel);
