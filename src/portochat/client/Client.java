@@ -1,6 +1,18 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ *  This file is a part of port-o-chat.
+ * 
+ *  port-o-chat is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package portochat.client;
 
@@ -17,6 +29,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -281,6 +294,15 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
             public void run() {
                 if (contactListModel.contains(user))
                     contactListModel.removeElement(user);
+                
+                //Remove from channel lists as well
+                Set<String> channelPaneList = channelPaneMap.keySet();
+                for (String channel : channelPaneList) {
+                    ChannelPane pane = channelPaneMap.get(channel);
+                    if (pane != null) {
+                        pane.userDisconnectedEvent(user);
+                    }
+                }
             }
         });
     }
@@ -330,8 +352,8 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
     }
 
     @Override
-    public void receiveChatMessage(final String fromUser, final String message, 
-            final String channel) {
+    public void receiveChatMessage(final String fromUser, final boolean action, 
+        final String message, final String channel) {
         
         // user to user message
         if (channel == null) {
@@ -345,18 +367,18 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
                                         fromUser, myUserName);
                         chatPaneMap.put(fromUser, pane);
                         tabbedChatPane.add(pane.getPaneTitle(), pane);
-                        pane.receiveMessage(fromUser, message);
+                        pane.receiveMessage(fromUser, action, message);
                     }
                 });
             } else {
                 // update existing pane
-                pane.receiveMessage(fromUser, message);
+                pane.receiveMessage(fromUser, action, message);
             }
         } else {
             ChannelPane pane = channelPaneMap.get(channel);
             if (pane != null) {
                 // update existing pane
-                pane.receiveMessage(fromUser, message);
+                pane.receiveMessage(fromUser, action, message);
             } else {
                 logger.warning("Received a message from a channel that is not joined.");
             }
@@ -375,7 +397,7 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
     public void receiveChannelJoinPart(String user, String channel, boolean join) {
         ChannelPane pane = channelPaneMap.get(channel);
         if (pane != null) {
-            pane.userConnectionEvent(user, join);
+            pane.userJoinedEvent(user, join);
         }
     }
 

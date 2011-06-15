@@ -1,6 +1,18 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ *  This file is a part of port-o-chat.
+ * 
+ *  port-o-chat is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package portochat.common.socket;
 
@@ -25,7 +37,8 @@ import portochat.common.socket.event.NetListener;
 import portochat.server.UserDatabase;
 
 /**
- *
+ * This class handles server and client TCP connections.
+ * 
  * @author Mike
  */
 public class TCPSocket {
@@ -42,6 +55,11 @@ public class TCPSocket {
     private OutgoingThread outgoingThread = null;
     private UserDatabase userDatabase = null;
 
+    /*
+     * Public constructor
+     * 
+     * @param name The socket name
+     */
     public TCPSocket(String name) {
         this.name = name;
         writeQueue = new LinkedBlockingQueue<NetData>();
@@ -49,6 +67,14 @@ public class TCPSocket {
         userDatabase = UserDatabase.getInstance();
     }
 
+    /**
+     * Binds to the specified port
+     * 
+     * @param port the port number
+     * 
+     * @return true if successful
+     * @throws IOException
+     */
     public boolean bind(int port) throws IOException {
 
         serverSocket = new ServerSocket(port);
@@ -58,6 +84,14 @@ public class TCPSocket {
         return true;
     }
 
+    /*
+     * This method connects to a specified host and port
+     * 
+     * @param host the hostname
+     * @param port the port number
+     * 
+     * @return true if successful
+     */
     public boolean connect(String host, int port) {
         try {
             clientSocket = new Socket(host, port);
@@ -72,6 +106,11 @@ public class TCPSocket {
         return clientSocket.isConnected();
     }
 
+    /**
+     * Thid method starts the processing threads for the associated socket
+     * 
+     * @param socket The socket
+     */
     private void startProcessingThreads(Socket socket) {
 
         //TODO: this will create numerous threads.. and for servers how do these close?
@@ -82,9 +121,14 @@ public class TCPSocket {
             outgoingThread = new OutgoingThread();
             outgoingThread.start();
         }
-
     }
 
+    /*
+     * This method writes the data to the specified socket
+     * 
+     * @param socket The socket
+     * @param defaultData the data to be sent
+     */
     public void writeData(Socket socket, DefaultData defaultData) {
         NetData netData = new NetData();
         netData.socket = socket;
@@ -93,6 +137,12 @@ public class TCPSocket {
         writeQueue.offer(netData);
     }
 
+    /**
+     * This method is used to add listeners who wish to know about 
+     * incoming DefaultData messages
+     * 
+     * @param listener the NetListener
+     */
     public void addListener(NetListener listener) {
         if (listeners == null) {
             listeners = new LinkedList();
@@ -100,10 +150,22 @@ public class TCPSocket {
         listeners.add(listener);
     }
 
+    /*
+     * This method is used to remove listeners from knowing about
+     * incoming DefaultData messages
+     * 
+     * @param listener the NetListener
+     */
     public void removeListener(NetListener listener) {
         listeners.remove(listener);
     }
 
+    /**
+     * Fires incoming messages
+     * 
+     * @param socket The socket this message came from
+     * @param defulatData the data to be sent
+     */
     private void fireIncomingMessage(Socket socket, DefaultData defaultData) {
         NetEvent e = new NetEvent(socket, defaultData);
 
@@ -116,14 +178,23 @@ public class TCPSocket {
         }
     }
 
+    /*
+     * @return The client socket
+     */
     public Socket getClientSocket() {
         return clientSocket;
     }
 
+    /**
+     * @return The name of this socket
+     */
     public String getName() {
         return name;
     }
 
+    /*
+     * This class is used to accept incoming connections.
+     */
     private class AcceptThread extends Thread {
 
         public AcceptThread() {
@@ -151,6 +222,9 @@ public class TCPSocket {
         }
     }
 
+    /**
+     * This class is used to process incoming data.
+     */
     private class IncomingThread extends Thread {
 
         private Socket incomingSocket = null;
@@ -197,6 +271,11 @@ public class TCPSocket {
             }
         }
 
+        /*
+         * Sends a user connection update to the specified socket
+         * 
+         * @param socket The socket to send the info to
+         */
         private void sendUserConnectionUpdate(Socket socket) {
             UserConnection userConnection = new UserConnection();
             if (serverSocket != null) {
@@ -214,6 +293,9 @@ public class TCPSocket {
         }
     }
 
+    /**
+     * This class is used to process outgoind messages
+     */
     private class OutgoingThread extends Thread {
 
         public OutgoingThread() {
@@ -244,6 +326,9 @@ public class TCPSocket {
         }
     }
 
+    /*
+     * Used to bundle up the socket and data byte array
+     */
     private class NetData {
 
         private Socket socket = null;
