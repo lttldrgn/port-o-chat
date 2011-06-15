@@ -18,6 +18,7 @@ package portochat.client;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -143,10 +144,7 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
                     String contact = (String) contactList.getSelectedValue();
                     SingleChatPane pane = chatPaneMap.get(contact);
                     if (pane == null) {
-                        pane = SingleChatPane.createChatPane(
-                                connection, contact, myUserName);
-                        chatPaneMap.put(contact, pane);
-                        tabbedChatPane.add(pane.getPaneTitle(), pane);
+                        pane = createSingleChatPane(contact);
                     }
                     tabbedChatPane.setSelectedComponent(pane);
                 }
@@ -181,6 +179,9 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
 
             channelPaneMap.put(channel, pane);
             tabbedChatPane.add(pane.getPaneTitle(), pane);
+            tabbedChatPane.setTabComponentAt(
+                tabbedChatPane.indexOfComponent(pane), 
+                new ButtonTabComponent(tabbedChatPane, this));
             connection.joinChannel(channel);
             connection.requestUsersInChannel(channel);
         }
@@ -207,6 +208,19 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
                 if (!channel.startsWith("#"))
                     channel = "#" + channel;
                 joinChannel(channel);
+            }
+        } else if (e.getActionCommand().equals("CLOSE_TAB")) {
+            if (e.getSource() instanceof ButtonTabComponent.TabButton) {
+                int i = ((ButtonTabComponent.TabButton) e.getSource()).getComponentIndex();
+                String name = tabbedChatPane.getTitleAt(i);
+                if (name.startsWith("#")) {
+                    connection.partChannel(name);
+                    channelPaneMap.remove(name);
+                } else {
+                    chatPaneMap.remove(name);
+                }
+                tabbedChatPane.remove(i);
+                
             }
         }
     }
@@ -326,6 +340,25 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
         });
     }
     
+    /**
+     * Creates a SingleChatPane.  Note that it should only be called from the
+     * EDT or will throw an error
+     * @param userName
+     * @return 
+     */
+    private SingleChatPane createSingleChatPane(final String userName) {
+
+        assert SwingUtilities.isEventDispatchThread(): "createSingleChatPane called outside EDT";
+        SingleChatPane pane = SingleChatPane.createChatPane(connection, 
+                        userName, myUserName);
+        chatPaneMap.put(userName, pane);
+        tabbedChatPane.add(pane.getPaneTitle(), pane);
+        tabbedChatPane.setTabComponentAt(
+                tabbedChatPane.indexOfComponent(pane), 
+                new ButtonTabComponent(tabbedChatPane, this));
+        return pane;
+    }
+    
     @Override
     public void userListReceived(final List<String> users, String channel) {
     
@@ -363,10 +396,8 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                        SingleChatPane pane = SingleChatPane.createChatPane(connection, 
-                                        fromUser, myUserName);
-                        chatPaneMap.put(fromUser, pane);
-                        tabbedChatPane.add(pane.getPaneTitle(), pane);
+                        
+                        SingleChatPane pane = createSingleChatPane(fromUser);
                         pane.receiveMessage(fromUser, action, message);
                     }
                 });
