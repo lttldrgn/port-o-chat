@@ -1,6 +1,18 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ *  This file is a part of port-o-chat.
+ * 
+ *  port-o-chat is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package portochat.common.protocol;
 
@@ -17,7 +29,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * This class handles parsing byte arrays into DefaultData objects which can be
+ * used to process information.
+ * 
  * @author Mike
  */
 public class ProtocolHandler {
@@ -27,9 +41,17 @@ public class ProtocolHandler {
     private static ProtocolHandler instance = null;
     private static final Logger logger = Logger.getLogger(ProtocolHandler.class.getName());
     
+    /**
+     * Private constructor
+     */
     private ProtocolHandler() {
     }
 
+    /**
+     * Method to get the instance of this singleton.
+     * 
+     * @return ProtocolHandler
+     */
     public static ProtocolHandler getInstance() {
         if (instance == null) {
             instance = new ProtocolHandler();
@@ -39,6 +61,9 @@ public class ProtocolHandler {
         return instance;
     }
 
+    /**
+     * Initializes the protocol handler
+     */
     private void initialize() {
         protocolClassMap = new HashMap<Byte, String>();
         protocolClassMap.put((byte)0x1, "portochat.common.protocol.ServerMessage");
@@ -65,6 +90,14 @@ public class ProtocolHandler {
         protocolHeaderMap.put("portochat.common.protocol.ChannelJoinPart", (byte)0x10);
     }
     
+    /**
+     * This method processes the byte array and returns a list of DefaultData objects.
+     * 
+     * @param data the byte array
+     * @param length the length of readable portions of the byte array
+     * 
+     * @return a List<DefaultData> of all the processed DefaultData objects
+     */
     public List<DefaultData> processData(byte[] data, int length) {
         ArrayList<DefaultData> defaultDataList = new ArrayList<DefaultData>();
 
@@ -109,6 +142,13 @@ public class ProtocolHandler {
         return defaultDataList;
     }
 
+    /**
+     * Gets the header of the DefaultData class
+     * 
+     * @param clazz The DefaultData class
+     * 
+     * @return the byte value of the header for the DefaultData class
+     */
     public Byte getHeader(Class clazz) {
 
         Byte header = null;
