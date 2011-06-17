@@ -38,7 +38,6 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -61,6 +60,7 @@ import javax.swing.plaf.basic.BasicButtonUI;
 public class ButtonTabComponent extends JPanel {
     private final JTabbedPane pane;
 
+    private final JLabel label;
     /**
      * Creates a ButtonTabComponent that is rendered on each new tab
      * @param pane Pane that this component is attached to
@@ -76,7 +76,7 @@ public class ButtonTabComponent extends JPanel {
         setOpaque(false);
         
         //make JLabel read titles from JTabbedPane
-        JLabel label = new JLabel() {
+        label = new JLabel() {
             @Override
             public String getText() {
                 int i = pane.indexOfTabComponent(ButtonTabComponent.this);
@@ -97,6 +97,15 @@ public class ButtonTabComponent extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
     }
 
+    /**
+     * Sets the color of the displayed text
+     * @param color 
+     */
+    public void setTextColor(Color color) {
+        label.setForeground(color);
+        label.repaint();
+    }
+    
     public class TabButton extends JButton {
         public TabButton(ActionListener listener) {
             int size = 17;
