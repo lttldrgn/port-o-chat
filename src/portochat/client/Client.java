@@ -18,7 +18,6 @@ package portochat.client;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Container;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -49,6 +48,8 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 /**
  *
@@ -163,7 +164,16 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
         // set up right panel
         rightPane.setLayout(new BorderLayout());
         rightPane.add(tabbedChatPane);
+        
+        tabbedChatPane.addChangeListener(new ChangeListener() {
 
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                int tabIndex = tabbedChatPane.getSelectedIndex();
+                System.out.println(tabIndex);
+                setTabColor(tabIndex, Color.black);
+            }
+        });
     }
     
     /**
@@ -341,6 +351,23 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
     }
     
     /**
+     * Sets the tab color to the specified color
+     * @param index Index of the tab in the tabbed pane
+     * @param color 
+     */
+    private void setTabColor(final int tabIndex, final Color color) {
+        
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                final ButtonTabComponent comp = 
+                    (ButtonTabComponent)tabbedChatPane.getTabComponentAt(tabIndex);
+                comp.setTextColor(color);
+                comp.repaint();
+            }
+        });
+    }
+    
+    /**
      * Creates a SingleChatPane.  Note that it should only be called from the
      * EDT or will throw an error
      * @param userName
@@ -404,12 +431,20 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
             } else {
                 // update existing pane
                 pane.receiveMessage(fromUser, action, message);
+                int tabIndex = tabbedChatPane.indexOfComponent(pane);
+                if (tabbedChatPane.getSelectedIndex() != tabIndex) {
+                    setTabColor(tabIndex, Color.red);
+                }
             }
         } else {
             ChannelPane pane = channelPaneMap.get(channel);
             if (pane != null) {
                 // update existing pane
                 pane.receiveMessage(fromUser, action, message);
+                int tabIndex = tabbedChatPane.indexOfComponent(pane);
+                if (tabbedChatPane.getSelectedIndex() != tabIndex) {
+                    setTabColor(tabIndex, Color.red);
+                }
             } else {
                 logger.warning("Received a message from a channel that is not joined.");
             }
