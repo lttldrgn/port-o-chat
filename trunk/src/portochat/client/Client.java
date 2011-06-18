@@ -101,6 +101,7 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
 
         createChannelMenu.setActionCommand(CREATE_CHANNEL);
         createChannelMenu.addActionListener(this);
+        createChannelMenu.setMnemonic(KeyEvent.VK_H);
         fileMenu.add(createChannelMenu);
         createChannelMenu.setEnabled(false);
         
@@ -170,7 +171,6 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
             @Override
             public void stateChanged(ChangeEvent e) {
                 int tabIndex = tabbedChatPane.getSelectedIndex();
-                System.out.println(tabIndex);
                 setTabColor(tabIndex, Color.black);
             }
         });
@@ -184,8 +184,8 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
                         
         ChannelPane pane = channelPaneMap.get(channel);
         if (pane == null) {
-            pane = ChannelPane.createChannelPane(connection, 
-                    channel, myUserName);
+            pane = ChannelPane.createChatPane(connection, 
+                    channel, myUserName, true);
 
             channelPaneMap.put(channel, pane);
             tabbedChatPane.add(pane.getPaneTitle(), pane);
@@ -356,14 +356,18 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
      * @param color 
      */
     private void setTabColor(final int tabIndex, final Color color) {
+        // filter out bad indexes and closing tabs
+        if ((tabIndex == -1) || (tabIndex + 1 >tabbedChatPane.getTabCount()))
+            return;
         
         SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
                 final ButtonTabComponent comp = 
-                    (ButtonTabComponent)tabbedChatPane.getTabComponentAt(tabIndex);
-                comp.setTextColor(color);
-                comp.repaint();
-            }
+                            (ButtonTabComponent)tabbedChatPane.getTabComponentAt(tabIndex);
+                    comp.setTextColor(color);
+                    comp.repaint();
+                }
         });
     }
     
