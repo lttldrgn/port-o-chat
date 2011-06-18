@@ -28,6 +28,7 @@ import portochat.common.protocol.DefaultData;
 import portochat.common.protocol.Ping;
 import portochat.common.protocol.Pong;
 import portochat.common.protocol.ServerMessage;
+import portochat.common.protocol.ServerMessageEnum;
 import portochat.common.protocol.UserConnection;
 import portochat.common.protocol.UserData;
 import portochat.common.protocol.UserList;
@@ -122,7 +123,17 @@ public class ServerConnection {
                 System.out.println("Server lag: " + 
                         ((Pong)defaultData).getCalculatedLag() + "ms");
             } else if (defaultData instanceof ServerMessage) {
-                System.out.println(((ServerMessage)defaultData));
+                ServerMessage message = (ServerMessage) defaultData;
+                if (message.getMessageEnum().equals(ServerMessageEnum.USER_SET)) {
+                    for (ServerDataListener listener : listeners) {
+                        listener.handleServerConnection(message.getAdditionalMessage(), true);
+                    }
+                } else if (message.getMessageEnum().equals(ServerMessageEnum.ERROR_USERNAME_IN_USE)) {
+                    for (ServerDataListener listener : listeners) {
+                        listener.handleServerConnection(message.getAdditionalMessage(), false);
+                    }
+                }
+                logger.info(((ServerMessage)defaultData).toString());
             } else if (defaultData instanceof ChatMessage) {
                 ChatMessage message = (ChatMessage)defaultData;
                 String channel = message.isChannel() ? message.getTo() : null;

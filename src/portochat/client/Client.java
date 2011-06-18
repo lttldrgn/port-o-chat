@@ -239,9 +239,9 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
      * Connects the client to the server
      * @return 
      */
-    private synchronized boolean connectToServer() {
+    private synchronized void connectToServer() {
         if (connected)
-            return true;
+            return;
         
         JPanel optionPanel = new JPanel(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
@@ -277,29 +277,52 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
             port = Integer.parseInt(serverArgs[1]);
         }
         
-        if (name == null || name.isEmpty())
-            return false;
-        
-        myUserName = name;
-        boolean success = true;
+        if (name == null || name.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Invalid inputs!");
+            return;
+        }
+
         try {
             connection = new ServerConnection();
             connection.addDataListener(this);
             connection.connectToServer(server, port);
-            connection.sendUsername(myUserName);
-            connection.sendPing();
-            connected = true;
-            createChannelMenu.setEnabled(true);
-            setTitle("Port-O-Chat: Connected as " + myUserName);
-            
-            connection.sendUserListRequest();
-            connection.requestListOfChannels();
+            connection.sendUsername(name);
             
         } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Could not connect!");
             e.printStackTrace();
-            success = false;
         }
-        return success;
+    }
+    
+    @Override
+    public void handleServerConnection(final String username, boolean success) {
+        if (connected)
+            return;
+        
+        if (success) {
+            connection.sendPing();
+            connected = true;
+            myUserName = username;
+            createChannelMenu.setEnabled(true);
+            setTitle("Port-O-Chat: Connected as " + myUserName);
+
+            connection.sendUserListRequest();
+            connection.requestListOfChannels();
+        } else {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    String name = JOptionPane.showInputDialog(Client.this, 
+                        "\"" + username + "\" already in use.  Enter another name", 
+                        "Choose another name", JOptionPane.ERROR_MESSAGE);
+                    if (name != null) {
+                        connection.sendUsername(name);
+                    } else {
+                        // TODO: disconnect from server
+                    }
+                }
+            });
+        }
     }
 
     private void addUser(final String user) {
