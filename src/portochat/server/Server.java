@@ -30,6 +30,7 @@ import portochat.common.protocol.DefaultData;
 import portochat.common.protocol.Ping;
 import portochat.common.protocol.Pong;
 import portochat.common.protocol.ServerMessage;
+import portochat.common.protocol.ServerMessageEnum;
 import portochat.common.protocol.UserConnection;
 import portochat.common.protocol.UserData;
 import portochat.common.protocol.UserList;
@@ -116,9 +117,11 @@ public class Server {
 
                     ServerMessage serverMessage = new ServerMessage();
                     if (success) {
-                        serverMessage.setMessage("Set user to: " + userData.getUser());
+                        serverMessage.setMessageEnum(ServerMessageEnum.USER_SET);
+                        serverMessage.setAdditionalMessage(userData.getUser());
                     } else {
-                        serverMessage.setMessage("Username in use: " + userData.getUser());
+                        serverMessage.setMessageEnum(ServerMessageEnum.ERROR_USERNAME_IN_USE);
+                        serverMessage.setAdditionalMessage(userData.getUser());
                     }
                     tcpSocket.writeData(socket, serverMessage);
 
@@ -137,7 +140,7 @@ public class Server {
                     logger.info(((UserConnection) defaultData).toString());
                 } else {
                     ServerMessage serverMessage = new ServerMessage();
-                    serverMessage.setMessage("You must first send a username!");
+                    serverMessage.setMessageEnum(ServerMessageEnum.ERROR_NO_USERNAME);
                     tcpSocket.writeData(socket, serverMessage);
                 }
             } else if (defaultData instanceof UserData) {
@@ -169,8 +172,8 @@ public class Server {
                         }
                     } else {
                         ServerMessage serverMessage = new ServerMessage();
-                        serverMessage.setMessage("Can't send message to a "
-                                + "non-existant channel: " + chatMessage.getTo());
+                        serverMessage.setMessageEnum(ServerMessageEnum.ERROR_CHANNEL_NON_EXISTENT);
+                        serverMessage.setAdditionalMessage(chatMessage.getTo());
                         tcpSocket.writeData(socket, serverMessage);
                     }
                 } else {
@@ -179,8 +182,8 @@ public class Server {
                         tcpSocket.writeData(toUserSocket, chatMessage);
                     } else {
                         ServerMessage serverMessage = new ServerMessage();
-                        serverMessage.setMessage("Can't send message to a "
-                                + "non-existant user: " + chatMessage.getTo());
+                        serverMessage.setMessageEnum(ServerMessageEnum.ERROR_USER_NON_EXISTENT);
+                        serverMessage.setAdditionalMessage(chatMessage.getTo());
                         tcpSocket.writeData(socket, serverMessage);
                     }
                 }

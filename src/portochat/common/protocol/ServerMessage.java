@@ -31,7 +31,8 @@ import java.util.logging.Logger;
 public class ServerMessage extends DefaultData {
 
     private static final Logger logger = Logger.getLogger(ServerMessage.class.getName());
-    private String message = null;
+    private String additionalMessage = null;
+    private ServerMessageEnum messageEnum;
     
     /**
      * The public constructor
@@ -49,12 +50,13 @@ public class ServerMessage extends DefaultData {
         super.parse(dis);
 
         try {
+            messageEnum = ServerMessageEnum.values()[dis.readInt()];
             StringBuilder sb = new StringBuilder();         
             int messageLength = dis.readInt();
             for (int i = 0;i < messageLength;i++) {
                 sb.append((char)dis.readUnsignedByte());
             }
-            message = sb.toString();
+            additionalMessage = sb.toString();
             dis.readByte();
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to parse data!", ex);
@@ -70,9 +72,11 @@ public class ServerMessage extends DefaultData {
     public int writeBody(DataOutputStream dos) {
         
         try {
-            dos.writeInt(message.length());
-            for (int i = 0;i < message.length();i++) {
-                dos.writeByte(message.charAt(i));
+            dos.writeInt(messageEnum.getValue());
+            int messageLength = additionalMessage == null ? 0 : additionalMessage.length();
+            dos.writeInt(messageLength);
+            for (int i = 0;i < additionalMessage.length();i++) {
+                dos.writeByte(additionalMessage.charAt(i));
             }
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to write data", ex);
@@ -84,17 +88,26 @@ public class ServerMessage extends DefaultData {
     /**
      * @return The message
      */
-    public String getMessage() {
-        return message;
+    public String getAdditionalMessage() {
+        return additionalMessage;
     }
 
     /**
      * Sets the message
      * 
      * @param message the message
+     * @see getAdditionalMessage()
      */
-    public void setMessage(String message) {
-        this.message = message;
+    public void setAdditionalMessage(String message) {
+        this.additionalMessage = message;
+    }
+
+    public ServerMessageEnum getMessageEnum() {
+        return messageEnum;
+    }
+
+    public void setMessageEnum(ServerMessageEnum messageEnum) {
+        this.messageEnum = messageEnum;
     }
     
     /**
@@ -106,7 +119,9 @@ public class ServerMessage extends DefaultData {
         StringBuilder sb = new StringBuilder();
         sb.append(new Date(time));
         sb.append(" Server Message: ");
-        sb.append(message);
+        sb.append(messageEnum);
+        sb.append("\n");
+        sb.append(additionalMessage);
         
         return sb.toString();
     }

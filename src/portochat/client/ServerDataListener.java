@@ -71,4 +71,12 @@ public interface ServerDataListener {
      * @param created True if channel is being created, otherwise destroyed
      */
     public void channelStatusReceived(String channel, boolean created);
+    
+    /**
+     * This method is called when a server message is received with a connection
+     * message.
+     * @param username Username sent to server
+     * @param success True if connection was successful to the server
+     */
+    public void handleServerConnection(String username, boolean success);
 }
