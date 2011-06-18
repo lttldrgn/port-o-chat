@@ -48,12 +48,12 @@ import portochat.common.Settings;
  *
  * @author Brandon
  */
-public class ChannelPane extends JPanel {
+public class ChatPane extends JPanel {
 
     private static final Logger logger =
-            Logger.getLogger(ChannelPane.class.getName());
-    private DefaultListModel participantListModel = new DefaultListModel();
-    private JList participantList = new JList(participantListModel);
+            Logger.getLogger(ChatPane.class.getName());
+    private DefaultListModel participantListModel = null;
+    private JList participantList = null;
     private JTextPane viewPane = new JTextPane();
     private JTextArea textEntry = new JTextArea();
     private String recipient = null;
@@ -71,7 +71,7 @@ public class ChannelPane extends JPanel {
      * @param myName 
      * @param channel True if this chat pane is a channel
      */
-    private ChannelPane(ServerConnection server, String recipient, 
+    private ChatPane(ServerConnection server, String recipient, 
             String myName, boolean isChannel) {
         serverConnection = server;
         this.recipient = recipient;
@@ -92,14 +92,21 @@ public class ChannelPane extends JPanel {
         add(new JScrollPane(viewPane), c);
         viewPane.setEditable(false);
 
-        c.gridx = 1;
-        c.weightx = 0.1;
-        participantList.setPreferredSize(new Dimension(75, 300));
-        add(new JScrollPane(participantList), c);
+        if (isChannel) {
+            participantListModel = new DefaultListModel();
+            participantList = new JList(participantListModel);
+
+            c.gridx = 1;
+            c.weightx = 0.1;
+            participantList.setPreferredSize(new Dimension(75, 300));
+            add(new JScrollPane(participantList), c);
+            
+            //set up gridwidth for next component
+            c.gridwidth = 2;
+        }
 
         c.gridx = 0;
         c.gridy = 1;
-        c.gridwidth = 2;
         c.weighty = 0.1;
         add(new JScrollPane(textEntry), c);
 
@@ -157,9 +164,11 @@ public class ChannelPane extends JPanel {
             }
         });
 
-        ArrayList<String> me = new ArrayList<String>();
-        me.add(myUserName);
-        addParticipants(me);
+        if (isChannel) {
+            ArrayList<String> me = new ArrayList<String>();
+            me.add(myUserName);
+            addParticipants(me);
+        }
         initStyles(viewPane);
 
     }
@@ -206,13 +215,13 @@ public class ChannelPane extends JPanel {
      * @param myName 
      * @param channel True if this chat pane is a channel
      */
-    public static ChannelPane createChatPane(
+    public static ChatPane createChatPane(
             ServerConnection serverConnection,
             String channel,
             String myName,
             boolean isChannel) {
 
-        ChannelPane channelPane = new ChannelPane(serverConnection,
+        ChatPane channelPane = new ChatPane(serverConnection,
                 channel, myName, isChannel);
         channelPane.init();
         return channelPane;
