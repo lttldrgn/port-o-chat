@@ -56,16 +56,27 @@ public class ChannelPane extends JPanel {
     private JList participantList = new JList(participantListModel);
     private JTextPane viewPane = new JTextPane();
     private JTextArea textEntry = new JTextArea();
-    private String channelName = null;
+    private String recipient = null;
     private String myUserName = null;
     private ServerConnection serverConnection = null;
+    private boolean isChannel = false;
     private static final SimpleDateFormat formatDate =
             new SimpleDateFormat("h:mm.ssa");
 
-    private ChannelPane(ServerConnection server, String channel, String myName) {
+    /**
+     * Creates a Chat Pane
+     * @param server
+     * @param recipient Recipient of messages coming from this chat pane, either
+     * a user name or channel name
+     * @param myName 
+     * @param channel True if this chat pane is a channel
+     */
+    private ChannelPane(ServerConnection server, String recipient, 
+            String myName, boolean isChannel) {
         serverConnection = server;
-        this.channelName = channel;
+        this.recipient = recipient;
         this.myUserName = myName;
+        this.isChannel = isChannel;
     }
 
     private void init() {
@@ -149,7 +160,11 @@ public class ChannelPane extends JPanel {
         ArrayList<String> me = new ArrayList<String>();
         me.add(myUserName);
         addParticipants(me);
+        initStyles(viewPane);
 
+    }
+    
+    private void initStyles(JTextPane viewPane) {
         // add text styles
         Style def = StyleContext.getDefaultStyleContext().
                 getStyle(StyleContext.DEFAULT_STYLE);
@@ -176,20 +191,29 @@ public class ChannelPane extends JPanel {
     }
 
     private void sendMessage(boolean action, String messageText) {
-        serverConnection.sendMessage(channelName, action, messageText);
+        serverConnection.sendMessage(recipient, action, messageText);
     }
 
     public String getPaneTitle() {
-        return channelName;
+        return recipient;
     }
 
-    public static ChannelPane createChannelPane(
+    /**
+     * Creates a Chat Pane
+     * @param serverConnection
+     * @param recipient Recipient of messages coming from this chat pane, either
+     * a user name or channel name
+     * @param myName 
+     * @param channel True if this chat pane is a channel
+     */
+    public static ChannelPane createChatPane(
             ServerConnection serverConnection,
             String channel,
-            String myName) {
+            String myName,
+            boolean isChannel) {
 
         ChannelPane channelPane = new ChannelPane(serverConnection,
-                channel, myName);
+                channel, myName, isChannel);
         channelPane.init();
         return channelPane;
     }
@@ -330,7 +354,7 @@ public class ChannelPane extends JPanel {
     public static void main(String args[]) {
         JFrame frame = new JFrame();
         frame.setSize(600, 400);
-        frame.getContentPane().add(createChannelPane(null, "channel", "bob"));
+        frame.getContentPane().add(createChatPane(null, "channel", "bob", true));
         frame.setVisible(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
