@@ -113,12 +113,18 @@ public class ChatPane extends JPanel {
         textEntry.addKeyListener(new KeyAdapter() {
 
             @Override
-            public void keyReleased(KeyEvent e) {
+            public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
 
+                    String text = textEntry.getText();
+                    if (text.isEmpty() || text.startsWith("\n")) {
+                        textEntry.setText("");
+                        return;
+                    }
+
+                    
                     StyledDocument doc = viewPane.getStyledDocument();
                     boolean action = false;
-                    String text = textEntry.getText();
 
                     // Check for commands
                     if (text.startsWith(Settings.COMMAND_PREFIX)) {
@@ -152,7 +158,7 @@ public class ChatPane extends JPanel {
                                     getTimestamp() + " " + myUserName + ": ",
                                     doc.getStyle("bold"));
                             doc.insertString(doc.getLength(),
-                                    text,
+                                    text + "\n",
                                     doc.getStyle("normal"));
                         }
                     } catch (BadLocationException ex) {
@@ -160,6 +166,13 @@ public class ChatPane extends JPanel {
                     }
                     sendMessage(action, text);
                     textEntry.setText("");
+                }
+            }
+            
+            @Override
+            public void keyReleased(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                        textEntry.setText("");
                 }
             }
         });
@@ -334,7 +347,7 @@ public class ChatPane extends JPanel {
                                 getTimestamp() + " " + user + ": ",
                                 doc.getStyle("bold"));
                         doc.insertString(doc.getLength(),
-                                message,
+                                message + "\n",
                                 doc.getStyle("normal"));
                     }
                 } catch (BadLocationException ex) {
