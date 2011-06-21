@@ -196,6 +196,7 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
             connection.requestUsersInChannel(channel);
         }
         tabbedChatPane.setSelectedComponent(pane);
+        pane.setFocus();
 
     }
     
@@ -388,9 +389,11 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
             public void run() {
                 final ButtonTabComponent comp = 
                             (ButtonTabComponent)tabbedChatPane.getTabComponentAt(tabIndex);
-                    comp.setTextColor(color);
-                    comp.repaint();
-                }
+                comp.setTextColor(color);
+                comp.repaint();
+                ChatPane chatPane = (ChatPane) tabbedChatPane.getComponentAt(tabIndex);
+                chatPane.setFocus();
+            }
         });
     }
     
@@ -410,6 +413,7 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
         tabbedChatPane.setTabComponentAt(
                 tabbedChatPane.indexOfComponent(pane), 
                 new ButtonTabComponent(tabbedChatPane, this));
+        pane.setFocus();
         return pane;
     }
     
@@ -453,6 +457,10 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
                         
                         ChatPane pane = createChatPane(fromUser);
                         pane.receiveMessage(fromUser, action, message);
+                        int tabIndex = tabbedChatPane.indexOfComponent(pane);
+                        if (tabbedChatPane.getSelectedIndex() != tabIndex) {
+                            setTabColor(tabIndex, Color.red);
+                        }
                     }
                 });
             } else {

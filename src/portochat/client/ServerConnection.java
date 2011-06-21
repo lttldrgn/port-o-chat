@@ -183,7 +183,7 @@ public class ServerConnection {
                     logger.info(status.toString());
                 }
             } else {
-                System.out.println("Unknown message: " + defaultData);
+                logger.warning("Unknown message: " + defaultData);
             }
         }
     }
