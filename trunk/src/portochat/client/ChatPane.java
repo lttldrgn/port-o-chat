@@ -109,7 +109,7 @@ public class ChatPane extends JPanel {
         c.gridy = 1;
         c.weighty = 0.1;
         add(new JScrollPane(textEntry), c);
-
+        textEntry.setText("Enter message to send");
         textEntry.addKeyListener(new KeyAdapter() {
 
             @Override
@@ -151,7 +151,7 @@ public class ChatPane extends JPanel {
                                     getTimestamp() + " * " + myUserName + " ",
                                     doc.getStyle("boldaction"));
                             doc.insertString(doc.getLength(),
-                                    text,
+                                    text + "\n",
                                     doc.getStyle("action"));
                         } else {
                             doc.insertString(doc.getLength(),
@@ -213,13 +213,19 @@ public class ChatPane extends JPanel {
     }
 
     private void sendMessage(boolean action, String messageText) {
-        serverConnection.sendMessage(recipient, action, messageText);
+        if (serverConnection != null) {
+            serverConnection.sendMessage(recipient, action, messageText);
+        }
     }
 
     public String getPaneTitle() {
         return recipient;
     }
 
+    public void setFocus() {
+        textEntry.requestFocusInWindow();
+        textEntry.selectAll();
+    }
     /**
      * Creates a Chat Pane
      * @param serverConnection
@@ -230,12 +236,12 @@ public class ChatPane extends JPanel {
      */
     public static ChatPane createChatPane(
             ServerConnection serverConnection,
-            String channel,
+            String recipient,
             String myName,
             boolean isChannel) {
 
         ChatPane channelPane = new ChatPane(serverConnection,
-                channel, myName, isChannel);
+                recipient, myName, isChannel);
         channelPane.init();
         return channelPane;
     }
