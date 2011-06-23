@@ -107,7 +107,7 @@ public class TCPSocket {
     }
 
     /**
-     * Thid method starts the processing threads for the associated socket
+     * This method starts the processing threads for the associated socket
      * 
      * @param socket The socket
      */
@@ -245,22 +245,20 @@ public class TCPSocket {
 
             byte[] buffer = new byte[8192];
 
-            while (incomingSocket.isConnected()) {
+            int length = 0;
+            try {
+                while ((length = bis.read(buffer)) != -1) {
 
-                int length = 0;
-                try {
-                    length = bis.read(buffer);
-                } catch (SocketException ex) {
-                    break;
-                } catch (IOException ex) {
-                    logger.log(Level.SEVERE, null, ex);
+                    //TODO handle over 8192.. is that MTU?
+                    List<DefaultData> defaultDataList = protocolHandler.processData(buffer, length);
+                    for (DefaultData defaultData : defaultDataList) {
+                        fireIncomingMessage(incomingSocket, defaultData);
+                    }
                 }
-
-                //TODO handle over 8192.. is that MTU?
-                List<DefaultData> defaultDataList = protocolHandler.processData(buffer, length);
-                for (DefaultData defaultData : defaultDataList) {
-                    fireIncomingMessage(incomingSocket, defaultData);
-                }
+            } catch (SocketException ex) {
+                logger.info("Socket disconnected");
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "IOException while reading", ex);
             }
 
             try {
