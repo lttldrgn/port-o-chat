@@ -46,6 +46,7 @@ public class ServerConnection {
     private CopyOnWriteArrayList<ServerDataListener> listeners = 
             new CopyOnWriteArrayList<ServerDataListener>();
     private TCPSocket socket = null;
+    private ClientHandler clientHandler = null;
     
     public ServerConnection() {
     }
@@ -55,9 +56,16 @@ public class ServerConnection {
         socket = new TCPSocket("Client");
         successful = socket.connect(serverAddress, port);
         if (successful) {
-            socket.addListener(new ClientHandler());
+            clientHandler = new ClientHandler();
+            socket.addListener(clientHandler);
         }
         return successful;
+    }
+    
+    public void disconnect() {
+        socket.disconnect();
+        socket.removeListener(clientHandler);
+        socket = null;
     }
     
     public void sendUsername(String username) {
@@ -111,6 +119,10 @@ public class ServerConnection {
 
     public void addDataListener(ServerDataListener listener) {
         listeners.add(listener);
+    }
+    
+    public void removeDataListener(ServerDataListener listener) {
+        listeners.remove(listener);
     }
     
      private class ClientHandler implements NetListener {
