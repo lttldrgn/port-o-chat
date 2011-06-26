@@ -60,6 +60,7 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
     private static final String EXIT_COMMAND = "EXIT";
     private static final String CONNECT = "CONNECT";
     private static final String CREATE_CHANNEL = "CREATE_CHANNEL";
+    private static final String DISCONNECT = "DISCONNECT";
     private HashMap<String, ChatPane> chatPaneMap = 
             new HashMap<String, ChatPane>();
     private HashMap<String, ChatPane> channelPaneMap = 
@@ -69,6 +70,7 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
     private JList contactList = new JList(contactListModel);
     private JList channelList = new JList(channelListModel);
     private JMenuItem createChannelMenu = new JMenuItem("Create Channel...");
+    private JMenuItem disconnect = new JMenuItem("Disconnect");
     private JTabbedPane tabbedChatPane = new JTabbedPane(JTabbedPane.BOTTOM, 
             JTabbedPane.SCROLL_TAB_LAYOUT);
     private String myUserName = null;
@@ -97,6 +99,7 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
         JMenuItem connectMenu = new JMenuItem("Connect");
         connectMenu.setActionCommand(CONNECT);
         connectMenu.addActionListener(this);
+        connectMenu.setMnemonic(KeyEvent.VK_C);
         fileMenu.add(connectMenu);
 
         createChannelMenu.setActionCommand(CREATE_CHANNEL);
@@ -104,6 +107,12 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
         createChannelMenu.setMnemonic(KeyEvent.VK_H);
         fileMenu.add(createChannelMenu);
         createChannelMenu.setEnabled(false);
+        
+        disconnect.setMnemonic(KeyEvent.VK_D);
+        disconnect.setActionCommand(DISCONNECT);
+        disconnect.addActionListener(this);
+        disconnect.setEnabled(false);
+        fileMenu.add(disconnect);
         
         JMenuItem exitMenu = new JMenuItem("Exit");
         exitMenu.setMnemonic(KeyEvent.VK_X);
@@ -233,6 +242,8 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
                 tabbedChatPane.remove(i);
                 
             }
+        } else if (e.getActionCommand().equals(DISCONNECT)) {
+            disconnectFromServer();
         }
     }
     
@@ -295,6 +306,22 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
         }
     }
     
+    private synchronized void disconnectFromServer() {
+        if (connection == null) {
+            return;
+        }
+        
+        connection.disconnect();
+        connection.removeDataListener(this);
+        connection = null;
+        connected = false;
+        createChannelMenu.setEnabled(false);
+        disconnect.setEnabled(false);
+        setTitle("Port-O-Chat - Disconnected");
+        contactListModel.clear();
+        channelListModel.clear();
+    }
+    
     @Override
     public void handleServerConnection(final String username, boolean success) {
         if (connected)
@@ -304,11 +331,17 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
             connection.sendPing();
             connected = true;
             myUserName = username;
-            createChannelMenu.setEnabled(true);
-            setTitle("Port-O-Chat: Connected as " + myUserName);
-
+            
             connection.sendUserListRequest();
             connection.requestListOfChannels();
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    createChannelMenu.setEnabled(true);
+                    disconnect.setEnabled(true);
+                    setTitle("Port-O-Chat: Connected as " + myUserName);
+                }
+            });
         } else {
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
@@ -319,7 +352,7 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
                     if (name != null) {
                         connection.sendUsername(name);
                     } else {
-                        // TODO: disconnect from server
+                        disconnectFromServer();
                     }
                 }
             });
