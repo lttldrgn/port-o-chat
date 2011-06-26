@@ -105,6 +105,16 @@ public class TCPSocket {
 
         return clientSocket.isConnected();
     }
+    
+    public void disconnect() {
+        try {
+            clientSocket.close();
+            clientSocket = null;
+            outgoingThread.interrupt();
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, null, ex);
+        }
+    }
 
     /**
      * This method starts the processing threads for the associated socket
@@ -292,7 +302,7 @@ public class TCPSocket {
     }
 
     /**
-     * This class is used to process outgoind messages
+     * This class is used to process outgoing messages
      */
     private class OutgoingThread extends Thread {
 
@@ -316,8 +326,9 @@ public class TCPSocket {
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, null, ex);
                 } catch (InterruptedException ie) {
-                    // TODO: interruption probably means stop listening
-                    // return;
+                    // Thread was interrupted so exit this thread
+                    writeQueue.clear();
+                    break;
                 }
 
             }
