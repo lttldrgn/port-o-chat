@@ -69,6 +69,7 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
     private DefaultListModel channelListModel = new DefaultListModel();
     private JList contactList = new JList(contactListModel);
     private JList channelList = new JList(channelListModel);
+    private JMenuItem connectMenu = new JMenuItem("Connect");
     private JMenuItem createChannelMenu = new JMenuItem("Create Channel...");
     private JMenuItem disconnect = new JMenuItem("Disconnect");
     private JTabbedPane tabbedChatPane = new JTabbedPane(JTabbedPane.BOTTOM, 
@@ -96,7 +97,6 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
         fileMenu.setMnemonic(KeyEvent.VK_F);
         menuBar.add(fileMenu);
         
-        JMenuItem connectMenu = new JMenuItem("Connect");
         connectMenu.setActionCommand(CONNECT);
         connectMenu.addActionListener(this);
         connectMenu.setMnemonic(KeyEvent.VK_C);
@@ -315,6 +315,7 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
         connection.removeDataListener(this);
         connection = null;
         connected = false;
+        connectMenu.setEnabled(true);
         createChannelMenu.setEnabled(false);
         disconnect.setEnabled(false);
         setTitle("Port-O-Chat - Disconnected");
@@ -337,6 +338,7 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
             SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
+                    connectMenu.setEnabled(false);
                     createChannelMenu.setEnabled(true);
                     disconnect.setEnabled(true);
                     setTitle("Port-O-Chat: Connected as " + myUserName);
@@ -373,6 +375,11 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
+                if (user == null) {
+                    disconnectFromServer();
+                    return;
+                }
+                
                 if (contactListModel.contains(user))
                     contactListModel.removeElement(user);
                 
