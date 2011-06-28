@@ -135,7 +135,7 @@ public class ChatPane extends JPanel {
                             try {
                                 doc.insertString(doc.getLength(),
                                         getTimestamp() + " Unknown command: "
-                                        + text.split(" ")[0],
+                                        + text.split(" ")[0] + "\n",
                                         doc.getStyle("unknowncommand"));
                                 return;
                             } catch (BadLocationException ex) {
@@ -346,7 +346,7 @@ public class ChatPane extends JPanel {
                                 getTimestamp() + " * " + user + " ",
                                 doc.getStyle("boldaction"));
                         doc.insertString(doc.getLength(),
-                                message,
+                                message + "\n",
                                 doc.getStyle("action"));
                     } else {
                         doc.insertString(doc.getLength(),

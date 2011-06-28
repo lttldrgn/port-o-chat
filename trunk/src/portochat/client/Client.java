@@ -24,6 +24,8 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -278,6 +280,17 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
         c.fill = GridBagConstraints.BOTH;
         c.insets = new Insets(0,0,0,0);
         optionPanel.add(serverTextField, c);
+        FocusAdapter focusListener = new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                if (e.getComponent() instanceof JTextField) {
+                    JTextField entry = (JTextField) e.getComponent();
+                    entry.selectAll();
+                }
+            }
+        };
+        userTextField.addFocusListener(focusListener);
+        serverTextField.addFocusListener(focusListener);
         
         JOptionPane.showMessageDialog(this, optionPanel, "Enter information", JOptionPane.PLAIN_MESSAGE);
         String name = userTextField.getText();
