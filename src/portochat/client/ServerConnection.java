@@ -79,9 +79,15 @@ public class ServerConnection {
         socket.writeData(socket.getClientSocket(), ping);
     }
     
-    public void sendMessage(String username, boolean action, String message) {
+    /**
+     * Sends a message to the defined recipient
+     * @param recipient Person or channel the message is being sent to
+     * @param action True if this is an action message
+     * @param message Message being sent
+     */
+    public void sendMessage(String recipient, boolean action, String message) {
         ChatMessage chatMessage = new ChatMessage();
-        chatMessage.setTo(username);
+        chatMessage.setTo(recipient);
         chatMessage.setAction(action);
         chatMessage.setMessage(message);
         socket.writeData(socket.getClientSocket(), chatMessage);

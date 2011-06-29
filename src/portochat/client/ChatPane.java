@@ -58,22 +58,22 @@ public class ChatPane extends JPanel {
     private JTextArea textEntry = new JTextArea();
     private String recipient = null;
     private String myUserName = null;
-    private ServerConnection serverConnection = null;
+    private ServerConnectionProvider serverConnectionProvider = null;
     private boolean isChannel = false;
     private static final SimpleDateFormat formatDate =
             new SimpleDateFormat("h:mm.ssa");
 
     /**
      * Creates a Chat Pane
-     * @param server
+     * @param serverProvider Provider of the server connection
      * @param recipient Recipient of messages coming from this chat pane, either
      * a user name or channel name
      * @param myName 
      * @param channel True if this chat pane is a channel
      */
-    private ChatPane(ServerConnection server, String recipient, 
+    private ChatPane(ServerConnectionProvider serverProvider, String recipient, 
             String myName, boolean isChannel) {
-        serverConnection = server;
+        serverConnectionProvider = serverProvider;
         this.recipient = recipient;
         this.myUserName = myName;
         this.isChannel = isChannel;
@@ -213,9 +213,7 @@ public class ChatPane extends JPanel {
     }
 
     private void sendMessage(boolean action, String messageText) {
-        if (serverConnection != null) {
-            serverConnection.sendMessage(recipient, action, messageText);
-        }
+        serverConnectionProvider.sendMessage(recipient, action, messageText);
     }
 
     public String getPaneTitle() {
@@ -228,19 +226,19 @@ public class ChatPane extends JPanel {
     }
     /**
      * Creates a Chat Pane
-     * @param serverConnection
+     * @param serverConnectionProvider Provider of server connection
      * @param recipient Recipient of messages coming from this chat pane, either
      * a user name or channel name
      * @param myName 
      * @param channel True if this chat pane is a channel
      */
     public static ChatPane createChatPane(
-            ServerConnection serverConnection,
+            ServerConnectionProvider serverConnectionProvider,
             String recipient,
             String myName,
             boolean isChannel) {
 
-        ChatPane channelPane = new ChatPane(serverConnection,
+        ChatPane channelPane = new ChatPane(serverConnectionProvider,
                 recipient, myName, isChannel);
         channelPane.init();
         return channelPane;
@@ -370,6 +368,16 @@ public class ChatPane extends JPanel {
     public void updateUserList(final List<String> list) {
         for (String user : list) {
             userJoinedEvent(user, true);
+        }
+    }
+    
+    /**
+     * This method should be called after a server disconnect to clean up any 
+     * artifacts left from the disconnect.
+     */
+    public void rejoin() {
+        if (isChannel) {
+            participantListModel.clear();
         }
     }
 
