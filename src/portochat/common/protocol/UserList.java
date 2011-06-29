@@ -172,6 +172,7 @@ public class UserList extends DefaultData {
 
         StringBuilder sb = new StringBuilder();
         sb.append(new Date(time));
+        sb.append(" UserList -");
         if (channel != null) {
             sb.append(" ");
             sb.append(channel);

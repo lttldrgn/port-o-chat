@@ -136,6 +136,9 @@ public class ServerConnection {
         @Override
         public void incomingMessage(NetEvent event) {
             DefaultData defaultData = event.getData();
+            if (logger.isLoggable(Level.FINE)) {
+                logger.fine(defaultData.toString());
+            }
             
             if (defaultData instanceof Pong) {
                 System.out.println("Server lag: " + 
@@ -151,7 +154,6 @@ public class ServerConnection {
                         listener.handleServerConnection(message.getAdditionalMessage(), false);
                     }
                 }
-                logger.info(((ServerMessage)defaultData).toString());
             } else if (defaultData instanceof ChatMessage) {
                 ChatMessage message = (ChatMessage)defaultData;
                 String channel = message.isChannel() ? message.getTo() : null;
@@ -159,21 +161,18 @@ public class ServerConnection {
                     listener.receiveChatMessage(message.getFromUser(),
                             message.isAction(), message.getMessage(), channel);
                 }
-                System.out.println(((ChatMessage)defaultData));
             } else if (defaultData instanceof UserList) {
                 UserList userList = (UserList) defaultData;
                 String channel = userList.getChannel();
                 for (ServerDataListener listener : listeners) {
                     listener.userListReceived(userList.getUserList(), channel);
                 }
-                System.out.println((UserList)defaultData);
             } else if (defaultData instanceof UserConnection) {
                 // if user is null it's the server disconnecting
                 UserConnection user = (UserConnection) defaultData;
                 for (ServerDataListener listener : listeners) {
                     listener.userConnectionEvent(user.getUser(), user.isConnected());
                 }
-                System.out.println((UserConnection)defaultData);
             } else if (defaultData instanceof ChannelList) {
                 // Received a channel list
                 ChannelList channelList = (ChannelList) defaultData;
@@ -181,24 +180,17 @@ public class ServerConnection {
                 for (ServerDataListener listener : listeners) {
                     listener.channelListReceived(channels);
                 }
-                System.out.println(((ChannelList)defaultData));
             } else if (defaultData instanceof ChannelJoinPart) {
                 ChannelJoinPart joinPart = (ChannelJoinPart) defaultData;
                 for (ServerDataListener listener : listeners) {
                     listener.receiveChannelJoinPart(joinPart.getUser(), 
                             joinPart.getChannel(), joinPart.hasJoined());
                 }
-                if (logger.isLoggable(Level.INFO)) {
-                    logger.info(joinPart.toString());
-                }
             } else if (defaultData instanceof ChannelStatus) {
                 ChannelStatus status = (ChannelStatus) defaultData;
                 for (ServerDataListener listener : listeners) {
                     listener.channelStatusReceived(status.getChannel(), 
                             status.isCreated());
-                }
-                if (logger.isLoggable(Level.INFO)) {
-                    logger.info(status.toString());
                 }
             } else {
                 logger.warning("Unknown message: " + defaultData);
