@@ -1,0 +1,8 @@
+#summary Known issues and any workarounds
+
+= Known Issues =
+
+This page lists issues that are known in the current version and any workarounds.
+
+
+== Auto Scrolling ==
