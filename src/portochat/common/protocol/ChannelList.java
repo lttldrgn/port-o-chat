@@ -121,7 +121,7 @@ public class ChannelList extends DefaultData {
 
         StringBuilder sb = new StringBuilder();
         sb.append(new Date(time));
-        sb.append(" Num Channels: ");
+        sb.append(" ChannelList - Num Channels: ");
         if (channelList != null) {
             sb.append(channelList.size());
             for (String channel : channelList) {

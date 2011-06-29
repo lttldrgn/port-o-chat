@@ -153,7 +153,7 @@ public class ChannelJoinPart extends DefaultData {
 
         StringBuilder sb = new StringBuilder();
         sb.append(new Date(time));
-        sb.append(" User: ");
+        sb.append(" ChannelJoinPart - User: ");
         sb.append(user);
         sb.append((joined?" has joined ":" has parted "));
         sb.append(channel);

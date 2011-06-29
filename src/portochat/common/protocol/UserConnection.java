@@ -122,7 +122,7 @@ public class UserConnection extends DefaultData {
 
         StringBuilder sb = new StringBuilder();
         sb.append(new Date(time));
-        sb.append(" User: ");
+        sb.append(" User Connection: ");
         sb.append(user);
         sb.append((connected?" has connected!":" has disconnected!"));
         return sb.toString();
