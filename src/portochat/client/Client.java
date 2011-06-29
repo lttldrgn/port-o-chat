@@ -31,6 +31,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
@@ -57,7 +58,8 @@ import javax.swing.event.ChangeListener;
  *
  * @author Brandon
  */
-public class Client extends JFrame implements ActionListener, ServerDataListener {
+public class Client extends JFrame implements ActionListener, 
+        ServerConnectionProvider, ServerDataListener {
     private static final Logger logger = Logger.getLogger(Client.class.getName());
     private static final String EXIT_COMMAND = "EXIT";
     private static final String CONNECT = "CONNECT";
@@ -195,7 +197,7 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
                         
         ChatPane pane = channelPaneMap.get(channel);
         if (pane == null) {
-            pane = ChatPane.createChatPane(connection, 
+            pane = ChatPane.createChatPane(this, 
                     channel, myUserName, true);
 
             channelPaneMap.put(channel, pane);
@@ -355,6 +357,7 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
                     createChannelMenu.setEnabled(true);
                     disconnect.setEnabled(true);
                     setTitle("Port-O-Chat: Connected as " + myUserName);
+                    rejoinOpenChannels();
                 }
             });
         } else {
@@ -459,7 +462,7 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
     private ChatPane createChatPane(final String userName) {
 
         assert SwingUtilities.isEventDispatchThread(): "createChatPane called outside EDT";
-        ChatPane pane = ChatPane.createChatPane(connection, 
+        ChatPane pane = ChatPane.createChatPane(this, 
                         userName, myUserName, false);
         chatPaneMap.put(userName, pane);
         tabbedChatPane.add(pane.getPaneTitle(), pane);
@@ -468,6 +471,19 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
                 new ButtonTabComponent(tabbedChatPane, this));
         pane.setFocus();
         return pane;
+    }
+    
+    /**
+     * This method will rejoin any open channels after a server disconnection
+     * has occurred.
+     */
+    private void rejoinOpenChannels() {
+        Set<Entry<String, ChatPane>> channelEntries = channelPaneMap.entrySet();
+        for (Entry<String, ChatPane> entry : channelEntries) {
+            entry.getValue().rejoin();
+            connection.joinChannel(entry.getKey());
+            connection.requestUsersInChannel(entry.getKey());
+        }
     }
     
     @Override
@@ -561,6 +577,13 @@ public class Client extends JFrame implements ActionListener, ServerDataListener
             addChannelToList(channel);
         } else {
             removeChannelFromList(channel);
+        }
+    }
+
+    @Override
+    public void sendMessage(String recipient, boolean action, String message) {
+        if (connection != null) {
+            connection.sendMessage(recipient, action, message);
         }
     }
 }
