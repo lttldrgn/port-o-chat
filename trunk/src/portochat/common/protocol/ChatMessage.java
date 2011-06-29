@@ -200,6 +200,7 @@ public class ChatMessage extends DefaultData {
         StringBuilder sb = new StringBuilder();
         sb.append(new Date(time));
         sb.append(" ");
+        sb.append("ChatMessage - ");
         if (isChannel()) {
             sb.append(to);
             sb.append(" ");
