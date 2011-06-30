@@ -30,7 +30,7 @@ import java.util.logging.Logger;
 public class UserData extends DefaultData {
 
     private static final Logger logger = Logger.getLogger(UserData.class.getName());
-    private String user = null;
+    private String name = null;
 
     /**
      * Public constructor
@@ -53,7 +53,7 @@ public class UserData extends DefaultData {
             for (int i = 0; i < userLength; i++) {
                 sb.append((char) dis.readUnsignedByte());
             }
-            user = sb.toString();
+            name = sb.toString();
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to parse data!", ex);
         }
@@ -67,9 +67,9 @@ public class UserData extends DefaultData {
     @Override
     public int writeBody(DataOutputStream dos) {
         try {
-            dos.writeInt(user.length());
-            for (int i = 0; i < user.length(); i++) {
-                dos.writeByte(user.charAt(i));
+            dos.writeInt(name.length());
+            for (int i = 0; i < name.length(); i++) {
+                dos.writeByte(name.charAt(i));
             }
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to write data", ex);
@@ -81,8 +81,8 @@ public class UserData extends DefaultData {
     /**
      * @return the user
      */
-    public String getUser() {
-        return user;
+    public String getName() {
+        return name;
     }
 
     /**
@@ -91,7 +91,7 @@ public class UserData extends DefaultData {
      * @param user
      */
     public void setUser(String user) {
-        this.user = user;
+        this.name = user;
     }
 
     /**
@@ -102,8 +102,8 @@ public class UserData extends DefaultData {
 
         StringBuilder sb = new StringBuilder();
         sb.append(super.toString());
-        sb.append("User: ");
-        sb.append(user);
+        sb.append("Name: ");
+        sb.append(name);
 
         return sb.toString();
     }

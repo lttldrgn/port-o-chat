@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import portochat.common.User;
 
 /**
  * This class is a singleton class used to contain the user database.
@@ -33,15 +34,15 @@ public class UserDatabase {
 
     private static final Logger logger = Logger.getLogger(UserDatabase.class.getName());
     private static UserDatabase instance = null;
-    private Map<String, Socket> userMap = null;
-    private Map<Socket, String> socketMap = null;
+    private Map<User, Socket> userMap = null;
+    private Map<Socket, User> socketMap = null;
     
     /**
      * Private constructor.
      */
     private UserDatabase() {
-        userMap = new ConcurrentHashMap<String, Socket>();
-        socketMap = new ConcurrentHashMap<Socket, String>();
+        userMap = new ConcurrentHashMap<User, Socket>();
+        socketMap = new ConcurrentHashMap<Socket, User>();
     }
     
     /**
@@ -59,19 +60,21 @@ public class UserDatabase {
     /**
      * Adds a user to the database
      * 
-     * @param user user to add
+     * @param userName user name to add
      * @param socket the user's socket. 
      * 
      * @return true if successful
      */
-    public boolean addUser(String user, Socket socket) {
+    public boolean addUser(String userName, Socket socket) {
         boolean success = false;
+        
+        User user = new User(userName, socket.getInetAddress().getHostName());
         
         if (!userMap.containsKey(user)) {
             userMap.put(user, socket);
             socketMap.put(socket, user);
-            logger.log(Level.INFO, "{0}@{1} has connected", 
-                    new Object[]{user, socket.getInetAddress()});
+            logger.log(Level.INFO, "{0} has connected", 
+                    new Object[]{user});
             success = true;
         }
         
@@ -83,21 +86,24 @@ public class UserDatabase {
      * 
      * @param oldUser old username
      * @param newUser new username
-     * @param socket the user's socket
      * 
      * @return true if successful
      */
-    public boolean renameUser(String oldUser, String newUser, Socket socket) {
+    public boolean renameUser(User oldUser, String newUserName) {
         boolean success = false;
         
         if (userMap.containsKey(oldUser)) {
-            userMap.remove(oldUser);
-            socketMap.remove(socket);
-            userMap.put(newUser, socket);
-            socketMap.put(socket, newUser);
-            logger.log(Level.INFO, "{0}@{1} has renamed to {2}", 
-                    new Object[]{oldUser, socket.getInetAddress(), newUser});
-            success = true;
+            
+            // Check if the username is in use
+            if (!userNameInUse(newUserName)) {
+                String oldUserName = oldUser.getName();
+                Socket socket = userMap.get(oldUser);
+                User user = socketMap.get(socket);
+                user.setName(newUserName);
+                logger.log(Level.INFO, "{0} is now known as {1}", 
+                        new Object[]{oldUserName, newUserName});
+                success = true;
+            }
         }
         
         return success;
@@ -110,7 +116,7 @@ public class UserDatabase {
      * 
      * @return true if successful
      */
-    public boolean removeUser(String user) {
+    public boolean removeUser(User user) {
         
         boolean success = false;
         
@@ -125,14 +131,51 @@ public class UserDatabase {
     }
     
     /**
+     * Used to see if a user name is in use
+     * @param userName
+     * @return true if the user name is in use
+     */
+    public boolean userNameInUse(String userName) {
+        boolean inUse = false;
+        
+        for (User user : userMap.keySet()) {
+            if (user.getName().equals(userName)) {
+                inUse = true;
+                break;
+            }
+        }
+        
+        return inUse;
+    }
+    
+    /**
      * Returns the user's socket
      * 
      * @param user the user
      * 
      * @return the user's socket
      */
-    public Socket getUserOfSocket(String user) {
+    public Socket getUserOfSocket(User user) {
         return userMap.get(user);
+    }
+    
+    /**
+     * Returns the user's socket
+     * 
+     * @param user the user
+     * 
+     * @return the user's socket
+     */
+    public Socket getUserOfSocket(String userName) {
+        Socket socket = null;
+        
+        for (User user : userMap.keySet()) {
+            if (user.getName().equals(userName)) {
+                socket = userMap.get(user);
+                break;
+            }
+        }
+        return socket;
     }
     
     /**
@@ -142,19 +185,29 @@ public class UserDatabase {
      * 
      * @return the user
      */
-    public String getSocketOfUser(Socket socket) {
+    public User getSocketOfUser(Socket socket) {
         return socketMap.get(socket);
     }
     
     /**
-     * Returns the whole userlist
+     * Returns the address of the user
+     * 
+     * @param user
+     * @return The address of the user
+     */
+    public String getAddressOfUserName(User user) {
+        return userMap.get(user).getInetAddress().getHostName();
+    }
+
+    /**
+     * Returns the whole userlist as User objects
      * 
      * @return List<String> of the userlist
      */
-    public List<String> getUserList() {
-        return new ArrayList<String>(userMap.keySet());
+    public List<User> getUserList() {
+        return new ArrayList<User>(userMap.keySet());
     }
-    
+
     /**
      * Returns the whole socketlist
      * 
@@ -169,11 +222,11 @@ public class UserDatabase {
      * 
      * @param userList The userlist
      * 
-     * @return List<Socket> of the userlist's sockets.
+     * @return List<User> of the userlist's sockets.
      */
-    public List<Socket> getSocketList(List<String> userList) {
+    public List<Socket> getSocketListByUsers(List<User> userList) {
         List<Socket> socketList = new ArrayList<Socket>();
-        for (String user : userList) {
+        for (User user : userList) {
             socketList.add(getUserOfSocket(user));
         }
         return socketList;

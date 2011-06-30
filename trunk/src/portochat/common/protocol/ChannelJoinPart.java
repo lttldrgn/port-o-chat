@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import portochat.common.User;
 
 /**
  * This class contains information about a channel join/part event.  It includes
@@ -31,7 +32,7 @@ import java.util.logging.Logger;
 public class ChannelJoinPart extends DefaultData {
 
     private static final Logger logger = Logger.getLogger(ChannelJoinPart.class.getName());
-    private String user = null;
+    private User user = null;
     private String channel = null;
     private boolean joined = false;
     
@@ -51,18 +52,8 @@ public class ChannelJoinPart extends DefaultData {
         super.parse(dis);
 
         try {
-            StringBuilder sb = new StringBuilder();
-            int userLength = dis.readInt();
-            for (int i = 0; i < userLength; i++) {
-                sb.append((char) dis.readUnsignedByte());
-            }
-            user = sb.toString();
-            sb = new StringBuilder();
-            int channelLength = dis.readInt();
-            for (int i = 0; i < channelLength; i++) {
-                sb.append((char) dis.readUnsignedByte());
-            }
-            channel = sb.toString();
+            user = new User(dis);
+            channel = dis.readUTF();
             joined = dis.readBoolean();
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to parse data!", ex);
@@ -77,19 +68,10 @@ public class ChannelJoinPart extends DefaultData {
     @Override
     public int writeBody(DataOutputStream dos) {
         try {
-            if (user != null) {
-                dos.writeInt(user.length());
-                for (int i = 0; i < user.length(); i++) {
-                    dos.writeByte(user.charAt(i));
-                }
-            } else {
-                // Filled out by server.
-                dos.writeInt(0);
-            }
-            dos.writeInt(channel.length());
-            for (int i = 0; i < channel.length(); i++) {
-                dos.writeByte(channel.charAt(i));
-            }
+            
+            // The user data is filled out by the server.
+            User.writeDos(user, dos);
+            dos.writeUTF(channel);
             dos.writeBoolean(joined);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to write data", ex);
@@ -101,7 +83,7 @@ public class ChannelJoinPart extends DefaultData {
     /**
      * @return returns the user
      */
-    public String getUser() {
+    public User getUser() {
         return user;
     }
 
@@ -109,7 +91,7 @@ public class ChannelJoinPart extends DefaultData {
      * Sets the user
      * @param user 
      */
-    public void setUser(String user) {
+    public void setUser(User user) {
         this.user = user;
     }
 

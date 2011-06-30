@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import portochat.common.User;
 import portochat.common.protocol.DefaultData;
 import portochat.common.protocol.ProtocolHandler;
 import portochat.common.protocol.UserConnection;
@@ -288,10 +289,11 @@ public class TCPSocket {
             UserConnection userConnection = new UserConnection();
             if (serverSocket != null) {
                 // Get the user who disconnected
-                String user = userDatabase.getSocketOfUser(socket);
+                User user = userDatabase.getSocketOfUser(socket);
                 if (user == null) {
                     // Hasn't set a username yet
-                    user = socket.getInetAddress().toString();
+                    user = new User("unknown",
+                            socket.getInetAddress().getHostName());
                 }
                 userConnection.setUser(user);
             }

@@ -17,11 +17,14 @@
 package portochat.server;
 
 import java.io.IOException;
+import java.lang.String;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import portochat.common.User;
 import portochat.common.protocol.ChannelJoinPart;
 import portochat.common.protocol.ChannelList;
 import portochat.common.protocol.ChannelStatus;
@@ -107,28 +110,29 @@ public class Server {
             Socket socket = (Socket) event.getSource();
             DefaultData defaultData = event.getData();
 
-            String user = userDatabase.getSocketOfUser(socket);
+            User user = userDatabase.getSocketOfUser(socket);
             if (user == null) {
                 // Users must send a UserData packet first
                 if (defaultData instanceof UserData) {
                     // Add
                     UserData userData = (UserData) defaultData;
-                    boolean success = userDatabase.addUser(userData.getUser(), socket);
-
+                    boolean success = userDatabase.addUser(userData.getName(), socket);
+                    user = userDatabase.getSocketOfUser(socket);
+                    
                     ServerMessage serverMessage = new ServerMessage();
                     if (success) {
-                        serverMessage.setMessageEnum(ServerMessageEnum.USER_SET);
-                        serverMessage.setAdditionalMessage(userData.getUser());
+                        serverMessage.setMessageEnum(ServerMessageEnum.USERNAME_SET);
+                        serverMessage.setAdditionalMessage(userData.getName());
                     } else {
                         serverMessage.setMessageEnum(ServerMessageEnum.ERROR_USERNAME_IN_USE);
-                        serverMessage.setAdditionalMessage(userData.getUser());
+                        serverMessage.setAdditionalMessage(userData.getName());
                     }
                     tcpSocket.writeData(socket, serverMessage);
 
                     if (success) {
                         // Notify other users of connection
                         UserConnection userConnection = new UserConnection();
-                        userConnection.setUser(userData.getUser());
+                        userConnection.setUser(user);
                         userConnection.setConnected(true);
 
                         ArrayList<Socket> userSocketList =
@@ -146,8 +150,25 @@ public class Server {
             } else if (defaultData instanceof UserData) {
                 // Rename
                 UserData userData = (UserData) defaultData;
-                boolean success = userDatabase.renameUser(user, userData.getUser(), socket);
-                // TODO username in use
+                String oldUserName = user.getName();
+                boolean success = userDatabase.renameUser(user, userData.getName());
+                
+                ServerMessage serverMessage = new ServerMessage();
+                if (success) {
+                    // update channel database
+                    channelDatabase.renameUser(oldUserName, userData.getName());
+                    serverMessage.setMessageEnum(ServerMessageEnum.USERNAME_SET);
+                    serverMessage.setAdditionalMessage(userData.getName());
+                } else {
+                    serverMessage.setMessageEnum(ServerMessageEnum.ERROR_USERNAME_IN_USE);
+                    serverMessage.setAdditionalMessage(userData.getName());
+                }
+                tcpSocket.writeData(socket, serverMessage);
+                
+                // Log
+                logger.log(Level.INFO, "Renamed of {0} to {1} was {2}",
+                        new Object[]{oldUserName, userData.getName(), 
+                            success?"successful!":"unsuccessful!"});
             } else if (defaultData instanceof Ping) {
                 // Send a pong
                 Pong pong = new Pong();
@@ -234,7 +255,7 @@ public class Server {
 
                 // Fill out the user
                 channelJoinPart.setUser(user);
-
+                
                 if (channelJoinPart.hasJoined()) {
                     // joining
                     if (!channelDatabase.channelExists(

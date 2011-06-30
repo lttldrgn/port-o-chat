@@ -53,6 +53,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import portochat.common.User;
 
 /**
  *
@@ -377,17 +378,17 @@ public class Client extends JFrame implements ActionListener,
         }
     }
 
-    private void addUser(final String user) {
+    private void addUser(final User user) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                if (!contactListModel.contains(user))
-                    contactListModel.addElement(user);
+                if (!contactListModel.contains(user.getName()))
+                    contactListModel.addElement(user.getName());
             }
         });
     }
     
-    private void removeUser(final String user) {
+    private void removeUser(final User user) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -396,8 +397,8 @@ public class Client extends JFrame implements ActionListener,
                     return;
                 }
                 
-                if (contactListModel.contains(user))
-                    contactListModel.removeElement(user);
+                if (contactListModel.contains(user.getName()))
+                    contactListModel.removeElement(user.getName());
                 
                 //Remove from channel lists as well
                 Set<String> channelPaneList = channelPaneMap.keySet();
@@ -487,11 +488,11 @@ public class Client extends JFrame implements ActionListener,
     }
     
     @Override
-    public void userListReceived(final List<String> users, String channel) {
+    public void userListReceived(final List<User> users, String channel) {
     
         if (channel == null) {
             // this is a server list
-            for (String user: users) {
+            for (User user: users) {
                 addUser(user);
             }
         } else {
@@ -503,7 +504,7 @@ public class Client extends JFrame implements ActionListener,
     }
     
     @Override
-    public void userConnectionEvent(String user, boolean connected) {
+    public void userConnectionEvent(User user, boolean connected) {
         if (connected) {
             addUser(user);
         } else {
@@ -512,20 +513,20 @@ public class Client extends JFrame implements ActionListener,
     }
 
     @Override
-    public void receiveChatMessage(final String fromUser, final boolean action, 
+    public void receiveChatMessage(final User fromUser, final boolean action, 
         final String message, final String channel) {
         
         // user to user message
         if (channel == null) {
-            ChatPane pane = chatPaneMap.get(fromUser);
+            ChatPane pane = chatPaneMap.get(fromUser.getName());
         
             if (pane == null) {
                 SwingUtilities.invokeLater(new Runnable() {
                     @Override
                     public void run() {
                         
-                        ChatPane pane = createChatPane(fromUser);
-                        pane.receiveMessage(fromUser, action, message);
+                        ChatPane pane = createChatPane(fromUser.getName());
+                        pane.receiveMessage(fromUser.getName(), action, message);
                         int tabIndex = tabbedChatPane.indexOfComponent(pane);
                         if (tabbedChatPane.getSelectedIndex() != tabIndex) {
                             setTabColor(tabIndex, Color.red);
@@ -534,7 +535,7 @@ public class Client extends JFrame implements ActionListener,
                 });
             } else {
                 // update existing pane
-                pane.receiveMessage(fromUser, action, message);
+                pane.receiveMessage(fromUser.getName(), action, message);
                 int tabIndex = tabbedChatPane.indexOfComponent(pane);
                 if (tabbedChatPane.getSelectedIndex() != tabIndex) {
                     setTabColor(tabIndex, Color.red);
@@ -544,7 +545,7 @@ public class Client extends JFrame implements ActionListener,
             ChatPane pane = channelPaneMap.get(channel);
             if (pane != null) {
                 // update existing pane
-                pane.receiveMessage(fromUser, action, message);
+                pane.receiveMessage(fromUser.getName(), action, message);
                 int tabIndex = tabbedChatPane.indexOfComponent(pane);
                 if (tabbedChatPane.getSelectedIndex() != tabIndex) {
                     setTabColor(tabIndex, Color.red);
@@ -564,7 +565,8 @@ public class Client extends JFrame implements ActionListener,
     }
 
     @Override
-    public void receiveChannelJoinPart(String user, String channel, boolean join) {
+    public void receiveChannelJoinPart(User user, String channel,
+        boolean join) {
         ChatPane pane = channelPaneMap.get(channel);
         if (pane != null) {
             pane.userJoinedEvent(user, join);
