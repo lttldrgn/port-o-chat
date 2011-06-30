@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import portochat.common.User;
 
 /**
  * This class handles the channel database.
@@ -34,16 +35,16 @@ public class ChannelDatabase {
 
     private static final Logger logger = Logger.getLogger(ChannelDatabase.class.getName());
     private static ChannelDatabase instance = null;
-    private Map<String, ArrayList<String>> channelMap = null;
-    private Map<String, ArrayList<String>> userChannelMap = null;   
+    private Map<String, ArrayList<User>> channelMap = null;
+    private Map<User, ArrayList<String>> userChannelMap = null;   
     private UserDatabase userDatabase = null;
 
     /**
      * Private constructor
      */
     private ChannelDatabase() {
-        channelMap = new ConcurrentHashMap<String, ArrayList<String>>();
-        userChannelMap = new ConcurrentHashMap<String, ArrayList<String>>();
+        channelMap = new ConcurrentHashMap<String, ArrayList<User>>();
+        userChannelMap = new ConcurrentHashMap<User, ArrayList<String>>();
         userDatabase = UserDatabase.getInstance();
     }
 
@@ -65,11 +66,11 @@ public class ChannelDatabase {
      * @param channel
      * @param user
      */
-    public void addUserToChannel(String channel, String user) {
-        ArrayList<String> userList = channelMap.get(channel);
+    public void addUserToChannel(String channel, User user) {
+        ArrayList<User> userList = channelMap.get(channel);
         if (userList == null) {
             // New channel
-            userList = new ArrayList<String>();
+            userList = new ArrayList<User>();
             channelMap.put(channel, userList);
         }
         userList.add(user);
@@ -89,12 +90,12 @@ public class ChannelDatabase {
      * @param channel
      * @param user
      */
-    public void removeUserFromChannel(String channel, String user) {
-        ArrayList<String> userList = channelMap.get(channel);
+    public void removeUserFromChannel(String channel, User user) {
+        ArrayList<User> userList = channelMap.get(channel);
         if (userList != null) {
             Iterator iter = userList.iterator();
             while (iter.hasNext()) {
-                if (((String) iter.next()).equals(user)) {
+                if (((User) iter.next()).equals(user)) {
                     iter.remove();
                     break;
                 }
@@ -133,6 +134,38 @@ public class ChannelDatabase {
     }
 
     /**
+     * Rename a user in all his channels
+     * 
+     * @param oldUserName
+     * @param newUserName 
+     */
+    public void renameUser(String oldUserName, String newUserName) {
+        for (User user : userChannelMap.keySet()) {
+            if (user.getName().equals(oldUserName)) {
+                // Get list of channels
+                ArrayList<String> channelList = userChannelMap.get(user);
+                
+                for (String channel : channelList) {
+                    ArrayList<User> userList = channelMap.get(channel);
+                    if (userList != null) {
+                        Iterator iter = userList.iterator();
+                        while (iter.hasNext()) {
+                            if (((User) iter.next()).equals(user)) {
+                                user.setName(newUserName);
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                // Set new user name
+                user.setName(newUserName);
+                break;
+            }
+        }        
+    }
+    
+    /**
      * Returns true if the user is in a channel
      * 
      * @param channel
@@ -140,14 +173,14 @@ public class ChannelDatabase {
      * 
      * @return true if the user is in the channel
      */
-    public boolean isUserInChannel(String channel, String user) {
+    public boolean isUserInChannel(String channel, User user) {
         boolean exists = false;
         
-        ArrayList<String> userList = channelMap.get(channel);
+        ArrayList<User> userList = channelMap.get(channel);
         if (userList != null) {
             Iterator iter = userList.iterator();
             while (iter.hasNext()) {
-                if (((String) iter.next()).equals(user)) {
+                if (((User) iter.next()).equals(user)) {
                     exists = true;
                     break;
                 }
@@ -164,7 +197,7 @@ public class ChannelDatabase {
      * 
      * @return a List<String> containing the user's channels
      */
-    public List<String> getUserChannels(String user) {
+    public List<String> getUserChannels(User user) {
         List<String> channelList = userChannelMap.get(user);
         List<String> returnList = new ArrayList<String>();
         if (channelList != null) {
@@ -178,7 +211,7 @@ public class ChannelDatabase {
      * 
      * @param user
      */
-    public void removeUserFromAllChannels(String user) {
+    public void removeUserFromAllChannels(User user) {
         for (String channel : channelMap.keySet()) {
             if (isUserInChannel(channel, user)) {
                 removeUserFromChannel(channel, user);
@@ -204,7 +237,7 @@ public class ChannelDatabase {
      * 
      * @return a List<String> containing the users in the channel
      */
-    public List<String> getUsersInChannel(String channel) {
+    public List<User> getUsersInChannel(String channel) {
         return channelMap.get(channel);
     }
     
@@ -224,17 +257,17 @@ public class ChannelDatabase {
      * 
      * @return a List<Socket> containing all the user's sockets
      */
-    public List<Socket> getSocketsOfUsersInChannel(String channel, String filterUser) {
+    public List<Socket> getSocketsOfUsersInChannel(String channel, User filterUser) {
         ArrayList<Socket> userSocketList = null;
-        ArrayList<String> userList = channelMap.get(channel);
+        ArrayList<User> userList = channelMap.get(channel);
         if (userList != null) {
-            ArrayList<String> copyOfUserList = new ArrayList<String>(channelMap.get(channel));
+            ArrayList<User> copyOfUserList = new ArrayList<User>(channelMap.get(channel));
             if (copyOfUserList != null) {
                 if (filterUser != null) {
                     // Remove the sender's name
                     Iterator iter = copyOfUserList.iterator();
                     while (iter.hasNext()) {
-                        if (((String) iter.next()).equals(filterUser)) {
+                        if (((User) iter.next()).equals(filterUser)) {
                             iter.remove();
                             break;
                         }
@@ -243,7 +276,7 @@ public class ChannelDatabase {
 
                 // List of sockets for each user in the channel
                 userSocketList =
-                        (ArrayList<Socket>) userDatabase.getSocketList(copyOfUserList);
+                        (ArrayList<Socket>) userDatabase.getSocketListByUsers(copyOfUserList);
 
             } else {
                 // Shouldn't happen

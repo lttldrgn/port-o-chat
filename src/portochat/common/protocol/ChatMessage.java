@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import portochat.common.User;
 
 /**
  * This class holds client messages to a user or channel.
@@ -31,7 +32,7 @@ import java.util.logging.Logger;
 public class ChatMessage extends DefaultData {
 
     private static final Logger logger = Logger.getLogger(ChatMessage.class.getName());
-    private String fromUser = null;
+    private User fromUser = null;
     private String to = null;
     private boolean action = false;
     private String message = null;
@@ -52,28 +53,11 @@ public class ChatMessage extends DefaultData {
         super.parse(dis);
 
         try {
-            StringBuilder sb = new StringBuilder();
-            
-            int userLength = dis.readInt();
-            for (int i = 0;i < userLength;i++) {
-                sb.append((char)dis.readUnsignedByte());
-            }
-            fromUser = sb.toString();
-                        
-            sb = new StringBuilder();
-            userLength = dis.readInt();
-            for (int i = 0;i < userLength;i++) {
-                sb.append((char)dis.readUnsignedByte());
-            }
-            to = sb.toString();
+            fromUser = new User(dis);
+            to = dis.readUTF();
             
             action = dis.readBoolean();
-            int messageLength = dis.readInt();
-            sb = new StringBuilder();
-            for (int i = 0;i < messageLength;i++) {
-                sb.append((char)dis.readUnsignedByte());
-            }
-            message = sb.toString();
+            message = dis.readUTF();
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to parse data!", ex);
         }
@@ -89,25 +73,10 @@ public class ChatMessage extends DefaultData {
         
         try {
             // The server fills this out, from the client this will be null.
-            if (fromUser == null) {
-                dos.writeInt(0);
-            } else { 
-                dos.writeInt(fromUser.length());
-                for (int i = 0;i < fromUser.length();i++) {
-                    dos.writeByte(fromUser.charAt(i));
-                }
-            }
-            
-            dos.writeInt(to.length());
-            for (int i = 0;i < to.length();i++) {
-                dos.writeByte(to.charAt(i));
-            }
-            
+            User.writeDos(fromUser, dos);
+            dos.writeUTF(to);
             dos.writeBoolean(action);
-            dos.writeInt(message.length());
-            for (int i = 0;i < message.length();i++) {
-                dos.writeByte(message.charAt(i));
-            }
+            dos.writeUTF(message);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to write data", ex);
         }
@@ -164,7 +133,7 @@ public class ChatMessage extends DefaultData {
     /**
      * @return the from user
      */
-    public String getFromUser() {
+    public User getFromUser() {
         return fromUser;
     }
 
@@ -173,7 +142,7 @@ public class ChatMessage extends DefaultData {
      * 
      * @param fromUser
      */
-    public void setFromUser(String fromUser) {
+    public void setFromUser(User fromUser) {
         this.fromUser = fromUser;
     }
 

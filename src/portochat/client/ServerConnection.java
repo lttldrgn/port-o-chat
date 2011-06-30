@@ -145,7 +145,7 @@ public class ServerConnection {
                         ((Pong)defaultData).getCalculatedLag() + "ms");
             } else if (defaultData instanceof ServerMessage) {
                 ServerMessage message = (ServerMessage) defaultData;
-                if (message.getMessageEnum().equals(ServerMessageEnum.USER_SET)) {
+                if (message.getMessageEnum().equals(ServerMessageEnum.USERNAME_SET)) {
                     for (ServerDataListener listener : listeners) {
                         listener.handleServerConnection(message.getAdditionalMessage(), true);
                     }
@@ -183,7 +183,7 @@ public class ServerConnection {
             } else if (defaultData instanceof ChannelJoinPart) {
                 ChannelJoinPart joinPart = (ChannelJoinPart) defaultData;
                 for (ServerDataListener listener : listeners) {
-                    listener.receiveChannelJoinPart(joinPart.getUser(), 
+                    listener.receiveChannelJoinPart(joinPart.getUser(),
                             joinPart.getChannel(), joinPart.hasJoined());
                 }
             } else if (defaultData instanceof ChannelStatus) {
