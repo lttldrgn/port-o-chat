@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import portochat.common.User;
 
 /**
  * This class holds data for users connecting and disconnecting from the server.
@@ -31,7 +32,7 @@ import java.util.logging.Logger;
 public class UserConnection extends DefaultData {
 
     private static final Logger logger = Logger.getLogger(UserConnection.class.getName());
-    private String user = null;
+    private User user = null;
     private boolean connected = false;
     
     /*
@@ -50,12 +51,7 @@ public class UserConnection extends DefaultData {
         super.parse(dis);
 
         try {
-            StringBuilder sb = new StringBuilder();
-            int userLength = dis.readInt();
-            for (int i = 0; i < userLength; i++) {
-                sb.append((char) dis.readUnsignedByte());
-            }
-            user = sb.toString();
+            user = new User(dis);
             connected = dis.readBoolean();
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to parse data!", ex);
@@ -70,10 +66,7 @@ public class UserConnection extends DefaultData {
     @Override
     public int writeBody(DataOutputStream dos) {
         try {
-            dos.writeInt(user.length());
-            for (int i = 0; i < user.length(); i++) {
-                dos.writeByte(user.charAt(i));
-            }
+            User.writeDos(user, dos);
             dos.writeBoolean(connected);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to write data", ex);
@@ -85,7 +78,7 @@ public class UserConnection extends DefaultData {
     /**
      * @return the user
      */
-    public String getUser() {
+    public User getUser() {
         return user;
     }
 
@@ -94,7 +87,7 @@ public class UserConnection extends DefaultData {
      * 
      * @param user
      */
-    public void setUser(String user) {
+    public void setUser(User user) {
         this.user = user;
     }
 

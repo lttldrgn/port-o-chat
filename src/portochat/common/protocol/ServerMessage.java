@@ -51,13 +51,10 @@ public class ServerMessage extends DefaultData {
 
         try {
             messageEnum = ServerMessageEnum.values()[dis.readInt()];
-            StringBuilder sb = new StringBuilder();         
-            int messageLength = dis.readInt();
-            for (int i = 0;i < messageLength;i++) {
-                sb.append((char)dis.readUnsignedByte());
+            boolean hasAdditionalMessage = dis.readBoolean();
+            if (hasAdditionalMessage) {
+                additionalMessage = dis.readUTF();
             }
-            additionalMessage = sb.toString();
-            dis.readByte();
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to parse data!", ex);
         }
@@ -73,10 +70,9 @@ public class ServerMessage extends DefaultData {
         
         try {
             dos.writeInt(messageEnum.getValue());
-            int messageLength = additionalMessage == null ? 0 : additionalMessage.length();
-            dos.writeInt(messageLength);
-            for (int i = 0;i < additionalMessage.length();i++) {
-                dos.writeByte(additionalMessage.charAt(i));
+            dos.writeBoolean(additionalMessage != null);
+            if (additionalMessage != null) {
+                dos.writeUTF(additionalMessage);
             }
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to write data", ex);

@@ -17,6 +17,7 @@
 package portochat.client;
 
 import java.util.List;
+import portochat.common.User;
 
 /**
  *
@@ -31,14 +32,14 @@ public interface ServerDataListener {
      * @param channel The channel that this list of users is from, null if a 
      * server user list.
      */
-    public void userListReceived(List<String> users, String channel);
+    public void userListReceived(List<User> users, String channel);
     
     /**
      * This method is called when a user joins or leaves the server or channel
      * @param user Name of the user
      * @param connected true if user has connected, otherwise means disconnected
      */
-    public void userConnectionEvent(String user, boolean connected);
+    public void userConnectionEvent(User user, boolean connected);
     
     /**
      * This method is called when a chat message is received.  If the channel
@@ -49,7 +50,7 @@ public interface ServerDataListener {
      * @param message
      * @param channel Which channel the message was sent on
      */
-    public void receiveChatMessage(String fromUser, boolean action, String message, String channel);
+    public void receiveChatMessage(User fromUser, boolean action, String message, String channel);
     
     /**
      * This method is called after a channel list is received from the server
@@ -63,7 +64,8 @@ public interface ServerDataListener {
      * @param channel Channel that is being joined/parted
      * @param join If true this is a join, otherwise a part event
      */
-    public void receiveChannelJoinPart(String user, String channel, boolean join);
+    public void receiveChannelJoinPart(User user, String channel,
+            boolean join);
     
     /**
      * This method is called when a channel is created or destroyed

@@ -9,7 +9,7 @@ package portochat.common.protocol;
  * @author Brandon
  */
 public enum ServerMessageEnum {
-    USER_SET(0, "User set to"),
+    USERNAME_SET(0, "Username set to"),
     ERROR_USERNAME_IN_USE(1, "Username in use"),
     ERROR_CHANNEL_NON_EXISTENT(2, "Can't send message to a non-existant channel"),
     ERROR_USER_NON_EXISTENT(2, "Can't send message to a non-existant user"),

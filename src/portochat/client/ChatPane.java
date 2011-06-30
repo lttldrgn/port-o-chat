@@ -43,6 +43,7 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
 import javax.swing.text.StyledDocument;
 import portochat.common.Settings;
+import portochat.common.User;
 
 /**
  *
@@ -178,8 +179,8 @@ public class ChatPane extends JPanel {
         });
 
         if (isChannel) {
-            ArrayList<String> me = new ArrayList<String>();
-            me.add(myUserName);
+            ArrayList<User> me = new ArrayList<User>();
+            me.add(new User(myUserName, "localhost"));
             addParticipants(me);
         }
         initStyles(viewPane);
@@ -197,9 +198,10 @@ public class ChatPane extends JPanel {
         StyleConstants.setBold(s, true);
         s = doc.addStyle("joinpart", def);
         StyleConstants.setItalic(s, true);
+        StyleConstants.setForeground(s, new Color(0, 153, 0));
         s = doc.addStyle("disconnect", def);
         StyleConstants.setItalic(s, true);
-        StyleConstants.setForeground(s, new Color(0, 153, 0));
+        StyleConstants.setForeground(s, new Color(0, 0, 153));
         s = doc.addStyle("boldaction", def);
         StyleConstants.setItalic(s, true);
         StyleConstants.setBold(s, true);
@@ -248,10 +250,10 @@ public class ChatPane extends JPanel {
      * Adds a list of participants to this channels list
      * @param participants List of participants in this channel
      */
-    public void addParticipants(final List<String> participants) {
+    public void addParticipants(final List<User> participants) {
 
-        for (String contact : participants) {
-            userJoinedEvent(contact, true);
+        for (User user : participants) {
+            userJoinedEvent(user, true);
         }
     }
 
@@ -262,14 +264,14 @@ public class ChatPane extends JPanel {
      * @param user
      * @param joined 
      */
-    public void userJoinedEvent(final String user, final boolean joined) {
+    public void userJoinedEvent(final User user, final boolean joined) {
         SwingUtilities.invokeLater(new Runnable() {
 
             @Override
             public void run() {
                 if (joined) {
-                    if (!participantListModel.contains(user)) {
-                        participantListModel.addElement(user);
+                    if (!participantListModel.contains(user.getName())) {
+                        participantListModel.addElement(user.getName());
                         StyledDocument doc = viewPane.getStyledDocument();
                         String message = getTimestamp() + " " + user
                                 + " has joined the channel\n";
@@ -281,7 +283,7 @@ public class ChatPane extends JPanel {
                         }
                     }
                 } else {
-                    participantListModel.removeElement(user);
+                    participantListModel.removeElement(user.getName());
                     StyledDocument doc = viewPane.getStyledDocument();
                     String message = getTimestamp() + " " + user
                             + " has left the channel\n";
@@ -301,13 +303,13 @@ public class ChatPane extends JPanel {
      * This will remove the user from the list.
      * @param user
      */
-    public void userDisconnectedEvent(final String user) {
+    public void userDisconnectedEvent(final User user) {
         SwingUtilities.invokeLater(new Runnable() {
 
             @Override
             public void run() {
-                if (participantListModel.contains(user)) {
-                    participantListModel.removeElement(user);
+                if (participantListModel.contains(user.getName())) {
+                    participantListModel.removeElement(user.getName());
                     StyledDocument doc = viewPane.getStyledDocument();
                     String message = getTimestamp() + " " + user
                             + " has disconnected from the server\n";
@@ -365,8 +367,8 @@ public class ChatPane extends JPanel {
      * Updates the list of users in this channel
      * @param list List of users in the channel
      */
-    public void updateUserList(final List<String> list) {
-        for (String user : list) {
+    public void updateUserList(final List<User> list) {
+        for (User user : list) {
             userJoinedEvent(user, true);
         }
     }
