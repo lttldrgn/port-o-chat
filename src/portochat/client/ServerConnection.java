@@ -16,6 +16,7 @@
  */
 package portochat.client;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
@@ -51,10 +52,12 @@ public class ServerConnection {
     public ServerConnection() {
     }
     
-    public boolean connectToServer(String serverAddress, int port) {
+    public boolean connectToServer(String serverAddress, int port) 
+            throws IOException {
         boolean successful = true;
         socket = new TCPSocket("Client");
         successful = socket.connect(serverAddress, port);
+        
         if (successful) {
             clientHandler = new ClientHandler();
             socket.addListener(clientHandler);

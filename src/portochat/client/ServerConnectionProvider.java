@@ -17,4 +17,10 @@ public interface ServerConnectionProvider {
      * @param message Message being sent
      */
     public void sendMessage(String recipient, boolean action, String message);
+    
+    /**
+     * Returns the name that the client is connected as on the server
+     * @return Username that is set on the server
+     */
+    public String getConnectedUsername();
 }
