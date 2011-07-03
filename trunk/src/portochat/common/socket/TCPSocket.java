@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.net.UnknownHostException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -93,14 +92,8 @@ public class TCPSocket {
      * 
      * @return true if successful
      */
-    public boolean connect(String host, int port) {
-        try {
-            clientSocket = new Socket(host, port);
-        } catch (UnknownHostException ex) {
-            logger.log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, null, ex);
-        }
+    public boolean connect(String host, int port) throws IOException {
+        clientSocket = new Socket(host, port);
 
         startProcessingThreads(clientSocket);
 

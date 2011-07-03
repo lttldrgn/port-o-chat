@@ -18,6 +18,7 @@ package portochat.client;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -29,10 +30,13 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.net.ConnectException;
+import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -66,6 +70,7 @@ public class Client extends JFrame implements ActionListener,
     private static final String CONNECT = "CONNECT";
     private static final String CREATE_CHANNEL = "CREATE_CHANNEL";
     private static final String DISCONNECT = "DISCONNECT";
+    private static final String STATUS_MENU = "STATUS_MENU";
     private HashMap<String, ChatPane> chatPaneMap = 
             new HashMap<String, ChatPane>();
     private HashMap<String, ChatPane> channelPaneMap = 
@@ -79,6 +84,7 @@ public class Client extends JFrame implements ActionListener,
     private JMenuItem disconnect = new JMenuItem("Disconnect");
     private JTabbedPane tabbedChatPane = new JTabbedPane(JTabbedPane.BOTTOM, 
             JTabbedPane.SCROLL_TAB_LAYOUT);
+    private StatusPane statusPane = null;
     private String myUserName = null;
     private ServerConnection connection = null;
     private boolean connected = false;
@@ -124,6 +130,16 @@ public class Client extends JFrame implements ActionListener,
         exitMenu.setActionCommand(EXIT_COMMAND);
         fileMenu.add(exitMenu);
         exitMenu.addActionListener(this);
+        
+        JMenu windowMenu = new JMenu("Window");
+        windowMenu.setMnemonic(KeyEvent.VK_W);
+        menuBar.add(windowMenu);
+        
+        JMenuItem statusMenu = new JMenuItem("Status");
+        statusMenu.addActionListener(this);
+        statusMenu.setMnemonic(KeyEvent.VK_S);
+        statusMenu.setActionCommand(STATUS_MENU);
+        windowMenu.add(statusMenu); 
         
         // add split pane
         Container contentPane = getContentPane();       
@@ -188,6 +204,22 @@ public class Client extends JFrame implements ActionListener,
                 setTabColor(tabIndex, Color.black);
             }
         });
+        
+        statusPane = StatusPane.createStatusPane(this);
+        showStatusPane();
+    }
+    
+    /**
+     * Makes the status pane visible if it is not
+     */
+    private void showStatusPane() {
+        if (tabbedChatPane.indexOfComponent(statusPane) == -1) {
+
+            tabbedChatPane.add(statusPane.getPaneTitle(), statusPane);
+            tabbedChatPane.setTabComponentAt(
+                    tabbedChatPane.indexOfComponent(statusPane), 
+                    new ButtonTabComponent(tabbedChatPane, this));
+        }
     }
     
     /**
@@ -249,6 +281,8 @@ public class Client extends JFrame implements ActionListener,
             }
         } else if (e.getActionCommand().equals(DISCONNECT)) {
             disconnectFromServer();
+        } else if (e.getActionCommand().equals(STATUS_MENU)) {
+            showStatusPane();
         }
     }
     
@@ -310,15 +344,27 @@ public class Client extends JFrame implements ActionListener,
             return;
         }
 
+        boolean success = false;
         try {
             connection = new ServerConnection();
             connection.addDataListener(this);
-            connection.connectToServer(server, port);
+            success = connection.connectToServer(server, port);
             connection.sendUsername(name);
             
+        } catch (UnknownHostException e) {
+            statusPane.showMessage("Connection failed because of unknown " +
+                    "server name.  Please check the server name.");
+        } catch (ConnectException e) {
+            statusPane.showMessage("Connection failed.  Please check that the " +
+                    "server is running and that the client is configured " +
+                    "properly (i.e. server port number is correct).");
+            statusPane.showMessage("Error message: " + e.getMessage());
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Could not connect!");
-            e.printStackTrace();
+            statusPane.showMessage("Unknown error trying to connect to server. See log.");
+            logger.log(Level.SEVERE, "Unknown error.  Please report this issue.", e);
+        }
+        if (!success) {
+            JOptionPane.showMessageDialog(this, "Could not connect.  See status pane for reason");
         }
     }
     
@@ -448,8 +494,10 @@ public class Client extends JFrame implements ActionListener,
                             (ButtonTabComponent)tabbedChatPane.getTabComponentAt(tabIndex);
                 comp.setTextColor(color);
                 comp.repaint();
-                ChatPane chatPane = (ChatPane) tabbedChatPane.getComponentAt(tabIndex);
-                chatPane.setFocus();
+                Component pane = tabbedChatPane.getComponentAt(tabIndex);
+                if (pane instanceof ChatPane) {
+                    ((ChatPane)pane).setFocus();
+                }
             }
         });
     }
@@ -587,5 +635,10 @@ public class Client extends JFrame implements ActionListener,
         if (connection != null) {
             connection.sendMessage(recipient, action, message);
         }
+    }
+
+    @Override
+    public String getConnectedUsername() {
+        return myUserName;
     }
 }

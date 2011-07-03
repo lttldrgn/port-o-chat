@@ -378,6 +378,7 @@ public class ChatPane extends JPanel {
      * artifacts left from the disconnect.
      */
     public void rejoin() {
+        myUserName = serverConnectionProvider.getConnectedUsername();
         if (isChannel) {
             participantListModel.clear();
         }
