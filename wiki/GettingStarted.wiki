@@ -1,0 +1,27 @@
+#How to run Port-O-Chat server and client application
+
+== System Requirements ==
+  * Java 1.6 installed on computer
+
+== Install (any system) == 
+  * Unzip the PortOChat.zip file to a directory of your choice
+
+= Start the server =
+Note that only a single server should be started per group of clients.  Once a server is started then all clients on a network connect to that server.  Make sure your firewall settings are set to allow incoming connections from other computers.
+== Windows ==
+  * Run the server.bat file in the directory where PortOChat.zip was extracted
+== Linux ==
+  * Run the server.sh file in the directory where PortOChat.zip was extracted
+
+= Run the client=
+==Windows==
+  * Run the client.bat file in the directory where PortOChat.zip was extracted
+== Linux ==
+  * Run the client.sh file in the directory where PortOChat.zip was extracted
+
+= Connect client to server =
+  # Launch the client using above instructions
+  # From the "File" menu, select "Connect"
+  # Enter the user name you would like to use
+  # Enter the name of the machine the server is running on
+  # Click OK
