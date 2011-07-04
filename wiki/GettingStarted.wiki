@@ -3,7 +3,8 @@
 == System Requirements ==
   * Java 1.6 installed on computer
 
-== Install (any system) == 
+== Install (any system) ==
+  * Download the latest PortOChat.zip file from the Downloads area
   * Unzip the PortOChat.zip file to a directory of your choice
 
 = Start the server =
