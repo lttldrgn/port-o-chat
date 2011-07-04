@@ -1,4 +1,4 @@
-#How to run Port-O-Chat server and client application
+#summary How to run Port-O-Chat server and client application
 
 == System Requirements ==
   * Java 1.6 installed on computer
