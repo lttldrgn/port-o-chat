@@ -20,3 +20,8 @@ All messages start with a message header that includes the message type, length 
 || *Enumerated value* || *Name* || *Description* ||
 || 1 || Server Message || Message from the server to the client ||
 || 7 || User List|| Dual purpose message.  When sent from client this is a user list request.  When sent from server this message is populated with the list of users on server ||
+
+==User List Message==
+|| *Field* || *Length in bytes* || *Description* ||
+|| Header || 13 || See above ||
+|| Channel || 1 || If this user list is for a channel. 1 if true ||
