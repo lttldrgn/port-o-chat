@@ -23,6 +23,8 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -49,7 +51,7 @@ import portochat.common.User;
  *
  * @author Brandon
  */
-public class ChatPane extends JPanel {
+public class ChatPane extends JPanel implements PropertyChangeListener {
 
     private static final Logger logger =
             Logger.getLogger(ChatPane.class.getName());
@@ -184,6 +186,7 @@ public class ChatPane extends JPanel {
             addParticipants(me);
         }
         initStyles(viewPane);
+        ThemeManager.getInstance().addThemeListener(this);
 
     }
     
@@ -215,7 +218,9 @@ public class ChatPane extends JPanel {
     }
 
     private void sendMessage(boolean action, String messageText) {
-        serverConnectionProvider.sendMessage(recipient, action, messageText);
+        if (serverConnectionProvider != null) {
+            serverConnectionProvider.sendMessage(recipient, action, messageText);
+        }
     }
 
     public String getPaneTitle() {
@@ -389,6 +394,17 @@ public class ChatPane extends JPanel {
         return formatDate.format(currentDate);
     }
 
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        if (evt.getPropertyName().equals(ThemeManager.TOP_PANE_BACKGROUND)) {
+            Color newColor = (Color) evt.getNewValue();
+            viewPane.setBackground(newColor);
+        } else if (evt.getPropertyName().equals(ThemeManager.TOP_PANE_FOREGROUND)) {
+            Color newColor = (Color) evt.getNewValue();
+            viewPane.setForeground(newColor);
+        }
+    }
+    
     // main for visual test purposes only
     public static void main(String args[]) {
         JFrame frame = new JFrame();
