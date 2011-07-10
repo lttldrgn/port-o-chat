@@ -1,0 +1,10 @@
+#summary Describes protocol that client and server use to communicate
+
+==Client/Server communication basics==
+In general, the client and server communication is asynchronous.  This means that neither the client or server waits for a reply to any request that is made.
+
+==Client connection to server==
+Client opens a TCP connection to the server host and port
+Once connection is established, the client sends the user name to the server.
+If accepted then, a success message is sent to the client.
+Upon success message, the client then sends user and channel list requests.
