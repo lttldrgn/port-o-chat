@@ -71,6 +71,7 @@ public class Client extends JFrame implements ActionListener,
     private static final String CREATE_CHANNEL = "CREATE_CHANNEL";
     private static final String DISCONNECT = "DISCONNECT";
     private static final String STATUS_MENU = "STATUS_MENU";
+    private static final String THEME_MENU = "THEME_MENU";
     private HashMap<String, ChatPane> chatPaneMap = 
             new HashMap<String, ChatPane>();
     private HashMap<String, ChatPane> channelPaneMap = 
@@ -130,6 +131,15 @@ public class Client extends JFrame implements ActionListener,
         exitMenu.setActionCommand(EXIT_COMMAND);
         fileMenu.add(exitMenu);
         exitMenu.addActionListener(this);
+        
+        JMenu settingsMenu = new JMenu("Settings");
+        settingsMenu.setMnemonic(KeyEvent.VK_S);
+        menuBar.add(settingsMenu);
+        
+        JMenuItem themeMenu = new JMenuItem("Change theme");
+        themeMenu.addActionListener(this);
+        themeMenu.setActionCommand(THEME_MENU);
+        settingsMenu.add(themeMenu); 
         
         JMenu windowMenu = new JMenu("Window");
         windowMenu.setMnemonic(KeyEvent.VK_W);
@@ -283,6 +293,10 @@ public class Client extends JFrame implements ActionListener,
             disconnectFromServer();
         } else if (e.getActionCommand().equals(STATUS_MENU)) {
             showStatusPane();
+        } else if (e.getActionCommand().equals(THEME_MENU)) {
+            ThemeManager themeManager = ThemeManager.getInstance();
+            themeManager.setTopLevelComponent(this);
+            themeManager.setVisible(true);
         }
     }
     
