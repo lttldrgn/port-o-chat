@@ -112,7 +112,7 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
         c.gridy = 1;
         c.weighty = 0.1;
         add(new JScrollPane(textEntry), c);
-        textEntry.setText("Enter message to send");
+        
         textEntry.addKeyListener(new KeyAdapter() {
 
             @Override
@@ -368,6 +368,38 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
         });
     }
 
+    /**
+     * Show informational message in the channel window.  This is not a message
+     * from a user, but a message related to client or server status.
+     * @param message Message to show
+     * @param style Text style or null for regular text
+     */
+    public void showInfoMessage(final String message, final String style) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                StyledDocument doc = viewPane.getStyledDocument();
+                    try {
+                        if (style == null) {
+                            // no style applied
+                            doc.insertString(doc.getLength(),
+                                getTimestamp() + ": ",
+                                doc.getStyle("bold"));
+                        doc.insertString(doc.getLength(), message + "\n",
+                                doc.getStyle("normal"));
+                        }
+                        if (style.equals("disconnect")) {
+                            doc.insertString(doc.getLength(), 
+                                    getTimestamp() + ": " + message + "\n",
+                                    doc.getStyle("disconnect"));
+                        }
+                    } catch (BadLocationException ex) {
+                        logger.log(Level.SEVERE, null, ex);
+                    }
+            }
+        });
+    }
+    
     /**
      * Updates the list of users in this channel
      * @param list List of users in the channel
