@@ -135,14 +135,11 @@ public class StatusPane extends JPanel {
     }
 
     /**
-     * Updates the pane with the received message.  This update is thrown on 
-     * the EDT.
-     * 
-     * @param user
-     * @param action
-     * @param message 
+     * Show informational message in the status window.
+     * @param message Message to show
+     * @param style Text style or null for regular text
      */
-    public void showMessage(final String message) {
+    public void showMessage(final String message, final String style) {
 
         SwingUtilities.invokeLater(new Runnable() {
 
@@ -150,12 +147,18 @@ public class StatusPane extends JPanel {
             public void run() {
                 StyledDocument doc = viewPane.getStyledDocument();
                 try {
-                    doc.insertString(doc.getLength(),
-                            getTimestamp() + ": ",
-                            doc.getStyle("bold"));
-                    doc.insertString(doc.getLength(),
-                            message + "\n",
-                            doc.getStyle("normal"));
+                    if (style == null) {
+                        doc.insertString(doc.getLength(),
+                                getTimestamp() + ": ",
+                                doc.getStyle("bold"));
+                        doc.insertString(doc.getLength(),
+                                message + "\n",
+                                doc.getStyle("normal"));
+                    } else if (style.equals("disconnect")) {
+                        doc.insertString(doc.getLength(), 
+                                    getTimestamp() + ": " + message + "\n",
+                                    doc.getStyle("disconnect"));
+                    }
                 } catch (BadLocationException ex) {
                     logger.log(Level.SEVERE, null, ex);
                 }
