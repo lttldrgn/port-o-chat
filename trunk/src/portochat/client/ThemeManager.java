@@ -70,7 +70,6 @@ public class ThemeManager extends JDialog implements ActionListener {
     private void init() {
 
         for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                System.out.println(info.getName());
                 themeChooser.addItem(info.getName());
                 lookAndFeelMap.put(info.getName(), info.getClassName());
         }
@@ -162,6 +161,7 @@ public class ThemeManager extends JDialog implements ActionListener {
     
     private void setLookAndFeel(final Component topLevel) {
         SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
 
                 try {
