@@ -184,11 +184,13 @@ public class Client extends JFrame implements ActionListener,
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() >= 2) {
                     String contact = (String) contactList.getSelectedValue();
-                    ChatPane pane = chatPaneMap.get(contact);
-                    if (pane == null) {
-                        pane = createChatPane(contact);
+                    if (contact != null) {
+                        ChatPane pane = chatPaneMap.get(contact);
+                        if (pane == null) {
+                            pane = createChatPane(contact);
+                        }
+                        tabbedChatPane.setSelectedComponent(pane);
                     }
-                    tabbedChatPane.setSelectedComponent(pane);
                 }
             }
         });
@@ -197,7 +199,9 @@ public class Client extends JFrame implements ActionListener,
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() >= 2) {
                     String channel = (String) channelList.getSelectedValue();
-                    joinChannel(channel);
+                    if (channel != null) {
+                        joinChannel(channel);
+                    }
                 }
             }
         });
@@ -281,7 +285,9 @@ public class Client extends JFrame implements ActionListener,
                 int i = ((ButtonTabComponent.TabButton) e.getSource()).getComponentIndex();
                 String name = tabbedChatPane.getTitleAt(i);
                 if (name.startsWith("#")) {
-                    connection.partChannel(name);
+                    if (connected) {
+                        connection.partChannel(name);
+                    }
                     channelPaneMap.remove(name);
                 } else {
                     chatPaneMap.remove(name);
