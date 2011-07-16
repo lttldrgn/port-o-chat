@@ -32,6 +32,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
@@ -373,14 +374,14 @@ public class Client extends JFrame implements ActionListener,
             
         } catch (UnknownHostException e) {
             statusPane.showMessage("Connection failed because of unknown " +
-                    "server name.  Please check the server name.");
+                    "server name.  Please check the server name.", null);
         } catch (ConnectException e) {
             statusPane.showMessage("Connection failed.  Please check that the " +
                     "server is running and that the client is configured " +
-                    "properly (i.e. server port number is correct).");
-            statusPane.showMessage("Error message: " + e.getMessage());
+                    "properly (i.e. server port number is correct).", null);
+            statusPane.showMessage("Error message: " + e.getMessage(), null);
         } catch (Exception e) {
-            statusPane.showMessage("Unknown error trying to connect to server. See log.");
+            statusPane.showMessage("Unknown error trying to connect to server. See log.", null);
             logger.log(Level.SEVERE, "Unknown error.  Please report this issue.", e);
         }
         if (!success) {
@@ -403,6 +404,20 @@ public class Client extends JFrame implements ActionListener,
         setTitle("Port-O-Chat - Disconnected");
         contactListModel.clear();
         channelListModel.clear();
+        showDisconnectMessage();
+    }
+    
+    private void showDisconnectMessage() {
+        Collection<ChatPane> chatPanes = chatPaneMap.values();
+        for (ChatPane pane : chatPanes) {
+            pane.showInfoMessage("Disconnected from server", "disconnect");
+        }
+        
+        Collection<ChatPane> channelPanes = channelPaneMap.values();
+        for (ChatPane pane : channelPanes) {
+            pane.showInfoMessage("Disconnected from server", "disconnect");
+        }
+        statusPane.showMessage("Disconnected from server", "disconnect");
     }
     
     @Override
