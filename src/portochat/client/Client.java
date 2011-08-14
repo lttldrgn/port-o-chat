@@ -30,6 +30,8 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.util.Collection;
@@ -56,6 +58,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import portochat.common.User;
@@ -90,7 +93,11 @@ public class Client extends JFrame implements ActionListener,
     private String myUserName = null;
     private ServerConnection connection = null;
     private boolean connected = false;
- 
+    private NotificationTimerListener timerListener = new NotificationTimerListener();
+    // Timer to alert user when a message has been received
+    private Timer notificationTimer = new Timer(1500, timerListener);
+    private volatile boolean messageReceived = false;
+    
     public Client() {
         setTitle("Port-O-Chat");
     }
@@ -219,6 +226,8 @@ public class Client extends JFrame implements ActionListener,
                 setTabColor(tabIndex, Color.black);
             }
         });
+        
+        addWindowFocusListener(timerListener);
         
         statusPane = StatusPane.createStatusPane(this);
         showStatusPane();
@@ -405,6 +414,7 @@ public class Client extends JFrame implements ActionListener,
         contactListModel.clear();
         channelListModel.clear();
         showDisconnectMessage();
+        timerListener.reset();
     }
     
     private void showDisconnectMessage() {
@@ -440,6 +450,11 @@ public class Client extends JFrame implements ActionListener,
                     disconnect.setEnabled(true);
                     setTitle("Port-O-Chat: Connected as " + myUserName);
                     rejoinOpenChannels();
+                    if (notificationTimer.isRunning()) {
+                        notificationTimer.restart();
+                    } else {
+                        notificationTimer.start();
+                    }
                 }
             });
         } else {
@@ -598,7 +613,7 @@ public class Client extends JFrame implements ActionListener,
     @Override
     public void receiveChatMessage(final User fromUser, final boolean action, 
         final String message, final String channel) {
-        
+
         // user to user message
         if (channel == null) {
             ChatPane pane = chatPaneMap.get(fromUser.getName());
@@ -614,6 +629,7 @@ public class Client extends JFrame implements ActionListener,
                         if (tabbedChatPane.getSelectedIndex() != tabIndex) {
                             setTabColor(tabIndex, Color.red);
                         }
+                        messageReceived = true;
                     }
                 });
             } else {
@@ -623,6 +639,7 @@ public class Client extends JFrame implements ActionListener,
                 if (tabbedChatPane.getSelectedIndex() != tabIndex) {
                     setTabColor(tabIndex, Color.red);
                 }
+                messageReceived = true;
             }
         } else {
             ChatPane pane = channelPaneMap.get(channel);
@@ -633,6 +650,7 @@ public class Client extends JFrame implements ActionListener,
                 if (tabbedChatPane.getSelectedIndex() != tabIndex) {
                     setTabColor(tabIndex, Color.red);
                 }
+                messageReceived = true;
             } else {
                 logger.warning("Received a message from a channel that is not joined.");
             }
@@ -675,5 +693,55 @@ public class Client extends JFrame implements ActionListener,
     @Override
     public String getConnectedUsername() {
         return myUserName;
+    }
+    
+    private class NotificationTimerListener implements ActionListener, 
+            WindowFocusListener {
+        
+        private String currentTitle;
+        private boolean isWindows = false;
+        
+        public NotificationTimerListener() {
+            isWindows = System.getProperty("os.name").contains("Windows");
+        }
+        
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (currentTitle == null) {
+                currentTitle = getTitle();
+            }
+            
+            if (!Client.this.isActive() && messageReceived) {
+                // if the window is not active and a message is received
+                // set the title to give a visual cue to user
+                if (isWindows) {
+                    toFront();
+                    messageReceived = false;
+                } else {
+                    // linux
+                    if (getTitle().equals(currentTitle)) {
+                        setTitle("Message received " + currentTitle);
+                    } else {
+                        setTitle(currentTitle);
+                    }
+                }
+            }
+        }
+        
+        public void reset() {
+            currentTitle = null;
+        }
+
+        @Override
+        public void windowGainedFocus(WindowEvent e) {
+            messageReceived = false;
+            setTitle(currentTitle);
+        }
+
+        @Override
+        public void windowLostFocus(WindowEvent e) {
+            
+        }
+        
     }
 }
