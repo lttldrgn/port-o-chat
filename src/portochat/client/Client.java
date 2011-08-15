@@ -96,7 +96,6 @@ public class Client extends JFrame implements ActionListener,
     private NotificationTimerListener timerListener = new NotificationTimerListener();
     // Timer to alert user when a message has been received
     private Timer notificationTimer = new Timer(1500, timerListener);
-    private volatile boolean messageReceived = false;
     
     public Client() {
         setTitle("Port-O-Chat");
@@ -629,7 +628,7 @@ public class Client extends JFrame implements ActionListener,
                         if (tabbedChatPane.getSelectedIndex() != tabIndex) {
                             setTabColor(tabIndex, Color.red);
                         }
-                        messageReceived = true;
+                        timerListener.notifyMessageReceived();
                     }
                 });
             } else {
@@ -639,7 +638,7 @@ public class Client extends JFrame implements ActionListener,
                 if (tabbedChatPane.getSelectedIndex() != tabIndex) {
                     setTabColor(tabIndex, Color.red);
                 }
-                messageReceived = true;
+                timerListener.notifyMessageReceived();
             }
         } else {
             ChatPane pane = channelPaneMap.get(channel);
@@ -650,7 +649,7 @@ public class Client extends JFrame implements ActionListener,
                 if (tabbedChatPane.getSelectedIndex() != tabIndex) {
                     setTabColor(tabIndex, Color.red);
                 }
-                messageReceived = true;
+                timerListener.notifyMessageReceived();
             } else {
                 logger.warning("Received a message from a channel that is not joined.");
             }
@@ -700,6 +699,7 @@ public class Client extends JFrame implements ActionListener,
         
         private String currentTitle;
         private boolean isWindows = false;
+        private volatile boolean messageReceived = false;
         
         public NotificationTimerListener() {
             isWindows = System.getProperty("os.name").contains("Windows");
@@ -714,17 +714,19 @@ public class Client extends JFrame implements ActionListener,
             if (!Client.this.isActive() && messageReceived) {
                 // if the window is not active and a message is received
                 // set the title to give a visual cue to user
-                if (isWindows) {
-                    toFront();
-                    messageReceived = false;
+                if (getTitle().equals(currentTitle)) {
+                    setTitle("Message received " + currentTitle);
                 } else {
-                    // linux
-                    if (getTitle().equals(currentTitle)) {
-                        setTitle("Message received " + currentTitle);
-                    } else {
-                        setTitle(currentTitle);
-                    }
+                    setTitle(currentTitle);
                 }
+            }
+        }
+        
+        public void notifyMessageReceived() {
+            messageReceived = true;
+            if (isWindows) {
+                // flash taskbar icon in windows
+                toFront();
             }
         }
         
