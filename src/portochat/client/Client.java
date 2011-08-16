@@ -30,6 +30,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 import java.net.ConnectException;
@@ -93,8 +94,13 @@ public class Client extends JFrame implements ActionListener,
     private String myUserName = null;
     private ServerConnection connection = null;
     private boolean connected = false;
-    private NotificationTimerListener timerListener = new NotificationTimerListener();
+    
+    // previous state
+    String username = "user";
+    String server = "localhost";
+    
     // Timer to alert user when a message has been received
+    private NotificationTimerListener timerListener = new NotificationTimerListener();
     private Timer notificationTimer = new Timer(1500, timerListener);
     
     public Client() {
@@ -106,8 +112,13 @@ public class Client extends JFrame implements ActionListener,
      */
     public void init() {
         setSize(1024, 768);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                shutdown();
+            }
+        });
         // add menu bar
         JMenuBar menuBar = new JMenuBar();
         setJMenuBar(menuBar);
@@ -230,6 +241,17 @@ public class Client extends JFrame implements ActionListener,
         
         statusPane = StatusPane.createStatusPane(this);
         showStatusPane();
+        username = GuiUtil.getUserName(this.getClass());
+        server = GuiUtil.getServerName(this.getClass());
+    }
+    
+    private void shutdown() {
+        if (connected) {
+            this.disconnectFromServer();
+        }
+        GuiUtil.saveUserName(getClass(), username);
+        GuiUtil.saveServerName(getClass(), server);
+        System.exit(0);
     }
     
     /**
@@ -275,7 +297,7 @@ public class Client extends JFrame implements ActionListener,
             int returnVal = JOptionPane.showConfirmDialog(this, "Exit?", 
                     "Exit confirmation", JOptionPane.OK_CANCEL_OPTION);
             if (returnVal == JOptionPane.OK_OPTION) {
-                System.exit(0);
+                shutdown();
             }
         } else if (e.getActionCommand().equals(CONNECT)) {
             connectToServer();
@@ -325,8 +347,8 @@ public class Client extends JFrame implements ActionListener,
         
         JPanel optionPanel = new JPanel(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
-        JTextField userTextField = new JTextField("user");
-        JTextField serverTextField = new JTextField("localhost");
+        JTextField userTextField = new JTextField(username);
+        JTextField serverTextField = new JTextField(server);
         c.gridx = 0;
         c.gridy = 0;
         c.insets = new Insets(0,0,0,5);
@@ -358,9 +380,13 @@ public class Client extends JFrame implements ActionListener,
         userTextField.addFocusListener(focusListener);
         serverTextField.addFocusListener(focusListener);
         
-        JOptionPane.showMessageDialog(this, optionPanel, "Enter information", JOptionPane.PLAIN_MESSAGE);
-        String name = userTextField.getText();
-        String server = serverTextField.getText();
+        int returnVal = JOptionPane.showConfirmDialog(this, optionPanel, 
+                "Enter information", JOptionPane.OK_CANCEL_OPTION);
+        if (returnVal != JOptionPane.OK_OPTION) {
+            return;
+        }
+        username = userTextField.getText();
+        server = serverTextField.getText();
         int port = ClientSettings.DEFAULT_SERVER_PORT;
         if (server.contains(":")) {
             String serverArgs[] = server.split(":");
@@ -368,7 +394,7 @@ public class Client extends JFrame implements ActionListener,
             port = Integer.parseInt(serverArgs[1]);
         }
         
-        if (name == null || name.isEmpty()) {
+        if (username == null || username.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Invalid inputs!");
             return;
         }
@@ -378,7 +404,7 @@ public class Client extends JFrame implements ActionListener,
             connection = new ServerConnection();
             connection.addDataListener(this);
             success = connection.connectToServer(server, port);
-            connection.sendUsername(name);
+            connection.sendUsername(username);
             
         } catch (UnknownHostException e) {
             statusPane.showMessage("Connection failed because of unknown " +
@@ -711,7 +737,7 @@ public class Client extends JFrame implements ActionListener,
                 currentTitle = getTitle();
             }
             
-            if (!Client.this.isActive() && messageReceived) {
+            if (messageReceived) {
                 // if the window is not active and a message is received
                 // set the title to give a visual cue to user
                 if (getTitle().equals(currentTitle)) {
@@ -723,10 +749,12 @@ public class Client extends JFrame implements ActionListener,
         }
         
         public void notifyMessageReceived() {
-            messageReceived = true;
-            if (isWindows) {
-                // flash taskbar icon in windows
-                toFront();
+            if (!Client.this.isActive()) {
+                messageReceived = true;
+                if (isWindows) {
+                    // flash taskbar icon in windows
+                    toFront();
+                }
             }
         }
         
