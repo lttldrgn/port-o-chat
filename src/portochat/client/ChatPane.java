@@ -198,7 +198,9 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
             addParticipants(me);
         }
         initStyles(viewPane);
-        ThemeManager.getInstance().addThemeListener(this);
+        // disabling for now... not being used at the moment and is a memory 
+        // leak anyway because we were not unregistering on pane close
+        //ThemeManager.getInstance().addThemeListener(this);
         
         viewPane.addHyperlinkListener(new HyperlinkListener() {
 
