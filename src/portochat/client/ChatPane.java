@@ -17,6 +17,7 @@
 package portochat.client;
 
 import java.awt.Color;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -25,6 +26,9 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -39,11 +43,12 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.text.BadLocationException;
-import javax.swing.text.Style;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyleContext;
-import javax.swing.text.StyledDocument;
+import javax.swing.text.Element;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 import portochat.common.Settings;
 import portochat.common.User;
 
@@ -55,6 +60,8 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
 
     private static final Logger logger =
             Logger.getLogger(ChatPane.class.getName());
+    private static final SimpleDateFormat formatDate =
+            new SimpleDateFormat("hh:mm.ssa");
     private DefaultListModel participantListModel = null;
     private JList participantList = null;
     private JTextPane viewPane = new JTextPane();
@@ -63,8 +70,8 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
     private String myUserName = null;
     private ServerConnectionProvider serverConnectionProvider = null;
     private boolean isChannel = false;
-    private static final SimpleDateFormat formatDate =
-            new SimpleDateFormat("h:mm.ssa");
+    private Element chatTextElement = null; // element that chat text is inserted
+    private HTMLDocument htdoc = null;
 
     /**
      * Creates a Chat Pane
@@ -125,8 +132,6 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
                         return;
                     }
 
-                    
-                    StyledDocument doc = viewPane.getStyledDocument();
                     boolean action = false;
 
                     // Check for commands
@@ -136,13 +141,19 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
                             text = text.replaceFirst(Settings.COMMAND_PREFIX + "me", "");
                         } else {
                             try {
-                                doc.insertString(doc.getLength(),
-                                        getTimestamp() + " Unknown command: "
-                                        + text.split(" ")[0] + "\n",
-                                        doc.getStyle("unknowncommand"));
-                                return;
+                                StringBuilder sb = new StringBuilder();
+                                sb.append("<span class=\"unknowncommand\">");
+                                sb.append(getTimestamp());
+                                sb.append(" Unknown command: ");
+                                sb.append(text.split(" ")[0]);
+                                sb.append("</span>");
+                                sb.append("<br>");
+                                htdoc.insertBeforeEnd(chatTextElement,
+                                        sb.toString());
                             } catch (BadLocationException ex) {
                                 logger.log(Level.SEVERE, null, ex);
+                            } catch (IOException ioe) {
+                                logger.log(Level.SEVERE, null, ioe);
                             }
                         }
                     }
@@ -150,22 +161,23 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
                     // Display message
                     try {
                         if (action) {
-                            doc.insertString(doc.getLength(),
-                                    getTimestamp() + " * " + myUserName + " ",
-                                    doc.getStyle("boldaction"));
-                            doc.insertString(doc.getLength(),
-                                    text + "\n",
-                                    doc.getStyle("action"));
+                            String insertText = "<span class=\"boldaction\">" + 
+                                    getTimestamp() + " " + myUserName + 
+                                    ": </span>" + "<span class=\"action\">" + 
+                                    text + "</span><br>";
+                            htdoc.insertBeforeEnd(chatTextElement, insertText); 
+                                    
                         } else {
-                            doc.insertString(doc.getLength(),
-                                    getTimestamp() + " " + myUserName + ": ",
-                                    doc.getStyle("bold"));
-                            doc.insertString(doc.getLength(),
-                                    text + "\n",
-                                    doc.getStyle("normal"));
+                            String insertText = "<b>" + getTimestamp() + " " + 
+                                    myUserName + ": </b>" + convertLinks(text) + 
+                                    "<br>";
+                            
+                            htdoc.insertBeforeEnd(chatTextElement, insertText);
                         }
                     } catch (BadLocationException ex) {
                         logger.log(Level.SEVERE, null, ex);
+                    } catch (IOException ioe) {
+                        logger.log(Level.SEVERE, "Error appending", ioe);
                     }
                     sendMessage(action, text);
                     textEntry.setText("");
@@ -187,34 +199,132 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
         }
         initStyles(viewPane);
         ThemeManager.getInstance().addThemeListener(this);
+        
+        viewPane.addHyperlinkListener(new HyperlinkListener() {
 
+            @Override
+            public void hyperlinkUpdate(HyperlinkEvent e) {
+                if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+                    if (Desktop.isDesktopSupported()) {
+                        Desktop desktop = Desktop.getDesktop();
+                        if (desktop.isSupported(Desktop.Action.BROWSE)) {
+                            try {
+                                desktop.browse(URI.create(e.getDescription()));
+                                textEntry.requestFocusInWindow();
+                                viewPane.setCaretPosition(
+                                        viewPane.getStyledDocument().getLength());
+                            } catch (IOException ex) {
+                                logger.log(Level.SEVERE, null, ex);
+                            }
+                        }
+                    }
+                }
+            }
+            
+        });
     }
     
     private void initStyles(JTextPane viewPane) {
-        // add text styles
-        Style def = StyleContext.getDefaultStyleContext().
-                getStyle(StyleContext.DEFAULT_STYLE);
-        StyledDocument doc = viewPane.getStyledDocument();
-        Style s = doc.addStyle("normal", def);
-        // bold font
-        s = doc.addStyle("bold", def);
-        StyleConstants.setBold(s, true);
-        s = doc.addStyle("joinpart", def);
-        StyleConstants.setItalic(s, true);
-        StyleConstants.setForeground(s, new Color(0, 153, 0));
-        s = doc.addStyle("disconnect", def);
-        StyleConstants.setItalic(s, true);
-        StyleConstants.setForeground(s, new Color(0, 0, 153));
-        s = doc.addStyle("boldaction", def);
-        StyleConstants.setItalic(s, true);
-        StyleConstants.setBold(s, true);
-        StyleConstants.setForeground(s, new Color(145, 25, 139));
-        s = doc.addStyle("action", def);
-        StyleConstants.setItalic(s, true);
-        StyleConstants.setForeground(s, new Color(145, 25, 139));
-        s = doc.addStyle("unknowncommand", def);
-        StyleConstants.setItalic(s, true);
-        StyleConstants.setForeground(s, new Color(219, 90, 39));
+        viewPane.setEditorKit(new HTMLEditorKit());
+        
+        htdoc = (HTMLDocument) viewPane.getStyledDocument();
+        StringBuilder startContent = new StringBuilder();
+        startContent.append("<html><head>");
+
+        // define styles
+        startContent.append("<style type=\"text/css\">");
+        startContent.append(".joinpart {color:rgb(0, 153, 0); font-style:italic}");
+        startContent.append(".bold {font-weight:bold; }");
+        startContent.append(".boldaction {color:rgb(145, 25, 139); font-weight:bold; font-style:italic}");
+        startContent.append(".action {color:rgb(145, 25, 139); font-style:italic}");
+        startContent.append(".disconnect {color:rgb(0, 0, 153); font-style:italic}");
+        startContent.append(".unknowncommand {color:rgb(219, 90, 39); font-style:italic}");
+        startContent.append("</style>");
+
+        startContent.append("</head><body id=\"body\">");
+        startContent.append("<p id=\"chatText\"></p>");
+        startContent.append("</body> </html>");
+        
+        viewPane.setText(startContent.toString());
+        chatTextElement = htdoc.getElement("chatText");
+        
+    }
+    
+    /**
+     * Converts any text starting with 'http://' or 'www' to HTML anchor links
+     * @param text
+     * @return Text with any links converted to HTML anchor tags
+     */
+    private String convertLinks(String text) {
+        String returnText = text;
+        String temp = text.toLowerCase();
+        if (temp.contains("http://") || text.contains("www")) {
+            int currentIndex = getNextLinkIndex(text, 0);
+            
+            StringBuilder sb = new StringBuilder(text);
+            while (currentIndex != -1 && currentIndex < temp.length()) {
+                int endLink = temp.indexOf(" ", currentIndex);
+                if (endLink == -1) {
+                    endLink = temp.length();
+                }
+                String link = temp.substring(currentIndex, endLink);
+                try {
+                    // check validity of link
+                    URI uri = new URI(link);
+                } catch (URISyntaxException ex) {
+                    // bad link so do not modify anything
+                    currentIndex = endLink;
+                    continue;
+                }
+                sb.insert(currentIndex, "<a href=\"");
+                endLink += 9;
+                sb.insert(endLink, "\">");
+                endLink += 2;
+                sb.insert(endLink, link);
+                endLink += link.length();
+                sb.insert(endLink, "</a>");
+                endLink += 4;
+                
+                // move currentIndex over and find next link
+                currentIndex = endLink;
+                temp = sb.toString();
+                currentIndex = getNextLinkIndex(temp, currentIndex);
+            }
+            returnText = sb.toString();
+        }
+        return returnText;
+    }
+    
+    /**
+     * Find the index of the next link with the given starting index
+     * @param text
+     * @param start
+     * @return Index of next link or -1 if none
+     */
+    private int getNextLinkIndex(String text, int start) {
+        String temp = text.toLowerCase();
+        int nextLinkStart = -1;
+        int httpIndex = temp.indexOf("http://", start);
+        int wwwIndex = temp.indexOf("www", start);
+
+        if (httpIndex == -1 && wwwIndex == -1) {
+            // no links
+            return -1;
+        } else {
+            // if there is more than one link then we need to check indexes
+            // to see which comes first
+            if (httpIndex != -1 && wwwIndex == -1) {
+                // link only contains http
+                nextLinkStart = httpIndex;
+            } else if (httpIndex == -1 && wwwIndex != -1) {
+                // link only contains www
+                nextLinkStart = wwwIndex;
+            } else {
+                // contains both www and http
+                nextLinkStart = httpIndex < wwwIndex ? httpIndex : wwwIndex;
+            }
+        }
+        return nextLinkStart;
     }
 
     private void sendMessage(boolean action, String messageText) {
@@ -277,26 +387,30 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
                 if (joined) {
                     if (!participantListModel.contains(user.getName())) {
                         participantListModel.addElement(user.getName());
-                        StyledDocument doc = viewPane.getStyledDocument();
-                        String message = getTimestamp() + " " + user
-                                + " has joined the channel\n";
+
+                        String message = "<span class=\"joinpart\">" + 
+                                getTimestamp() + " " + user +
+                                " has joined the channel</span><br>";
                         try {
-                            doc.insertString(doc.getLength(), message,
-                                    doc.getStyle("joinpart"));
+                            htdoc.insertBeforeEnd(chatTextElement, message);
                         } catch (BadLocationException ex) {
                             logger.log(Level.SEVERE, null, ex);
+                        } catch (IOException ioe) {
+                            logger.log(Level.SEVERE, null, ioe);
                         }
                     }
                 } else {
                     participantListModel.removeElement(user.getName());
-                    StyledDocument doc = viewPane.getStyledDocument();
-                    String message = getTimestamp() + " " + user
-                            + " has left the channel\n";
+
+                    String message = "<span class=\"joinpart\">" + 
+                            getTimestamp() + " " + user +
+                            " has left the channel</span><br>";
                     try {
-                        doc.insertString(doc.getLength(), message,
-                                doc.getStyle("joinpart"));
+                        htdoc.insertBeforeEnd(chatTextElement, message);
                     } catch (BadLocationException ex) {
                         logger.log(Level.SEVERE, null, ex);
+                    } catch (IOException ioe) {
+                            logger.log(Level.SEVERE, null, ioe);
                     }
                 }
             }
@@ -315,14 +429,16 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
             public void run() {
                 if (participantListModel.contains(user.getName())) {
                     participantListModel.removeElement(user.getName());
-                    StyledDocument doc = viewPane.getStyledDocument();
-                    String message = getTimestamp() + " " + user
-                            + " has disconnected from the server\n";
+
+                    String message = "<span class=\"disconnect\">" + 
+                            getTimestamp() + " " + user +
+                            " has disconnected from the server</span><br>";
                     try {
-                        doc.insertString(doc.getLength(), message,
-                                doc.getStyle("disconnect"));
+                        htdoc.insertBeforeEnd(chatTextElement, message);
                     } catch (BadLocationException ex) {
                         logger.log(Level.SEVERE, null, ex);
+                    } catch (IOException ioe) {
+                        logger.log(Level.SEVERE, null, ioe);
                     }
                 }
             }
@@ -344,25 +460,24 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
 
             @Override
             public void run() {
-                StyledDocument doc = viewPane.getStyledDocument();
+                
                 try {
                     if (action) {
-                        doc.insertString(doc.getLength(),
-                                getTimestamp() + " * " + user + " ",
-                                doc.getStyle("boldaction"));
-                        doc.insertString(doc.getLength(),
-                                message + "\n",
-                                doc.getStyle("action"));
+                        String text = "<span class=\"boldaction\">" + 
+                                getTimestamp() + " " + user + ": </span>" + 
+                                "<span class=\"action\">" + message + 
+                                "</span><br>";
+                        
+                        htdoc.insertBeforeEnd(chatTextElement, text);
                     } else {
-                        doc.insertString(doc.getLength(),
-                                getTimestamp() + " " + user + ": ",
-                                doc.getStyle("bold"));
-                        doc.insertString(doc.getLength(),
-                                message + "\n",
-                                doc.getStyle("normal"));
+                        String text = "<b>" + getTimestamp() + " " + user + 
+                                ": </b>" + convertLinks(message) + "<br>";
+                        htdoc.insertBeforeEnd(chatTextElement, text);
                     }
                 } catch (BadLocationException ex) {
                     logger.log(Level.SEVERE, null, ex);
+                }  catch (IOException ex) {
+                        logger.log(Level.SEVERE, null, ex);
                 }
             }
         });
@@ -378,24 +493,24 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                StyledDocument doc = viewPane.getStyledDocument();
-                    try {
-                        if (style == null) {
-                            // no style applied
-                            doc.insertString(doc.getLength(),
-                                getTimestamp() + ": ",
-                                doc.getStyle("bold"));
-                        doc.insertString(doc.getLength(), message + "\n",
-                                doc.getStyle("normal"));
-                        }
-                        if (style.equals("disconnect")) {
-                            doc.insertString(doc.getLength(), 
-                                    getTimestamp() + ": " + message + "\n",
-                                    doc.getStyle("disconnect"));
-                        }
-                    } catch (BadLocationException ex) {
-                        logger.log(Level.SEVERE, null, ex);
+
+                try {
+                    if (style == null) {
+                        // no style applied
+                        String text = "<span class=\"bold\">" + 
+                                getTimestamp() + ": </span>" + message + "<br>";
+                        htdoc.insertBeforeEnd(chatTextElement, text);
                     }
+                    if (style.equals("disconnect")) {
+                        String text =  "<span class=\"disconnect\">" + 
+                                getTimestamp() + ": " + message + "</span>" + "<br>";
+                        htdoc.insertBeforeEnd(chatTextElement, text);
+                    }
+                } catch (BadLocationException ex) {
+                    logger.log(Level.SEVERE, null, ex);
+                } catch (IOException ioe) {
+                    logger.log(Level.SEVERE, null, ioe);
+                }
             }
         });
     }
