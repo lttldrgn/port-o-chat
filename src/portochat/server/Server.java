@@ -17,9 +17,7 @@
 package portochat.server;
 
 import java.io.IOException;
-import java.lang.String;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -95,6 +93,12 @@ public class Server {
      * Shuts the server down
      */
     public void shutdown() {
+        // TODO: This needs to be called to cleanly shut down the server
+        ArrayList<Socket> userSocketList =
+                (ArrayList<Socket>) userDatabase.getSocketList();
+        for (Socket socket : userSocketList) {
+            
+        }
     }
 
     /**
