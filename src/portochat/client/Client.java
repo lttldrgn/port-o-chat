@@ -483,17 +483,15 @@ public class Client extends JFrame implements ActionListener,
         String currentDir = ".";
         try {
             currentDir = f.getCanonicalPath();
-            System.out.println(currentDir);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, null, ex);
         }
-        // TODO: Remove hard coded path
+        // get the current directory
         pb.directory(new File(currentDir));
         //pb.directory(new File(currentDir + "\\dist")); // for testing
 
         try {
-            pb.redirectErrorStream(true);
-            System.out.println(pb.directory());
+            pb.redirectErrorStream(true);;
             serverProcess = pb.start();
 
         } catch (IOException ex) {
