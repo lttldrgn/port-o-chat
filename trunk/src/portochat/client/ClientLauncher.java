@@ -23,7 +23,7 @@ import javax.swing.SwingUtilities;
  * @author Brandon
  */
 public class ClientLauncher {
-    public static void main(String args[]) {
+    public static void launchClient() {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                Client client = new Client();
@@ -31,5 +31,9 @@ public class ClientLauncher {
                client.setVisible(true);
             } 
         });
+    }
+    
+    public static void main(String args[]) {
+        launchClient();
     }
 }

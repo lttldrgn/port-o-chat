@@ -33,6 +33,10 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.util.Collection;
@@ -75,6 +79,7 @@ public class Client extends JFrame implements ActionListener,
     private static final String CONNECT = "CONNECT";
     private static final String CREATE_CHANNEL = "CREATE_CHANNEL";
     private static final String DISCONNECT = "DISCONNECT";
+    private static final String START_SERVER = "START_SERVER";
     private static final String STATUS_MENU = "STATUS_MENU";
     private static final String THEME_MENU = "THEME_MENU";
     private HashMap<String, ChatPane> chatPaneMap = 
@@ -96,12 +101,14 @@ public class Client extends JFrame implements ActionListener,
     private boolean connected = false;
     
     // previous state
-    String username = "user";
-    String server = "localhost";
+    private String username = "user";
+    private String server = "localhost";
     
     // Timer to alert user when a message has been received
     private NotificationTimerListener timerListener = new NotificationTimerListener();
     private Timer notificationTimer = new Timer(1500, timerListener);
+    
+    private Process serverProcess = null;
     
     public Client() {
         setTitle("Port-O-Chat");
@@ -143,6 +150,11 @@ public class Client extends JFrame implements ActionListener,
         disconnect.addActionListener(this);
         disconnect.setEnabled(false);
         fileMenu.add(disconnect);
+        
+        JMenuItem startServer = new JMenuItem("Start Server");
+        startServer.setActionCommand(START_SERVER);
+        fileMenu.add(startServer);
+        startServer.addActionListener(this);
         
         JMenuItem exitMenu = new JMenuItem("Exit");
         exitMenu.setMnemonic(KeyEvent.VK_X);
@@ -334,6 +346,8 @@ public class Client extends JFrame implements ActionListener,
             ThemeManager themeManager = ThemeManager.getInstance();
             themeManager.setTopLevelComponent(this);
             themeManager.setVisible(true);
+        } else if (e.getActionCommand().equals(START_SERVER)) {
+            startServer();
         }
     }
     
@@ -439,6 +453,7 @@ public class Client extends JFrame implements ActionListener,
         contactListModel.clear();
         channelListModel.clear();
         showDisconnectMessage();
+        notificationTimer.stop();
         timerListener.reset();
     }
     
@@ -453,6 +468,59 @@ public class Client extends JFrame implements ActionListener,
             pane.showInfoMessage("Disconnected from server", "disconnect");
         }
         statusPane.showMessage("Disconnected from server", "disconnect");
+    }
+    
+    private void startServer() {
+        if (serverProcess != null) {
+            return;
+        }
+    
+        final ProcessBuilder pb = new ProcessBuilder("java", "-cp", 
+                "PortOChat.jar", "portochat.server.ServerLauncherGUI");
+            
+        // get current working directory so we can find the jar
+        File f = new File(".");
+        String currentDir = ".";
+        try {
+            currentDir = f.getCanonicalPath();
+            System.out.println(currentDir);
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, null, ex);
+        }
+        // TODO: Remove hard coded path
+        pb.directory(new File(currentDir));
+        //pb.directory(new File(currentDir + "\\dist")); // for testing
+
+        try {
+            pb.redirectErrorStream(true);
+            System.out.println(pb.directory());
+            serverProcess = pb.start();
+
+        } catch (IOException ex) {
+            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        if (serverProcess == null) {
+            // TODO Change to a JOptionPane
+            System.out.println("Couldn't launch process");
+            return;
+        }
+        final BufferedReader reader = new BufferedReader(new InputStreamReader(serverProcess.getInputStream()));
+
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        System.out.println(line);
+                    }
+                } catch (IOException ex) {
+                    Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                serverProcess = null;
+            }
+        }, "Process Drainer");
+        t.start();
     }
     
     @Override

@@ -23,8 +23,13 @@ import portochat.common.Settings;
  * @author Mike
  */
 public class ServerLauncher {
-    public static void main (String args[]) {
+    public static Server launchServer () {
         Server server = new Server();
         server.bind(Settings.DEFAULT_SERVER_PORT);
+        return server;
+    }
+    
+    public static void main (String args[]) {
+        launchServer();
     }
 }
