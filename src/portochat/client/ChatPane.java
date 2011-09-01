@@ -33,9 +33,7 @@ import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -57,6 +55,7 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import portochat.common.Settings;
 import portochat.common.User;
+import portochat.common.Util;
 
 /**
  *
@@ -66,8 +65,6 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
 
     private static final Logger logger =
             Logger.getLogger(ChatPane.class.getName());
-    private static final SimpleDateFormat formatDate =
-            new SimpleDateFormat("hh:mm.ssa");
     private DefaultListModel participantListModel = null;
     private JList participantList = null;
     private JPopupMenu viewPaneRightClickMenu;
@@ -139,55 +136,7 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
                         return;
                     }
 
-                    boolean action = false;
-
-                    // Check for commands
-                    if (text.startsWith(Settings.COMMAND_PREFIX)) {
-                        if (text.startsWith(Settings.COMMAND_PREFIX + "me ")) {
-                            action = true;
-                            text = text.replaceFirst(Settings.COMMAND_PREFIX + "me", "");
-                        } else {
-                            try {
-                                StringBuilder sb = new StringBuilder();
-                                sb.append("<span class=\"unknowncommand\">");
-                                sb.append(getTimestamp());
-                                sb.append(" Unknown command: ");
-                                sb.append(text.split(" ")[0]);
-                                sb.append("</span>");
-                                sb.append("<br>");
-                                htdoc.insertBeforeEnd(chatTextElement,
-                                        sb.toString());
-                            } catch (BadLocationException ex) {
-                                logger.log(Level.SEVERE, null, ex);
-                            } catch (IOException ioe) {
-                                logger.log(Level.SEVERE, null, ioe);
-                            }
-                        }
-                    }
-
-                    // Display message
-                    try {
-                        if (action) {
-                            String insertText = "<span class=\"boldaction\">" + 
-                                    getTimestamp() + " " + myUserName + 
-                                    ": </span>" + "<span class=\"action\">" + 
-                                    text + "</span><br>";
-                            htdoc.insertBeforeEnd(chatTextElement, insertText); 
-                                    
-                        } else {
-                            String insertText = "<b>" + getTimestamp() + " " + 
-                                    myUserName + ": </b>" + convertLinks(text) + 
-                                    "<br>";
-                            
-                            htdoc.insertBeforeEnd(chatTextElement, insertText);
-                        }
-                    } catch (BadLocationException ex) {
-                        logger.log(Level.SEVERE, null, ex);
-                    } catch (IOException ioe) {
-                        logger.log(Level.SEVERE, "Error appending", ioe);
-                    }
-                    sendMessage(action, text);
-                    textEntry.setText("");
+                    processInputMessage(text);
                 }
             }
             
@@ -257,7 +206,7 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
 
         startContent.append("</head><body id=\"body\">");
         startContent.append("<p id=\"chatText\"></p>");
-        startContent.append("</body> </html>");
+        startContent.append("</body></html>");
         
         viewPane.setText(startContent.toString());
         chatTextElement = htdoc.getElement("chatText");
@@ -426,7 +375,7 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
                         participantListModel.addElement(user.getName());
 
                         String message = "<span class=\"joinpart\">" + 
-                                getTimestamp() + " " + user +
+                                Util.getTimestamp() + " " + user +
                                 " has joined the channel</span><br>";
                         try {
                             htdoc.insertBeforeEnd(chatTextElement, message);
@@ -440,7 +389,7 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
                     participantListModel.removeElement(user.getName());
 
                     String message = "<span class=\"joinpart\">" + 
-                            getTimestamp() + " " + user +
+                            Util.getTimestamp() + " " + user +
                             " has left the channel</span><br>";
                     try {
                         htdoc.insertBeforeEnd(chatTextElement, message);
@@ -468,7 +417,7 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
                     participantListModel.removeElement(user.getName());
 
                     String message = "<span class=\"disconnect\">" + 
-                            getTimestamp() + " " + user +
+                            Util.getTimestamp() + " " + user +
                             " has disconnected from the server</span><br>";
                     try {
                         htdoc.insertBeforeEnd(chatTextElement, message);
@@ -501,13 +450,13 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
                 try {
                     if (action) {
                         String text = "<span class=\"boldaction\">" + 
-                                getTimestamp() + " " + user + ": </span>" + 
+                                Util.getTimestamp() + " " + user + ": </span>" + 
                                 "<span class=\"action\">" + message + 
                                 "</span><br>";
                         
                         htdoc.insertBeforeEnd(chatTextElement, text);
                     } else {
-                        String text = "<b>" + getTimestamp() + " " + user + 
+                        String text = "<b>" + Util.getTimestamp() + " " + user + 
                                 ": </b>" + convertLinks(message) + "<br>";
                         htdoc.insertBeforeEnd(chatTextElement, text);
                     }
@@ -535,12 +484,12 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
                     if (style == null) {
                         // no style applied
                         String text = "<span class=\"bold\">" + 
-                                getTimestamp() + ": </span>" + message + "<br>";
+                                Util.getTimestamp() + ": </span>" + message + "<br>";
                         htdoc.insertBeforeEnd(chatTextElement, text);
                     }
                     if (style.equals("disconnect")) {
                         String text =  "<span class=\"disconnect\">" + 
-                                getTimestamp() + ": " + message + "</span>" + "<br>";
+                                Util.getTimestamp() + ": " + message + "</span>" + "<br>";
                         htdoc.insertBeforeEnd(chatTextElement, text);
                     }
                 } catch (BadLocationException ex) {
@@ -573,11 +522,6 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
         }
     }
 
-    private String getTimestamp() {
-        Date currentDate = new Date();
-        return formatDate.format(currentDate);
-    }
-
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getPropertyName().equals(ThemeManager.TOP_PANE_BACKGROUND)) {
@@ -589,6 +533,92 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
         }
     }
     
+    /**
+     * Processes the input message from the chat pane.
+     * 
+     * @param message The message to process
+     */
+    private void processInputMessage(String message) {
+        
+        // Check for an action
+        boolean action = message.startsWith(Settings.COMMAND_PREFIX + "me");
+
+        if (!action && isCommand(message)) {
+            // Process the command
+            processCommand(message);
+        } else {
+            // If it's an action, remove the command
+            if (action) {
+                message = message.replaceFirst(Settings.COMMAND_PREFIX + "me", "");
+            }
+            
+            // Display message
+            try {
+                String insertText = null;
+                if (action) {
+                    insertText = "<span class=\"boldaction\">"
+                            + Util.getTimestamp() + " " + myUserName
+                            + ": </span>" + "<span class=\"action\">"
+                            + message + "</span><br>";
+                } else {
+                    insertText = "<b>" + Util.getTimestamp() + " "
+                            + myUserName + ": </b>" + convertLinks(message)
+                            + "<br>";
+
+                }
+                htdoc.insertBeforeEnd(chatTextElement, insertText);
+            } catch (BadLocationException ex) {
+                logger.log(Level.SEVERE, null, ex);
+            } catch (IOException ioe) {
+                logger.log(Level.SEVERE, "Error appending", ioe);
+            }
+            sendMessage(action, message);
+            textEntry.setText("");
+        }
+    }
+    
+    /**
+     * Returns true if the specified text is a command 
+     * @param text The text to check 
+     * @return true if the specified text is a command
+     */
+    private boolean isCommand(String text) {
+        return text.startsWith(Settings.COMMAND_PREFIX);
+    }
+
+    /**
+     * Processes the command
+     * @param command The command to process
+     * @return true if the command was processed successfully
+     */
+    private boolean processCommand(String command) {
+        
+        boolean success = true;
+        
+        if (command.startsWith(Settings.COMMAND_PREFIX + "clear")) {
+            resetViewPane();
+        } else {
+            try {
+                StringBuilder sb = new StringBuilder();
+                sb.append("<span class=\"unknowncommand\">");
+                sb.append(Util.getTimestamp());
+                sb.append(" Unknown command: ");
+                sb.append(command.split(" ")[0]);
+                sb.append("</span>");
+                sb.append("<br>");
+                htdoc.insertBeforeEnd(chatTextElement,
+                        sb.toString());
+            } catch (BadLocationException ex) {
+                logger.log(Level.SEVERE, null, ex);
+            } catch (IOException ioe) {
+                logger.log(Level.SEVERE, null, ioe);
+            }
+            success = false;
+        }
+        
+        return success;
+    }
+
     // main for visual test purposes only
     public static void main(String args[]) {
         JFrame frame = new JFrame();
