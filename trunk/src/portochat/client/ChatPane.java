@@ -22,8 +22,12 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
@@ -38,7 +42,9 @@ import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
 import javax.swing.JList;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextPane;
@@ -64,6 +70,7 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
             new SimpleDateFormat("hh:mm.ssa");
     private DefaultListModel participantListModel = null;
     private JList participantList = null;
+    private JPopupMenu viewPaneRightClickMenu;
     private JTextPane viewPane = new JTextPane();
     private JTextArea textEntry = new JTextArea();
     private String recipient = null;
@@ -198,6 +205,7 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
             addParticipants(me);
         }
         initStyles(viewPane);
+        setupRightClickMenu();
         // disabling for now... not being used at the moment and is a memory 
         // leak anyway because we were not unregistering on pane close
         //ThemeManager.getInstance().addThemeListener(this);
@@ -230,6 +238,10 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
         viewPane.setEditorKit(new HTMLEditorKit());
         
         htdoc = (HTMLDocument) viewPane.getStyledDocument();
+        resetViewPane();
+    }
+    
+    private void resetViewPane() {
         StringBuilder startContent = new StringBuilder();
         startContent.append("<html><head>");
 
@@ -249,6 +261,29 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
         
         viewPane.setText(startContent.toString());
         chatTextElement = htdoc.getElement("chatText");
+        
+    }
+    
+    private void setupRightClickMenu() {
+        viewPaneRightClickMenu = new JPopupMenu();
+
+        JMenuItem clear = new JMenuItem("Clear");
+        viewPaneRightClickMenu.add(clear);
+        clear.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                resetViewPane();
+            }
+        });
+
+        viewPane.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                if (e.isPopupTrigger() || e.getButton() == MouseEvent.BUTTON3) {
+                    viewPaneRightClickMenu.show(e.getComponent(), e.getX(), e.getY());
+                }
+            }
+        });
         
     }
     
