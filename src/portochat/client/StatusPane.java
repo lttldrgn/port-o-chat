@@ -18,8 +18,6 @@ package portochat.client;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JPanel;
@@ -32,6 +30,7 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
 import javax.swing.text.StyledDocument;
 import portochat.common.User;
+import portochat.common.Util;
 
 /**
  *
@@ -43,8 +42,6 @@ public class StatusPane extends JPanel {
             Logger.getLogger(StatusPane.class.getName());
     private JTextPane viewPane = new JTextPane();
     private ServerConnectionProvider serverConnectionProvider = null;
-    private static final SimpleDateFormat formatDate =
-            new SimpleDateFormat("h:mm.ssa");
 
     /**
      * Creates a Chat Pane
@@ -122,7 +119,7 @@ public class StatusPane extends JPanel {
             public void run() {
 
                 StyledDocument doc = viewPane.getStyledDocument();
-                String message = getTimestamp() + " " + user
+                String message = Util.getTimestamp() + " " + user
                         + " has disconnected from the server\n";
                 try {
                     doc.insertString(doc.getLength(), message,
@@ -149,14 +146,14 @@ public class StatusPane extends JPanel {
                 try {
                     if (style == null) {
                         doc.insertString(doc.getLength(),
-                                getTimestamp() + ": ",
+                                Util.getTimestamp() + ": ",
                                 doc.getStyle("bold"));
                         doc.insertString(doc.getLength(),
                                 message + "\n",
                                 doc.getStyle("normal"));
                     } else if (style.equals("disconnect")) {
                         doc.insertString(doc.getLength(), 
-                                    getTimestamp() + ": " + message + "\n",
+                                    Util.getTimestamp() + ": " + message + "\n",
                                     doc.getStyle("disconnect"));
                     }
                 } catch (BadLocationException ex) {
@@ -165,10 +162,4 @@ public class StatusPane extends JPanel {
             }
         });
     }
-
-    private String getTimestamp() {
-        Date currentDate = new Date();
-        return formatDate.format(currentDate);
-    }
-
 }
