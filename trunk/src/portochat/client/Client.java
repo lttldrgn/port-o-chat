@@ -831,7 +831,11 @@ public class Client extends JFrame implements ActionListener,
         @Override
         public void windowGainedFocus(WindowEvent e) {
             messageReceived = false;
-            setTitle(currentTitle);
+            // handle the case where the title has been reset but user has not
+            // regained focus
+            if (currentTitle != null) {
+                setTitle(currentTitle);
+            }
         }
 
         @Override
