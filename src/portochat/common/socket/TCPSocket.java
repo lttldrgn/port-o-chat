@@ -23,8 +23,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -48,7 +48,7 @@ public class TCPSocket {
     private volatile boolean listening = false;
     private ServerSocket serverSocket = null;
     private Socket clientSocket = null;
-    private List listeners = null;
+    private List<NetListener> listeners = null;
     private LinkedBlockingQueue<NetData> writeQueue = null;
     private AcceptThread acceptThread = null;
     private ProtocolHandler protocolHandler = null;
@@ -102,11 +102,12 @@ public class TCPSocket {
     
     public void disconnect() {
         try {
-            clientSocket.close();
-            clientSocket = null;
             outgoingThread.interrupt();
+            clientSocket.close();
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, null, ex);
+            logger.log(Level.INFO, "Exception thrown closing socket", ex);
+        } finally {
+            clientSocket = null;
         }
     }
 
@@ -149,7 +150,7 @@ public class TCPSocket {
      */
     public void addListener(NetListener listener) {
         if (listeners == null) {
-            listeners = new LinkedList();
+            listeners = new CopyOnWriteArrayList<NetListener>();
         }
         listeners.add(listener);
     }
@@ -175,8 +176,8 @@ public class TCPSocket {
 
         if (listeners != null) {
 
-            for (Iterator it = listeners.iterator(); it.hasNext();) {
-                NetListener l = (NetListener) it.next();
+            for (Iterator<NetListener> it = listeners.iterator(); it.hasNext();) {
+                NetListener l = it.next();
                 l.incomingMessage(e);
             }
         }
@@ -194,6 +195,24 @@ public class TCPSocket {
      */
     public String getName() {
         return name;
+    }
+    
+    /**
+     * Cleans up everything after socket is disconnected
+     */
+    private synchronized void cleanup() {
+        if (clientSocket != null) {
+            try {
+                clientSocket.close();
+            } catch (IOException ex) {
+                logger.log(Level.FINE, "Error thrown closing socket", ex);
+            } finally {
+                clientSocket = null;
+            }
+            
+        }
+        writeQueue.clear();
+        // TODO: Should listeners be cleared also?
     }
 
     /*
@@ -240,7 +259,7 @@ public class TCPSocket {
             try {
                 bis = new BufferedInputStream(incomingSocket.getInputStream());
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, null, ex);
+                logger.log(Level.SEVERE, "Error getting inputstream", ex);
             }
         }
 
@@ -260,7 +279,7 @@ public class TCPSocket {
                     }
                 }
             } catch (SocketException ex) {
-                logger.info("Socket disconnected");
+                logger.log(Level.INFO, "Socket disconnected", ex);
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "IOException while reading", ex);
             }
@@ -269,7 +288,7 @@ public class TCPSocket {
                 sendUserConnectionUpdate(incomingSocket);
                 incomingSocket.close();
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, null, ex);
+                logger.log(Level.INFO, "Exception closing socket", ex);
             }
         }
 
@@ -308,24 +327,28 @@ public class TCPSocket {
         @Override
         public void run() {
             //TODO do something when disconnecting everyone?
-            while (true) {
-
-                // Write the data
-                try {
+            
+            // Write the data
+            try {
+                while (true) {
                     NetData netData = writeQueue.take();
                     BufferedOutputStream bos =
                             new BufferedOutputStream(netData.socket.getOutputStream());
                     bos.write(netData.data);
                     bos.flush();
-
-                } catch (IOException ex) {
-                    logger.log(Level.SEVERE, null, ex);
-                } catch (InterruptedException ie) {
-                    // Thread was interrupted so exit this thread
-                    writeQueue.clear();
-                    break;
                 }
 
+            } catch (SocketException se) {
+                logger.log(Level.INFO, 
+                        "Closing connection due to SocketException", se);
+            } catch (IOException ex) {
+                logger.log(Level.WARNING, 
+                        "Closing connection due to IOException", ex);
+            } catch (InterruptedException ie) {
+                // Thread was interrupted so exit this thread
+                logger.fine("Exiting thread due to interruption");
+            } finally {
+                cleanup();
             }
         }
     }
