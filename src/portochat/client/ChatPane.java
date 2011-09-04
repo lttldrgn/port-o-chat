@@ -41,6 +41,7 @@ import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
@@ -173,7 +174,10 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
                                 viewPane.setCaretPosition(
                                         viewPane.getStyledDocument().getLength());
                             } catch (IOException ex) {
-                                logger.log(Level.SEVERE, null, ex);
+                                JOptionPane.showMessageDialog(viewPane, 
+                                        "Could not launch default browser. See log for reason.");
+                                logger.log(Level.INFO, 
+                                        "Could not launch browser.", ex);
                             }
                         }
                     }
