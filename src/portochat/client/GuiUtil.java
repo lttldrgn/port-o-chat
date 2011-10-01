@@ -18,6 +18,7 @@ public class GuiUtil {
     private static final String POSITION = "Position";
     private static final String USERNAME = "username";
     private static final String SERVER = "server";
+    private static final String SERVER_PORT = "serverPort";
 
     /**
      * Retrieves the last window position saved to preferences
@@ -91,5 +92,25 @@ public class GuiUtil {
     public static String getServerName(Class<?> clazz) {
         Preferences prefs = Preferences.userNodeForPackage(clazz);
         return prefs.get(SERVER, "localhost");
+    }
+    
+    /**
+     * Save server name to preferences
+     * @param clazz Class calling this method
+     * @param serverName Server name to write to preferences
+     */
+    public static void saveServerPort(Class<?> clazz, int serverPort) {
+        Preferences prefs = Preferences.userNodeForPackage(clazz);
+        prefs.putInt(SERVER_PORT, serverPort);
+    }
+    
+    /**
+     * Get the last server name used
+     * @param clazz Class calling this method
+     * @return Last server name saved
+     */
+    public static int getServerPort(Class<?> clazz) {
+        Preferences prefs = Preferences.userNodeForPackage(clazz);
+        return prefs.getInt(SERVER_PORT, ClientSettings.DEFAULT_SERVER_PORT);
     }
 }
