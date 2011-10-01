@@ -103,6 +103,7 @@ public class Client extends JFrame implements ActionListener,
     // previous state
     private String username = "user";
     private String server = "localhost";
+    private int serverPort = ClientSettings.DEFAULT_SERVER_PORT;
     
     // Timer to alert user when a message has been received
     private NotificationTimerListener timerListener = new NotificationTimerListener();
@@ -255,6 +256,7 @@ public class Client extends JFrame implements ActionListener,
         showStatusPane();
         username = GuiUtil.getUserName(this.getClass());
         server = GuiUtil.getServerName(this.getClass());
+        serverPort = GuiUtil.getServerPort(this.getClass());
     }
     
     private void shutdown() {
@@ -263,6 +265,7 @@ public class Client extends JFrame implements ActionListener,
         }
         GuiUtil.saveUserName(getClass(), username);
         GuiUtil.saveServerName(getClass(), server);
+        GuiUtil.saveServerPort(getClass(), serverPort);
         System.exit(0);
     }
     
@@ -361,27 +364,39 @@ public class Client extends JFrame implements ActionListener,
         
         JPanel optionPanel = new JPanel(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
-        JTextField userTextField = new JTextField(username);
+        JTextField userTextField = new JTextField(username, 10);
         JTextField serverTextField = new JTextField(server);
+        JTextField serverPortTextField = new JTextField(Integer.toString(serverPort));
+        
+        // user name
         c.gridx = 0;
         c.gridy = 0;
-        c.insets = new Insets(0,0,0,5);
+        c.insets = new Insets(1,1,1,5);
         optionPanel.add(new JLabel("username", SwingConstants.RIGHT), c);
         c.gridx++;
         c.fill = GridBagConstraints.BOTH;
         c.anchor = GridBagConstraints.LINE_END;
-        c.insets = new Insets(0,0,0,0);
         optionPanel.add(userTextField, c);
+        
+        // server name
         c.gridx--;
         c.gridy++;
         c.fill = GridBagConstraints.NONE;
-        c.insets = new Insets(0,0,0,5);
         optionPanel.add(new JLabel("server", SwingConstants.RIGHT), c);
         c.gridx++;
-        c.weightx = 1.0;
         c.fill = GridBagConstraints.BOTH;
-        c.insets = new Insets(0,0,0,0);
         optionPanel.add(serverTextField, c);
+        
+        // server port
+        c.gridx = 0;
+        c.gridy++;
+        c.fill = GridBagConstraints.NONE;
+        optionPanel.add(new JLabel("port", SwingConstants.RIGHT), c);
+        c.gridx++;
+        c.fill = GridBagConstraints.BOTH;
+        optionPanel.add(serverPortTextField, c);
+        
+        // add focus selection listener
         FocusAdapter focusListener = new FocusAdapter() {
             @Override
             public void focusGained(FocusEvent e) {
@@ -393,19 +408,20 @@ public class Client extends JFrame implements ActionListener,
         };
         userTextField.addFocusListener(focusListener);
         serverTextField.addFocusListener(focusListener);
+        serverPortTextField.addFocusListener(focusListener);
         
         int returnVal = JOptionPane.showConfirmDialog(this, optionPanel, 
                 "Enter information", JOptionPane.OK_CANCEL_OPTION);
         if (returnVal != JOptionPane.OK_OPTION) {
             return;
         }
-        username = userTextField.getText();
-        server = serverTextField.getText();
-        int port = ClientSettings.DEFAULT_SERVER_PORT;
-        if (server.contains(":")) {
-            String serverArgs[] = server.split(":");
-            server = serverArgs[0];
-            port = Integer.parseInt(serverArgs[1]);
+        username = userTextField.getText().trim();
+        server = serverTextField.getText().trim();
+        try {
+            serverPort = Integer.parseInt(serverPortTextField.getText().trim());
+        } catch (NumberFormatException nfe) {
+            JOptionPane.showMessageDialog(this, "Invalid port");
+            return;
         }
         
         if (username == null || username.isEmpty()) {
@@ -417,7 +433,7 @@ public class Client extends JFrame implements ActionListener,
         try {
             connection = new ServerConnection();
             connection.addDataListener(this);
-            success = connection.connectToServer(server, port);
+            success = connection.connectToServer(server, serverPort);
             connection.sendUsername(username);
             
         } catch (UnknownHostException e) {
@@ -491,7 +507,7 @@ public class Client extends JFrame implements ActionListener,
         //pb.directory(new File(currentDir + "\\dist")); // for testing
 
         try {
-            pb.redirectErrorStream(true);;
+            pb.redirectErrorStream(true);
             serverProcess = pb.start();
 
         } catch (IOException ex) {
