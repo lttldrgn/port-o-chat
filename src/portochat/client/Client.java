@@ -49,6 +49,7 @@ import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultListModel;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -496,29 +497,49 @@ public class Client extends JFrame implements ActionListener,
             
         // get current working directory so we can find the jar
         File f = new File(".");
-        String currentDir = ".";
+        String jarDirectory = "."; // PortOChat.jar directory location
         try {
-            currentDir = f.getCanonicalPath();
+            jarDirectory = f.getCanonicalPath();
         } catch (IOException ex) {
             logger.log(Level.SEVERE, null, ex);
         }
+        
+        // check for PortOChat.jar
+        File jarFile = new File(jarDirectory + File.pathSeparator + "PortOChat.jar");
+        if (!jarFile.exists()) {
+            // allow user to select directory where PortOChat.jar resides
+            JOptionPane.showMessageDialog(this, "Could not find PortOChat.jar.  Select directory where it resides.");
+            JFileChooser chooser = new JFileChooser(jarDirectory);
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+            if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                try {
+                    jarDirectory = chooser.getSelectedFile().getCanonicalPath();
+                } catch (IOException ex) {
+                    logger.log(Level.SEVERE, "Error getting path", ex);
+                }
+            } else {
+                // user canceled so abort
+                return;
+            }
+        }
+        
         // get the current directory
-        pb.directory(new File(currentDir));
-        //pb.directory(new File(currentDir + "\\dist")); // for testing
+        pb.directory(new File(jarDirectory));
 
         try {
             pb.redirectErrorStream(true);
             serverProcess = pb.start();
 
         } catch (IOException ex) {
-            Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+            logger.log(Level.SEVERE, "Error starting Server", ex);
         }
         if (serverProcess == null) {
-            // TODO Change to a JOptionPane
-            System.out.println("Couldn't launch process");
+            JOptionPane.showMessageDialog(this, "Couldn't launch process.  See log for error");
             return;
         }
-        final BufferedReader reader = new BufferedReader(new InputStreamReader(serverProcess.getInputStream()));
+        final BufferedReader reader = new BufferedReader(
+                new InputStreamReader(serverProcess.getInputStream()));
 
         Thread t = new Thread(new Runnable() {
             @Override
@@ -529,7 +550,7 @@ public class Client extends JFrame implements ActionListener,
                         System.out.println(line);
                     }
                 } catch (IOException ex) {
-                    Logger.getLogger(Client.class.getName()).log(Level.SEVERE, null, ex);
+                    logger.log(Level.INFO, "IOException reading stream.", ex);
                 }
                 serverProcess = null;
             }
