@@ -100,15 +100,13 @@ public class TCPSocket {
         return clientSocket.isConnected();
     }
     
+    /**
+     * Calling this method disconnects this socket from the remote host
+     */
     public void disconnect() {
-        try {
-            outgoingThread.interrupt();
-            clientSocket.close();
-        } catch (IOException ex) {
-            logger.log(Level.INFO, "Exception thrown closing socket", ex);
-        } finally {
-            clientSocket = null;
-        }
+
+        outgoingThread.interrupt();
+        cleanup();
     }
 
     /**
