@@ -505,7 +505,7 @@ public class Client extends JFrame implements ActionListener,
         }
         
         // check for PortOChat.jar
-        File jarFile = new File(jarDirectory + File.pathSeparator + "PortOChat.jar");
+        File jarFile = new File(jarDirectory + File.separator + "PortOChat.jar");
         if (!jarFile.exists()) {
             // allow user to select directory where PortOChat.jar resides
             JOptionPane.showMessageDialog(this, "Could not find PortOChat.jar.  Select directory where it resides.");
