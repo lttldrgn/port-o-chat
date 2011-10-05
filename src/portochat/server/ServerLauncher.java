@@ -24,12 +24,20 @@ import portochat.common.Settings;
  */
 public class ServerLauncher {
     public static Server launchServer () {
-        Server server = new Server();
-        server.bind(Settings.DEFAULT_SERVER_PORT);
-        return server;
+        return new Server();
     }
     
     public static void main (String args[]) {
-        launchServer();
+        int port = Settings.DEFAULT_SERVER_PORT;
+        if (args.length > 0) {
+            try {
+                port = Integer.parseInt(args[0]);
+            } catch (NumberFormatException nfe) {
+                System.out.println("Error in arguments.  Using default port " +
+                        port);
+            }
+        }
+        Server server = launchServer();
+        server.bind(port);
     }
 }
