@@ -4,46 +4,82 @@
  */
 package portochat.server;
 
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import portochat.common.Settings;
 
 /**
  *
  * @author Brandon
  */
 public class ServerLauncherGUI extends JFrame implements ActionListener {
-    private JButton killButton = new JButton("Kill Server");
+    private Server server;
+    private JButton stopStartButton = new JButton("Start Server");
+    private JTextField portEntryField = new JTextField(5);
     // TODO: Show console with server output
     private JTextArea console = new JTextArea();
     //private PrintStream out = new PrintStream();
+    private boolean running = false;
     
-    public ServerLauncherGUI() {
-        add(killButton);
-        killButton.addActionListener(this);
-        setSize(100,100);
+    private ServerLauncherGUI() {
+        server = ServerLauncher.launchServer();
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
     
-    private void start() {
-        ServerLauncher.launchServer();
+    private void init() {
+        setLayout(new FlowLayout());
+        add(new JLabel("Port"));
+        portEntryField.setText(Integer.toString(Settings.DEFAULT_SERVER_PORT));
+        add(portEntryField);
+        add(stopStartButton);
+        stopStartButton.addActionListener(this);
+        setSize(100,100);
+        pack();
+    }
+    
+    public static ServerLauncherGUI getServerLauncherGUI() {
+        ServerLauncherGUI gui = new ServerLauncherGUI();
+        gui.init();
+        return gui;
+    }
+    
+    private void start(int port) {
+        server.bind(port);
     }
     
     public static void main(String args[]) {
-       ServerLauncherGUI gui = new ServerLauncherGUI();
+       ServerLauncherGUI gui = getServerLauncherGUI();
        gui.setVisible(true);
-       gui.start();
        System.out.println("Server Launched");
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource().equals(killButton)) {
-            // TODO: Exit server more cleanly
-            System.out.println("Shutting down server.");
-            System.exit(0);
+        if (e.getSource().equals(stopStartButton)) {
+            if (running) {
+                System.out.println("Shutting down server.");
+                server.shutdown();
+                running = false;
+                stopStartButton.setText("Start Server");
+            } else {
+                int port = Settings.DEFAULT_SERVER_PORT;
+                try {
+                    port = Integer.parseInt(portEntryField.getText());
+                } catch (NumberFormatException nfe) {
+                    JOptionPane.showMessageDialog(this, "Port is not valid");
+                    return;
+                }
+                start(port);
+                running = true;
+                stopStartButton.setText("Stop Server");
+            }
         }
     }
 }
