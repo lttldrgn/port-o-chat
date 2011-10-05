@@ -105,7 +105,9 @@ public class TCPSocket {
      */
     public void disconnect() {
 
-        outgoingThread.interrupt();
+        if (outgoingThread != null) {
+            outgoingThread.interrupt();
+        }
         cleanup();
     }
 
@@ -209,6 +211,15 @@ public class TCPSocket {
             }
             
         }
+        
+        if (serverSocket != null) {
+            try {
+                serverSocket.close();
+            } catch (IOException ex) {
+                logger.log(Level.INFO, "Error closing server socket", ex);
+            }
+            listening = false;
+        }
         writeQueue.clear();
         // TODO: Should listeners be cleared also?
     }
@@ -229,14 +240,16 @@ public class TCPSocket {
             while (listening) {
                 try {
                     startProcessingThreads(serverSocket.accept());
+                } catch (SocketException ex) {
+                    logger.log(Level.INFO, "Server Socket closed");
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, "Unable to accept client", ex);
-                }
+                } 
             }
             try {
                 serverSocket.close();
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Could not close the server socket", ex);
+                logger.log(Level.INFO, "Error closing server socket", ex);
             }
 
             logger.log(Level.INFO, "The server has shut down.");
@@ -275,7 +288,7 @@ public class TCPSocket {
                     for (DefaultData defaultData : defaultDataList) {
                         fireIncomingMessage(incomingSocket, defaultData);
                     }
-                }
+                            } 
             } catch (SocketException ex) {
                 logger.log(Level.INFO, "Socket disconnected", ex);
             } catch (IOException ex) {

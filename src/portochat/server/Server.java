@@ -93,12 +93,19 @@ public class Server {
      * Shuts the server down
      */
     public void shutdown() {
-        // TODO: This needs to be called to cleanly shut down the server
+        
         ArrayList<Socket> userSocketList =
                 (ArrayList<Socket>) userDatabase.getSocketList();
         for (Socket socket : userSocketList) {
-            
+            try {
+                // TODO: Send disconnect server message to clients
+                socket.close();
+            } catch (IOException ex) {
+                Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
+        tcpSocket.disconnect();
+        // TODO: Clear out databases
     }
 
     /**
