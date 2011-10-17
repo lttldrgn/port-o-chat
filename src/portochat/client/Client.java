@@ -19,7 +19,7 @@ package portochat.client;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -48,7 +48,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.DefaultListModel;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -58,6 +60,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
@@ -83,17 +86,23 @@ public class Client extends JFrame implements ActionListener,
     private static final String START_SERVER = "START_SERVER";
     private static final String STATUS_MENU = "STATUS_MENU";
     private static final String THEME_MENU = "THEME_MENU";
+    private static final String COMBINED_VIEW = "COMBINED_VIEW";
+    private static final String SPLIT_VIEW = "SPLIT_VIEW";
     private HashMap<String, ChatPane> chatPaneMap = 
             new HashMap<String, ChatPane>();
     private HashMap<String, ChatPane> channelPaneMap = 
             new HashMap<String, ChatPane>();
     private DefaultListModel contactListModel = new DefaultListModel();
     private DefaultListModel channelListModel = new DefaultListModel();
+    private Dimension defaultDimension = new Dimension(1024, 768);
+    private JDialog chatContainerDialog = null;
     private JList contactList = new JList(contactListModel);
     private JList channelList = new JList(channelListModel);
     private JMenuItem connectMenu = new JMenuItem("Connect");
     private JMenuItem createChannelMenu = new JMenuItem("Create Channel...");
     private JMenuItem disconnect = new JMenuItem("Disconnect");
+    private JPanel userChannelContainerPanel = null;
+    private JPanel chatContainerPanel = null;
     private JTabbedPane tabbedChatPane = new JTabbedPane(JTabbedPane.BOTTOM, 
             JTabbedPane.SCROLL_TAB_LAYOUT);
     private StatusPane statusPane = null;
@@ -111,6 +120,10 @@ public class Client extends JFrame implements ActionListener,
     private Timer notificationTimer = new Timer(1500, timerListener);
     
     private Process serverProcess = null;
+    private View currentView = View.COMBINED;
+    private enum View {
+        COMBINED, SPLIT;
+    }
     
     public Client() {
         setTitle("Port-O-Chat");
@@ -120,7 +133,7 @@ public class Client extends JFrame implements ActionListener,
      * Initializes the GUI and listeners
      */
     public void init() {
-        setSize(1024, 768);
+        setSize(defaultDimension);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
             @Override
@@ -173,42 +186,54 @@ public class Client extends JFrame implements ActionListener,
         themeMenu.setActionCommand(THEME_MENU);
         settingsMenu.add(themeMenu); 
         
-        JMenu windowMenu = new JMenu("Window");
-        windowMenu.setMnemonic(KeyEvent.VK_W);
-        menuBar.add(windowMenu);
+        JMenu viewMenu = new JMenu("View");
+        viewMenu.setMnemonic(KeyEvent.VK_V);
+        menuBar.add(viewMenu);
         
         JMenuItem statusMenu = new JMenuItem("Status");
         statusMenu.addActionListener(this);
         statusMenu.setMnemonic(KeyEvent.VK_S);
         statusMenu.setActionCommand(STATUS_MENU);
-        windowMenu.add(statusMenu); 
+        viewMenu.add(statusMenu); 
         
-        // add split pane
-        Container contentPane = getContentPane();       
-        JPanel leftPane = new JPanel();
-        JPanel rightPane = new JPanel();
-        JSplitPane splitPane = new 
-                JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPane, rightPane);
-        splitPane.setDividerLocation(200);
-        contentPane.add(splitPane);
+        viewMenu.addSeparator();
+        ButtonGroup viewGroup = new ButtonGroup();
+        JRadioButtonMenuItem combined = new JRadioButtonMenuItem("Combined Layout");
+        combined.setSelected(true);
+        combined.setActionCommand(COMBINED_VIEW);
+        combined.addActionListener(this);
+        viewMenu.add(combined);
+        viewGroup.add(combined);
+        
+        JRadioButtonMenuItem split = new JRadioButtonMenuItem("Split Layout");
+        split.setActionCommand(SPLIT_VIEW);
+        split.addActionListener(this);
+        viewGroup.add(split);
+        viewMenu.add(split);
+        
+        // construct panels 
+        userChannelContainerPanel = new JPanel();
+        chatContainerPanel = new JPanel();
 
-        // configure left pane
+        // configure user/channel pane
         // contact list panel
         JPanel contactPanel = new JPanel();
-        BoxLayout leftPaneLayout = new BoxLayout(leftPane, BoxLayout.PAGE_AXIS);
-        leftPane.setLayout(leftPaneLayout);
+        BoxLayout leftPaneLayout = 
+                new BoxLayout(userChannelContainerPanel, BoxLayout.PAGE_AXIS);
+        userChannelContainerPanel.setLayout(leftPaneLayout);
         contactPanel.setLayout(new BorderLayout());
         contactPanel.setBorder(BorderFactory.createLineBorder(Color.black));
         contactPanel.setBorder(BorderFactory.createTitledBorder("Contacts"));
         contactPanel.add(new JScrollPane(contactList));
-        leftPane.add(contactPanel);
+        userChannelContainerPanel.add(contactPanel);
         
         // channel list panel
         JPanel channelPanel = new JPanel();
         channelPanel.setBorder(BorderFactory.createTitledBorder("Channels"));
         channelPanel.setLayout(new BorderLayout());
         channelPanel.add(new JScrollPane(channelList));
-        leftPane.add(channelPanel);
+        userChannelContainerPanel.add(channelPanel);
+        setCombinedView();
         
         // set up listeners
         contactList.addMouseListener(new MouseAdapter() {
@@ -221,6 +246,7 @@ public class Client extends JFrame implements ActionListener,
                         if (pane == null) {
                             pane = createChatPane(contact);
                         }
+                        updateCurrentView();
                         tabbedChatPane.setSelectedComponent(pane);
                     }
                 }
@@ -238,9 +264,9 @@ public class Client extends JFrame implements ActionListener,
             }
         });
         
-        // set up right panel
-        rightPane.setLayout(new BorderLayout());
-        rightPane.add(tabbedChatPane);
+        // set up chat container panel
+        chatContainerPanel.setLayout(new BorderLayout());
+        chatContainerPanel.add(tabbedChatPane);
         
         tabbedChatPane.addChangeListener(new ChangeListener() {
 
@@ -258,6 +284,57 @@ public class Client extends JFrame implements ActionListener,
         username = GuiUtil.getUserName(this.getClass());
         server = GuiUtil.getServerName(this.getClass());
         serverPort = GuiUtil.getServerPort(this.getClass());
+    }
+    
+    private void setCombinedView() {
+        getContentPane().removeAll();
+        if (chatContainerDialog != null) {
+            chatContainerDialog.setVisible(false);
+            chatContainerDialog.getContentPane().removeAll();
+        }
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
+                userChannelContainerPanel, chatContainerPanel);
+        splitPane.setDividerLocation(200);
+        getContentPane().add(splitPane);
+        setSize(defaultDimension);
+        currentView = View.COMBINED;
+    }
+    
+    private void setSplitView() {
+        getContentPane().removeAll();
+        getContentPane().add(userChannelContainerPanel);
+        validate();
+        setSize(300, 400); // repack this frame
+        
+        if (chatContainerDialog == null) {
+            Dimension dialogSize = new Dimension(400, 500);
+            chatContainerDialog = new JDialog(this, "Chat");
+            chatContainerDialog.setLocation(getX() + getWidth(), getY());
+            chatContainerDialog.setSize(dialogSize);
+            chatContainerDialog.setPreferredSize(dialogSize);
+            chatContainerDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+            chatContainerDialog.addWindowListener(new WindowAdapter() {
+                @Override
+                public void windowClosing(WindowEvent e) {
+                    // TODO: handle closing of the window
+                }
+            });
+        }
+
+        chatContainerDialog.getContentPane().add(chatContainerPanel);
+        chatContainerDialog.validate();
+        chatContainerDialog.setVisible(true);
+        currentView = View.SPLIT;
+    }
+    
+    /**
+     * Updates the GUI based on the currently selected view
+     */
+    private void updateCurrentView() {
+        if (currentView == View.SPLIT) {
+            // make sure dialog is visible
+            chatContainerDialog.setVisible(true);
+        }
     }
     
     private void shutdown() {
@@ -302,6 +379,7 @@ public class Client extends JFrame implements ActionListener,
             connection.joinChannel(channel);
             connection.requestUsersInChannel(channel);
         }
+        updateCurrentView();
         tabbedChatPane.setSelectedComponent(pane);
         pane.setFocus();
 
@@ -322,6 +400,11 @@ public class Client extends JFrame implements ActionListener,
                     "Enter channel name to create", "Channel creation", 
                     JOptionPane.QUESTION_MESSAGE);
             if (returnVal != null) {
+                if (returnVal.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, 
+                            "Invalid name", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
                 String channel = returnVal;
                 if (!channel.startsWith("#"))
                     channel = "#" + channel;
@@ -340,18 +423,26 @@ public class Client extends JFrame implements ActionListener,
                     chatPaneMap.remove(name);
                 }
                 tabbedChatPane.remove(i);
-                
+
+                if (tabbedChatPane.getTabCount() == 0 && currentView == View.SPLIT) {
+                    chatContainerDialog.setVisible(false);
+                }
             }
         } else if (e.getActionCommand().equals(DISCONNECT)) {
             disconnectFromServer();
         } else if (e.getActionCommand().equals(STATUS_MENU)) {
             showStatusPane();
+            updateCurrentView();
         } else if (e.getActionCommand().equals(THEME_MENU)) {
             ThemeManager themeManager = ThemeManager.getInstance();
             themeManager.setTopLevelComponent(this);
             themeManager.setVisible(true);
         } else if (e.getActionCommand().equals(START_SERVER)) {
             startServer();
+        } else if (e.getActionCommand().equals(SPLIT_VIEW)) {
+            setSplitView();
+        } else if (e.getActionCommand().equals(COMBINED_VIEW)) {
+            setCombinedView();
         }
     }
     
@@ -758,6 +849,7 @@ public class Client extends JFrame implements ActionListener,
                             setTabColor(tabIndex, Color.red);
                         }
                         timerListener.notifyMessageReceived();
+                        updateCurrentView();
                     }
                 });
             } else {
@@ -768,6 +860,7 @@ public class Client extends JFrame implements ActionListener,
                     setTabColor(tabIndex, Color.red);
                 }
                 timerListener.notifyMessageReceived();
+                updateCurrentView();
             }
         } else {
             ChatPane pane = channelPaneMap.get(channel);
@@ -779,6 +872,7 @@ public class Client extends JFrame implements ActionListener,
                     setTabColor(tabIndex, Color.red);
                 }
                 timerListener.notifyMessageReceived();
+                updateCurrentView();
             } else {
                 logger.warning("Received a message from a channel that is not joined.");
             }
