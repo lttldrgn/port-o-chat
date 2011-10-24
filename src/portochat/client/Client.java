@@ -94,7 +94,6 @@ public class Client extends JFrame implements ActionListener,
             new HashMap<String, ChatPane>();
     private DefaultListModel contactListModel = new DefaultListModel();
     private DefaultListModel channelListModel = new DefaultListModel();
-    private Dimension defaultDimension = new Dimension(1024, 768);
     private JDialog chatContainerDialog = null;
     private JList contactList = new JList(contactListModel);
     private JList channelList = new JList(channelListModel);
@@ -133,7 +132,6 @@ public class Client extends JFrame implements ActionListener,
      * Initializes the GUI and listeners
      */
     public void init() {
-        setSize(defaultDimension);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
             @Override
@@ -218,6 +216,8 @@ public class Client extends JFrame implements ActionListener,
         // configure user/channel pane
         // contact list panel
         JPanel contactPanel = new JPanel();
+        contactPanel.setPreferredSize(new Dimension(250, 250));
+        contactPanel.setMinimumSize(new Dimension(200, 200));
         BoxLayout leftPaneLayout = 
                 new BoxLayout(userChannelContainerPanel, BoxLayout.PAGE_AXIS);
         userChannelContainerPanel.setLayout(leftPaneLayout);
@@ -229,6 +229,8 @@ public class Client extends JFrame implements ActionListener,
         
         // channel list panel
         JPanel channelPanel = new JPanel();
+        channelPanel.setPreferredSize(new Dimension(250, 250));
+        channelPanel.setMinimumSize(new Dimension(200, 200));
         channelPanel.setBorder(BorderFactory.createTitledBorder("Channels"));
         channelPanel.setLayout(new BorderLayout());
         channelPanel.add(new JScrollPane(channelList));
@@ -266,6 +268,7 @@ public class Client extends JFrame implements ActionListener,
         
         // set up chat container panel
         chatContainerPanel.setLayout(new BorderLayout());
+        tabbedChatPane.setPreferredSize(new Dimension(550, 550));
         chatContainerPanel.add(tabbedChatPane);
         
         tabbedChatPane.addChangeListener(new ChangeListener() {
@@ -284,6 +287,7 @@ public class Client extends JFrame implements ActionListener,
         username = GuiUtil.getUserName(this.getClass());
         server = GuiUtil.getServerName(this.getClass());
         serverPort = GuiUtil.getServerPort(this.getClass());
+        pack();
     }
     
     private void setCombinedView() {
@@ -294,36 +298,39 @@ public class Client extends JFrame implements ActionListener,
         }
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, 
                 userChannelContainerPanel, chatContainerPanel);
-        splitPane.setDividerLocation(200);
+        splitPane.setDividerLocation(250);
         getContentPane().add(splitPane);
-        setSize(defaultDimension);
+        pack();
         currentView = View.COMBINED;
     }
     
     private void setSplitView() {
         getContentPane().removeAll();
         getContentPane().add(userChannelContainerPanel);
-        validate();
-        setSize(300, 400); // repack this frame
+        pack();
         
         if (chatContainerDialog == null) {
-            Dimension dialogSize = new Dimension(400, 500);
             chatContainerDialog = new JDialog(this, "Chat");
             chatContainerDialog.setLocation(getX() + getWidth(), getY());
-            chatContainerDialog.setSize(dialogSize);
-            chatContainerDialog.setPreferredSize(dialogSize);
             chatContainerDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
             chatContainerDialog.addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosing(WindowEvent e) {
-                    // TODO: handle closing of the window
+                    int openTabs = tabbedChatPane.getTabCount();
+                    for (int i = openTabs - 1; i > -1; i--) {
+                        ButtonTabComponent comp = (ButtonTabComponent)tabbedChatPane.getTabComponentAt(i);
+                        comp.closeTab();
+                    }
+                    chatContainerDialog.setVisible(false);
                 }
             });
         }
 
         chatContainerDialog.getContentPane().add(chatContainerPanel);
-        chatContainerDialog.validate();
-        chatContainerDialog.setVisible(true);
+        if (tabbedChatPane.getTabCount() > 0) {
+            chatContainerDialog.pack();
+            chatContainerDialog.setVisible(true);
+        }
         currentView = View.SPLIT;
     }
     
@@ -333,6 +340,7 @@ public class Client extends JFrame implements ActionListener,
     private void updateCurrentView() {
         if (currentView == View.SPLIT) {
             // make sure dialog is visible
+            chatContainerDialog.pack();
             chatContainerDialog.setVisible(true);
         }
     }
@@ -752,23 +760,30 @@ public class Client extends JFrame implements ActionListener,
      * @param color 
      */
     private void setTabColor(final int tabIndex, final Color color) {
-        // filter out bad indexes and closing tabs
-        if ((tabIndex == -1) || (tabIndex + 1 >tabbedChatPane.getTabCount()))
-            return;
-        
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                final ButtonTabComponent comp = 
-                            (ButtonTabComponent)tabbedChatPane.getTabComponentAt(tabIndex);
+        if (SwingUtilities.isEventDispatchThread()) {
+            // filter out bad indexes and closing tabs
+            if ((tabIndex == -1) || (tabIndex + 1 >tabbedChatPane.getTabCount()))
+                return;
+            final ButtonTabComponent comp = 
+                        (ButtonTabComponent)tabbedChatPane.getTabComponentAt(tabIndex);
+            if (comp != null) {
+                // on tab create the button component has not yet been set
+                // so only set the color later when it is no longer null
                 comp.setTextColor(color);
                 comp.repaint();
-                Component pane = tabbedChatPane.getComponentAt(tabIndex);
-                if (pane instanceof ChatPane) {
-                    ((ChatPane)pane).setFocus();
-                }
             }
-        });
+            Component pane = tabbedChatPane.getComponentAt(tabIndex);
+            if (pane instanceof ChatPane) {
+                ((ChatPane)pane).setFocus();
+            }
+        } else {
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    setTabColor(tabIndex, color);
+                }
+            });
+        }
     }
     
     /**

@@ -61,6 +61,7 @@ public class ButtonTabComponent extends JPanel {
     private final JTabbedPane pane;
 
     private final JLabel label;
+    private JButton closeButton;
     /**
      * Creates a ButtonTabComponent that is rendered on each new tab
      * @param pane Pane that this component is attached to
@@ -91,8 +92,8 @@ public class ButtonTabComponent extends JPanel {
         //add more space between the label and the button
         label.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
         //tab button
-        JButton button = new TabButton(listener);
-        add(button);
+        closeButton = new TabButton(listener);
+        add(closeButton);
         //add more space to the top of the component
         setBorder(BorderFactory.createEmptyBorder(2, 0, 0, 0));
     }
@@ -104,6 +105,13 @@ public class ButtonTabComponent extends JPanel {
     public void setTextColor(Color color) {
         label.setForeground(color);
         label.repaint();
+    }
+    
+    /**
+     * Clicks the button tab's close button
+     */
+    public void closeTab() {
+        closeButton.doClick();
     }
     
     public class TabButton extends JButton {
