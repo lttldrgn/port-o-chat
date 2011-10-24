@@ -29,6 +29,7 @@ public class ServerLauncherGUI extends JFrame implements ActionListener {
     private boolean running = false;
     
     private ServerLauncherGUI() {
+        super("Port-O-Chat Server");
         server = ServerLauncher.launchServer();
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
@@ -40,7 +41,6 @@ public class ServerLauncherGUI extends JFrame implements ActionListener {
         add(portEntryField);
         add(stopStartButton);
         stopStartButton.addActionListener(this);
-        setSize(100,100);
         pack();
     }
     

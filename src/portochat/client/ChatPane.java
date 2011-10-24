@@ -102,9 +102,12 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
         c.fill = GridBagConstraints.BOTH;
         c.gridx = 0;
         c.gridy = 0;
-        c.weightx = 0.9;
+        c.weightx = 0.8;
         c.weighty = 0.9;
-        add(new JScrollPane(viewPane), c);
+        JScrollPane viewScroll = new JScrollPane(viewPane);
+        viewScroll.setPreferredSize(new Dimension(400, 400));
+        viewScroll.setMinimumSize(new Dimension(200, 200));
+        add(viewScroll, c);
         viewPane.setEditable(false);
 
         if (isChannel) {
@@ -112,9 +115,11 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
             participantList = new JList(participantListModel);
 
             c.gridx = 1;
-            c.weightx = 0.1;
-            participantList.setPreferredSize(new Dimension(75, 300));
-            add(new JScrollPane(participantList), c);
+            c.weightx = 0.2;
+            JScrollPane participantScroll = new JScrollPane(participantList);
+            participantScroll.setPreferredSize(new Dimension(100, 300));
+            participantScroll.setMinimumSize(new Dimension(100, 100));
+            add(participantScroll, c);
             
             //set up gridwidth for next component
             c.gridwidth = 2;
@@ -122,8 +127,11 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
 
         c.gridx = 0;
         c.gridy = 1;
+        c.weightx = 0.8;
         c.weighty = 0.1;
-        add(new JScrollPane(textEntry), c);
+        JScrollPane textEntryScroll = new JScrollPane(textEntry);
+        textEntryScroll.setPreferredSize(new Dimension(500, 50));
+        add(textEntryScroll, c);
         
         textEntry.addKeyListener(new KeyAdapter() {
 
