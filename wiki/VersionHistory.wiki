@@ -2,8 +2,19 @@
 
 = Release history =
 
+== October 3, 2011 ==
+
+Changes:
+  * Bug Fixes
+
+List of fixes:
+issue 2
+issue 36
+
+Partially implemented:
+issue 29
+
 == Sept 5, 2011 ==
-Sept 5th stable build of Port-O-Chat.
 
 Changes:
   * Bug Fixes
