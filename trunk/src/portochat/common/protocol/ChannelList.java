@@ -55,13 +55,7 @@ public class ChannelList extends DefaultData {
             channelList = new ArrayList<String>();
             for (int i = 0; i < numChannels; i++) {
                 
-                int channelLength = dis.readInt();
-
-                StringBuilder sb = new StringBuilder();
-                for (int j = 0; j < channelLength; j++) {
-                    sb.append((char) dis.readUnsignedByte());
-                }
-                String channel = sb.toString();
+                String channel = dis.readUTF();
                 channelList.add(channel);
             }
         } catch (IOException ex) {
@@ -79,15 +73,12 @@ public class ChannelList extends DefaultData {
 
         try {
             // The server fills this out, from the client this will be null.
-            if (channelList == null || channelList.size() == 0) {
+            if (channelList == null || channelList.isEmpty()) {
                 dos.writeInt(0);
             } else {
                 dos.writeInt(channelList.size());
                 for (String channel : channelList) {
-                    dos.writeInt(channel.length());
-                    for (int i = 0; i < channel.length(); i++) {
-                        dos.writeByte(channel.charAt(i));
-                    }
+                    dos.writeUTF(channel);
                 }
             }
         } catch (IOException ex) {
