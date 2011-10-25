@@ -48,12 +48,7 @@ public class UserData extends DefaultData {
         super.parse(dis);
 
         try {
-            StringBuilder sb = new StringBuilder();
-            int userLength = dis.readInt();
-            for (int i = 0; i < userLength; i++) {
-                sb.append((char) dis.readUnsignedByte());
-            }
-            name = sb.toString();
+            name = dis.readUTF();
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to parse data!", ex);
         }
@@ -67,10 +62,7 @@ public class UserData extends DefaultData {
     @Override
     public int writeBody(DataOutputStream dos) {
         try {
-            dos.writeInt(name.length());
-            for (int i = 0; i < name.length(); i++) {
-                dos.writeByte(name.charAt(i));
-            }
+            dos.writeUTF(name);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to write data", ex);
         }
