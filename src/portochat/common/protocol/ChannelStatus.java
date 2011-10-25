@@ -50,12 +50,7 @@ public class ChannelStatus extends DefaultData {
         super.parse(dis);
 
         try {
-            StringBuilder sb = new StringBuilder();
-            int channelLength = dis.readInt();
-            for (int i = 0; i < channelLength; i++) {
-                sb.append((char) dis.readUnsignedByte());
-            }
-            channel = sb.toString();
+            channel = dis.readUTF();
             created = dis.readBoolean();
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to parse data!", ex);
@@ -70,10 +65,7 @@ public class ChannelStatus extends DefaultData {
     @Override
     public int writeBody(DataOutputStream dos) {
         try {
-            dos.writeInt(channel.length());
-            for (int i = 0; i < channel.length(); i++) {
-                dos.writeByte(channel.charAt(i));
-            }
+            dos.writeUTF(channel);
             dos.writeBoolean(created);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to write data", ex);
