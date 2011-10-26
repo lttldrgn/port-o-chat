@@ -142,17 +142,25 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
                     String text = textEntry.getText();
                     if (text.isEmpty() || text.startsWith("\n")) {
                         textEntry.setText("");
-                        return;
+                    } else {
+                        processInputMessage(text);
                     }
-
-                    processInputMessage(text);
+                    e.consume();
                 }
             }
             
             @Override
             public void keyReleased(KeyEvent e) {
                 if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                        textEntry.setText("");
+                    // Added this check here for when MS IME is being used
+                    // with some character sets and for some reason we do not 
+                    // get the key pressed events, but we do get key released 
+                    // events so we can catch the input here
+                    String text = textEntry.getText();
+                    if (!text.isEmpty() && !text.startsWith("\n")) {
+                        processInputMessage(text);
+                    }
+                    textEntry.setText("");
                 }
             }
         });
