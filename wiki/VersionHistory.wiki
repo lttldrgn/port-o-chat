@@ -2,6 +2,16 @@
 
 = Release history =
 
+== October 26, 2011 ==
+Change Summary:
+  * Improved Server Launcher GUI with port configuration and start/stop button
+  * Added a multi-window view allowing contact/channel list and chat pane to be in different windows
+  * Fixed a problem with Microsoft IME language entry preventing Japanese characters from being entered
+  * Fixed issue with user and channel names using unicode characters
+
+List of fixes:
+issue 39, issue 40, issue 42
+
 == October 3, 2011 ==
 
 Changes:
