@@ -1,4 +1,5 @@
 #summary Page containing downloadable PortOChat version release notes
+#labels Featured
 
 = Release history =
 
