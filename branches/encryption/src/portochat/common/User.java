@@ -19,6 +19,12 @@ package portochat.common;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.security.PublicKey;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import javax.crypto.SecretKey;
+import portochat.common.protocol.InitializationEnum;
+import portochat.common.socket.handler.BufferHandler;
 
 /**
  *
@@ -28,16 +34,16 @@ public class User {
 
     private String name = null;
     private String host = null;
+    private SecretKey secretKey = null;
+    private PublicKey clientPublicKey = null;
+    private InitializationEnum initEnum = null;
+    private List<BufferHandler> handlers = null;
     
     /**
      * User constructor
-     * 
-     * @param name
-     * @param host 
      */
-    public User(String name, String host) {
-        this.name = name;
-        this.host = host;
+    public User() {
+        handlers = new CopyOnWriteArrayList<BufferHandler>();
     }
     
     /**
@@ -86,6 +92,46 @@ public class User {
         this.name = name;
     }
 
+    public SecretKey getSecretKey() {
+        return secretKey;
+    }
+
+    public void setSecretKey(SecretKey secretKey) {
+        this.secretKey = secretKey;
+    }
+
+    public PublicKey getClientPublicKey() {
+        return clientPublicKey;
+    }
+
+    public void setClientPublicKey(PublicKey clientPublicKey) {
+        this.clientPublicKey = clientPublicKey;
+    }
+
+    public InitializationEnum getInitEnum() {
+        return initEnum;
+    }
+
+    public void setInitEnum(InitializationEnum initEnum) {
+        this.initEnum = initEnum;
+    }
+
+    public void clearHandlers() {
+        handlers.clear();
+    }
+
+    public List<BufferHandler> getHandlers() {
+        return handlers;
+    }
+      
+    public void addHandler(BufferHandler handler) {
+        handlers.add(handler);
+    }
+    
+    public void removeHandler(BufferHandler handler) {
+        handlers.remove(handler);
+    }
+    
     /**
      * Static method used to write out user data to the DataOutputStream
      * 
@@ -132,4 +178,5 @@ public class User {
     public String toString() {
         return name + " (" + host + ")";
     }
+
 }

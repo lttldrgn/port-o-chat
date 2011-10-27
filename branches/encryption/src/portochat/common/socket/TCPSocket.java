@@ -29,11 +29,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import portochat.common.User;
+import portochat.common.Util;
 import portochat.common.protocol.DefaultData;
-import portochat.common.protocol.ProtocolHandler;
 import portochat.common.protocol.UserConnection;
 import portochat.common.socket.event.NetEvent;
 import portochat.common.socket.event.NetListener;
+import portochat.common.socket.handler.BufferHandler;
+import portochat.common.socket.handler.ChatHandler;
+import portochat.common.socket.handler.HandshakeHandler;
 import portochat.server.UserDatabase;
 
 /**
@@ -51,9 +54,10 @@ public class TCPSocket {
     private List<NetListener> listeners = null;
     private LinkedBlockingQueue<NetData> writeQueue = null;
     private AcceptThread acceptThread = null;
-    private ProtocolHandler protocolHandler = null;
     private OutgoingThread outgoingThread = null;
     private UserDatabase userDatabase = null;
+    private User serverUser = null;
+    private boolean encryptedStream = true;
 
     /*
      * Public constructor
@@ -63,7 +67,6 @@ public class TCPSocket {
     public TCPSocket(String name) {
         this.name = name;
         writeQueue = new LinkedBlockingQueue<NetData>();
-        protocolHandler = ProtocolHandler.getInstance();
         userDatabase = UserDatabase.getInstance();
     }
 
@@ -93,13 +96,20 @@ public class TCPSocket {
      * @return true if successful
      */
     public boolean connect(String host, int port) throws IOException {
-        clientSocket = new Socket(host, port);
 
+        serverUser = new User();
+        serverUser.setHost(host);
+
+        // TODO cleanup old handlers on reconnect?
+        serverUser.addHandler(new HandshakeHandler());
+        serverUser.addHandler(new ChatHandler());
+
+        clientSocket = new Socket(host, port);
         startProcessingThreads(clientSocket);
 
         return clientSocket.isConnected();
     }
-    
+
     /**
      * Calling this method disconnects this socket from the remote host
      */
@@ -196,7 +206,7 @@ public class TCPSocket {
     public String getName() {
         return name;
     }
-    
+
     /**
      * Cleans up everything after socket is disconnected
      */
@@ -209,9 +219,9 @@ public class TCPSocket {
             } finally {
                 clientSocket = null;
             }
-            
+
         }
-        
+
         if (serverSocket != null) {
             try {
                 serverSocket.close();
@@ -222,6 +232,24 @@ public class TCPSocket {
         }
         writeQueue.clear();
         // TODO: Should listeners be cleared also?
+    }
+
+    private List<BufferHandler> getHandlers(Socket socket) {
+        List<BufferHandler> handlers = null;
+
+        User user = (serverUser != null
+                ? serverUser : userDatabase.getSocketOfUser(socket));
+        handlers = user.getHandlers();
+
+        return handlers;
+    }
+
+    private void removeHandler(Socket socket, BufferHandler handler) {
+        List<BufferHandler> handlers = getHandlers(socket);
+
+        if (handlers != null) {
+            handlers.remove(handler);
+        }
     }
 
     /*
@@ -239,12 +267,25 @@ public class TCPSocket {
 
             while (listening) {
                 try {
-                    startProcessingThreads(serverSocket.accept());
+                    Socket socket = serverSocket.accept();
+                    userDatabase.addConnection(socket);
+
+                    // Add the handlers
+                    userDatabase.clearHandlers(socket);
+                    HandshakeHandler handshakeHandler = new HandshakeHandler();
+                    handshakeHandler.setServerHandler(true);
+                    handshakeHandler.setEncryption(encryptedStream);
+                    userDatabase.addHandler(socket, handshakeHandler);
+                    ChatHandler chatHandler = new ChatHandler();
+                    chatHandler.setServerHandler(true);
+                    userDatabase.addHandler(socket, chatHandler);
+
+                    startProcessingThreads(socket);
                 } catch (SocketException ex) {
                     logger.log(Level.INFO, "Server Socket closed");
                 } catch (IOException ex) {
                     logger.log(Level.SEVERE, "Unable to accept client", ex);
-                } 
+                }
             }
             try {
                 serverSocket.close();
@@ -257,7 +298,7 @@ public class TCPSocket {
     }
 
     /**
-     * This class is used to process incoming data.
+     * This class is used to processIncoming incoming data.
      */
     private class IncomingThread extends Thread {
 
@@ -266,6 +307,7 @@ public class TCPSocket {
 
         public IncomingThread(Socket incomingSocket) {
             super("IncomingThread");
+
             this.incomingSocket = incomingSocket;
             try {
                 bis = new BufferedInputStream(incomingSocket.getInputStream());
@@ -283,12 +325,40 @@ public class TCPSocket {
             try {
                 while ((length = bis.read(buffer)) != -1) {
 
-                    //TODO handle over 8192.. is that MTU?
-                    List<DefaultData> defaultDataList = protocolHandler.processData(buffer, length);
-                    for (DefaultData defaultData : defaultDataList) {
-                        fireIncomingMessage(incomingSocket, defaultData);
+                    //TODO how to handle chunk data?
+                    for (BufferHandler handler : getHandlers(incomingSocket)) {
+                        // If finished go to next, remove on outgoing
+                        if (handler.isFinished()) {
+                            continue;
+                        }
+
+                        handler.processIncoming(incomingSocket, buffer, length);
+
+                        // Retrieve any data that needs to be sent to listeners
+                        List<DefaultData> listenerDataList = handler.getListenerData();
+                        if (listenerDataList != null
+                                && listenerDataList.size() > 0) {
+                            for (DefaultData defaultData : listenerDataList) {
+                                fireIncomingMessage(incomingSocket, defaultData);
+                            }
+                        }
+
+                        // Retrieve any data that needs to be sent to the socket
+                        List<DefaultData> socketDataList = handler.getSocketData();
+                        if (socketDataList != null
+                                && socketDataList.size() > 0) {
+                            for (DefaultData defaultData : socketDataList) {
+
+                                writeData(incomingSocket, defaultData);
+                            }
+                        }
+
+                        // If this handler consumes the message, stop iterating
+                        if (handler.isMessageConsumed()) {
+                            break;
+                        }
                     }
-                            } 
+                }
             } catch (SocketException ex) {
                 logger.log(Level.INFO, "Socket disconnected", ex);
             } catch (IOException ex) {
@@ -315,8 +385,9 @@ public class TCPSocket {
                 User user = userDatabase.getSocketOfUser(socket);
                 if (user == null) {
                     // Hasn't set a username yet
-                    user = new User("unknown",
-                            socket.getInetAddress().getHostName());
+                    user = new User();
+                    user.setName("unknown");
+                    user.setHost(socket.getInetAddress().getHostName());
                 }
                 userConnection.setUser(user);
             }
@@ -327,7 +398,7 @@ public class TCPSocket {
     }
 
     /**
-     * This class is used to process outgoing messages
+     * This class is used to processIncoming outgoing messages
      */
     private class OutgoingThread extends Thread {
 
@@ -338,22 +409,53 @@ public class TCPSocket {
         @Override
         public void run() {
             //TODO do something when disconnecting everyone?
-            
+
             // Write the data
             try {
                 while (true) {
                     NetData netData = writeQueue.take();
-                    BufferedOutputStream bos =
-                            new BufferedOutputStream(netData.socket.getOutputStream());
-                    bos.write(netData.data);
-                    bos.flush();
+
+                    byte[] data = null;
+                    for (BufferHandler handler : getHandlers(netData.socket)) {
+                        //TODO how to fix this properly? handshake handler is sending
+                        // the user data since the client doesnt' send a response
+                        // for the server's READY response.. 
+                        if (handler instanceof HandshakeHandler &&
+                                !handler.isServerHandler() &&
+                                handler.isFinished()) {
+                            removeHandler(netData.socket, handler);
+                            continue;
+                        }
+                        data = handler.processOutgoing(
+                                netData.socket,
+                                netData.data, netData.data.length);
+
+                        if (data != null) {
+                            BufferedOutputStream bos =
+                                    new BufferedOutputStream(netData.socket.getOutputStream());
+                            System.out.println(handler + " is WRITING:" + Util.byteArrayToHexString(data));
+                            bos.write(data);
+                            bos.flush();
+                        }
+
+                        // If handler is finished, remove
+                        if (handler.isFinished()) {
+                            removeHandler(netData.socket, handler);
+                        }
+                        
+                        // If this handler consumes the message, stop iterating
+                        if (handler.isMessageConsumed()) {
+                            break;
+                        }
+                    }
                 }
 
+
             } catch (SocketException se) {
-                logger.log(Level.INFO, 
+                logger.log(Level.INFO,
                         "Closing connection due to SocketException", se);
             } catch (IOException ex) {
-                logger.log(Level.WARNING, 
+                logger.log(Level.WARNING,
                         "Closing connection due to IOException", ex);
             } catch (InterruptedException ie) {
                 // Thread was interrupted so exit this thread
@@ -369,7 +471,7 @@ public class TCPSocket {
      */
     private class NetData {
 
-        private Socket socket = null;
+        Socket socket = null;
         byte[] data = null;
     }
 }

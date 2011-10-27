@@ -534,7 +534,8 @@ public class Client extends JFrame implements ActionListener,
             connection = new ServerConnection();
             connection.addDataListener(this);
             success = connection.connectToServer(server, serverPort);
-            connection.sendUsername(username);
+            connection.setUsername(username);
+            connection.sendInitialize();//connection.sendUsername(username);
             
         } catch (UnknownHostException e) {
             statusPane.showMessage("Connection failed because of unknown " +

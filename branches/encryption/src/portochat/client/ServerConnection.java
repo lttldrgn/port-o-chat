@@ -21,11 +21,14 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import portochat.common.encryption.EncryptionManager;
 import portochat.common.protocol.ChannelJoinPart;
 import portochat.common.protocol.ChannelList;
 import portochat.common.protocol.ChannelStatus;
 import portochat.common.protocol.ChatMessage;
 import portochat.common.protocol.DefaultData;
+import portochat.common.protocol.Initialization;
+import portochat.common.protocol.InitializationEnum;
 import portochat.common.protocol.Ping;
 import portochat.common.protocol.Pong;
 import portochat.common.protocol.ServerMessage;
@@ -48,8 +51,11 @@ public class ServerConnection {
             new CopyOnWriteArrayList<ServerDataListener>();
     private TCPSocket socket = null;
     private ClientHandler clientHandler = null;
+    private static String username = null;
+    private EncryptionManager encryptionManager = null;
     
     public ServerConnection() {
+        encryptionManager = EncryptionManager.getInstance();
     }
     
     public boolean connectToServer(String serverAddress, int port) 
@@ -71,9 +77,25 @@ public class ServerConnection {
         socket = null;
     }
     
-    public void sendUsername(String username) {
+    public void setUsername(String username) {
+        this.username = username;
+    }
+    
+    public void sendInitialize() {
+        Initialization initialization = new Initialization();
+        initialization.setInitializationEnum(InitializationEnum.CLIENT_RSA_PRIVATE_KEY);
+        initialization.setServer(false);
+        initialization.setInitializationEnum(
+                    InitializationEnum.CLIENT_RSA_PRIVATE_KEY);
+        initialization.setEncodedPublicKey(
+                encryptionManager.getClientEncodedPublicKey());
+        
+        socket.writeData(socket.getClientSocket(), initialization);
+    }
+    
+    public void sendUsername(String newUsername) {
         UserData userData = new UserData();
-        userData.setUser(username);
+        userData.setUser(newUsername);
         socket.writeData(socket.getClientSocket(), userData);
     }
     
@@ -194,6 +216,12 @@ public class ServerConnection {
                 for (ServerDataListener listener : listeners) {
                     listener.channelStatusReceived(status.getChannel(), 
                             status.isCreated());
+                }
+            } else if (defaultData instanceof Initialization) {
+                Initialization init = (Initialization) defaultData;
+                if (init.getInitializationEnum() == InitializationEnum.READY) {
+                    // Send username
+                    sendUsername(username);
                 }
             } else {
                 logger.warning("Unknown message: " + defaultData);

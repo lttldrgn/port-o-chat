@@ -16,21 +16,33 @@
  */
 package portochat.common.protocol;
 
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  *
- * @author Brandon
+ * @author Mike
  */
-public enum ServerMessageEnum {
-    USERNAME_SET(0, "Username set to"),
-    ERROR_USERNAME_IN_USE(1, "Username in use"),
-    ERROR_CHANNEL_NON_EXISTENT(2, "Can't send message to a non-existant channel"),
-    ERROR_USER_NON_EXISTENT(2, "Can't send message to a non-existant user"),
-    ERROR_NO_USERNAME(3, "You must first send a username!");
+public enum InitializationEnum {
+    WAITING_FOR_CLIENT(0, "Server is waiting for the client"),
+    CLIENT_RSA_PRIVATE_KEY(1, "Client has sent their RSA public key."),
+    ENCRYPTION_ON(2, "Server has encryption on."),
+    ENCRYPTION_OFF(3, "Server has encryption off."),
+    READY(4, "Ready.");
 
     private int value;
     private String message;
+    private static final Map<Integer,InitializationEnum> lookup 
+          = new HashMap<Integer,InitializationEnum>();
     
-    ServerMessageEnum(int value, String message) {
+    static {
+        for (InitializationEnum e : EnumSet.allOf(InitializationEnum.class)) {
+            lookup.put(e.getValue(), e);
+        }
+    }
+
+    InitializationEnum(int value, String message) {
         this.value = value;
         this.message = message;
     }
@@ -51,6 +63,9 @@ public enum ServerMessageEnum {
     public int getValue() {
         return value;
     }
-    
-    
+
+    public static InitializationEnum get(int value) {
+        return lookup.get(value);
+    }
+
 }

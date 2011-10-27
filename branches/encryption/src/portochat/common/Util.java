@@ -43,4 +43,20 @@ public class Util {
         Date currentDate = new Date();
         return formatDate.format(currentDate);
     }
+    
+    public static String byteArrayToHexString(byte[] data) {
+        StringBuilder sb = new StringBuilder(data.length * 2);
+        for (int i = 0; i < data.length; i++) {
+            if ((i % 24) == 0) {
+                sb.append("\n\t");
+            }
+            int v = data[i] & 0xff;
+            if (v < 16) {
+                sb.append('0');
+            }
+            sb.append(Integer.toHexString(v));
+            sb.append(" ");
+        }
+        return sb.toString().toUpperCase();
+    }
 }

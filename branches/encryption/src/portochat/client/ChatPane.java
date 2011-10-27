@@ -151,7 +151,10 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
 
         if (isChannel) {
             ArrayList<User> me = new ArrayList<User>();
-            me.add(new User(myUserName, "localhost"));
+            User user = new User();
+            user.setName(myUserName);
+            user.setHost("localhost");
+            me.add(user);
             addParticipants(me);
         }
         initStyles(viewPane);
