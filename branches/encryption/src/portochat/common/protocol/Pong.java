@@ -1,0 +1,121 @@
+/*
+ *  This file is a part of port-o-chat.
+ * 
+ *  port-o-chat is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package portochat.common.protocol;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+/**
+ * This class holds data for a ping response
+ * 
+ * @author Mike
+ */
+public class Pong extends DefaultData {
+
+    private static final Logger logger = Logger.getLogger(Pong.class.getName());
+    private long timestamp = 0;
+    
+    /**
+     * Public constructor
+     */
+    public Pong() {
+    }
+    
+    /**
+     * Parses the data input stream
+     * 
+     * @param dis the data input stream
+     */
+    @Override
+    public void parse(DataInputStream dis) {
+        super.parse(dis);
+
+        try {
+            timestamp = dis.readLong();
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Unable to parse data!", ex);
+        }
+    }
+    
+    /**
+     * Writes the data to the data output stream
+     * 
+     * @param dos The data output stream
+     */
+    @Override
+    public int writeBody(DataOutputStream dos) {
+        
+        try {
+            dos.writeLong(timestamp);
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Unable to write data", ex);
+        }
+        
+        return dos.size();
+    }
+    
+    /**
+     * @return the timestamp
+     */
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    /**
+     * Sets the timestamp
+     * 
+     * @param timestamp the timestamp
+     */
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
+    
+    /**
+     * Calculates the lag by using the current system ticks and subtracting
+     * it from the set timestamp
+     * 
+     * @return the calculated lag in milliseconds
+     */
+    public long getCalculatedLag() {
+        return (System.currentTimeMillis() - timestamp);
+    }
+    
+    /**
+     * Overridden toString method
+     */
+    @Override
+    public String toString() {
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(super.toString());
+        sb.append("Pong: ");
+        sb.append(timestamp);
+
+        return sb.toString();
+    }
+
+    /**
+     * @return the object name
+     */
+    @Override
+    public String getObjectName() {
+        return "Pong";
+    }
+}
