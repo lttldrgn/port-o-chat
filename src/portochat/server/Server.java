@@ -122,25 +122,30 @@ public class Server {
             DefaultData defaultData = event.getData();
 
             User user = userDatabase.getSocketOfUser(socket);
-            if (user == null) {
-                // Users must send a UserData packet first
-                if (defaultData instanceof UserData) {
-                    // Add
-                    UserData userData = (UserData) defaultData;
-                    boolean success = userDatabase.addUser(userData.getName(), socket);
-                    user = userDatabase.getSocketOfUser(socket);
-                    
-                    ServerMessage serverMessage = new ServerMessage();
-                    if (success) {
-                        serverMessage.setMessageEnum(ServerMessageEnum.USERNAME_SET);
-                        serverMessage.setAdditionalMessage(userData.getName());
-                    } else {
-                        serverMessage.setMessageEnum(ServerMessageEnum.ERROR_USERNAME_IN_USE);
-                        serverMessage.setAdditionalMessage(userData.getName());
-                    }
-                    tcpSocket.writeData(socket, serverMessage);
 
-                    if (success) {
+            if (defaultData instanceof UserData) {
+                // Set user info
+                UserData userData = (UserData) defaultData;
+                String oldUserName = user.getName();
+                boolean rename = (oldUserName != null);
+                boolean success = false;
+
+                if (!rename) {
+                    // First time setting a name
+                    success = userDatabase.addUser(userData.getName(), socket);
+                } else {
+                    // Rename
+                    success = userDatabase.renameUser(user, userData.getName());
+
+                    // Log
+                    logger.log(Level.INFO, "Renamed of {0} to {1} was {2}",
+                            new Object[]{oldUserName, userData.getName(),
+                                success ? "successful!" : "unsuccessful!"});
+                }
+
+                ServerMessage serverMessage = new ServerMessage();
+                if (success) {
+                    if (!rename) {
                         // Notify other users of connection
                         UserConnection userConnection = new UserConnection();
                         userConnection.setUser(user);
@@ -149,25 +154,10 @@ public class Server {
                         ArrayList<Socket> userSocketList =
                                 (ArrayList<Socket>) userDatabase.getSocketList();
                         sendToAllSockets(userSocketList, userConnection);
+                    } else {
+                        // update channel database
+                        channelDatabase.renameUser(oldUserName, userData.getName());
                     }
-                } else if (defaultData instanceof UserConnection) {
-                    // Log the connection
-                    logger.info(((UserConnection) defaultData).toString());
-                } else {
-                    ServerMessage serverMessage = new ServerMessage();
-                    serverMessage.setMessageEnum(ServerMessageEnum.ERROR_NO_USERNAME);
-                    tcpSocket.writeData(socket, serverMessage);
-                }
-            } else if (defaultData instanceof UserData) {
-                // Rename
-                UserData userData = (UserData) defaultData;
-                String oldUserName = user.getName();
-                boolean success = userDatabase.renameUser(user, userData.getName());
-                
-                ServerMessage serverMessage = new ServerMessage();
-                if (success) {
-                    // update channel database
-                    channelDatabase.renameUser(oldUserName, userData.getName());
                     serverMessage.setMessageEnum(ServerMessageEnum.USERNAME_SET);
                     serverMessage.setAdditionalMessage(userData.getName());
                 } else {
@@ -175,11 +165,6 @@ public class Server {
                     serverMessage.setAdditionalMessage(userData.getName());
                 }
                 tcpSocket.writeData(socket, serverMessage);
-                
-                // Log
-                logger.log(Level.INFO, "Renamed of {0} to {1} was {2}",
-                        new Object[]{oldUserName, userData.getName(), 
-                            success?"successful!":"unsuccessful!"});
             } else if (defaultData instanceof Ping) {
                 // Send a pong
                 Pong pong = new Pong();
