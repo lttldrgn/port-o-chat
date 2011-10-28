@@ -425,7 +425,7 @@ public class TCPSocket {
                         if (handler.isFinished()
                                 && (handler.getSocketData() == null
                                 || handler.getSocketData().isEmpty())) {
-                            //If the hander is finished and has no response
+                            //If the hander is finished and has no response,
                             //remove the handler 
                             removeHandler(netData.socket, handler);
                             continue;
