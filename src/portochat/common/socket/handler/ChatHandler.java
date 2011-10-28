@@ -18,6 +18,8 @@ package portochat.common.socket.handler;
 
 import java.net.Socket;
 import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.crypto.SecretKey;
 import portochat.common.User;
 import portochat.common.encryption.EncryptionManager;
@@ -25,11 +27,15 @@ import portochat.common.protocol.ProtocolHandler;
 import portochat.server.UserDatabase;
 
 /**
- *
+ * The purpose of this class is to process chat messages. Note that these
+ * messages can be encrypted.
+ 
  * @author Mike
  */
 public class ChatHandler extends BufferHandler {
 
+    private static final Logger logger =
+            Logger.getLogger(BufferHandler.class.getName());
     private ProtocolHandler protocolHandler = null;
     private EncryptionManager encryptionManager = null;
     private Boolean encrypted = null;
@@ -46,10 +52,8 @@ public class ChatHandler extends BufferHandler {
     public boolean processIncoming(Socket socket, byte[] buffer, int length) {
         boolean error = false;
 
-        System.out.println("ChatHandler.processIncoming");
+        logger.log(Level.FINEST, "ChatHandler.processOutgoing");
         
-        // if encryption is on
-        // decrypt
         byte[] parseBuffer = Arrays.copyOf(buffer, length);
         if (isStreamEncrypted(socket)) {
             parseBuffer = encryptionManager.decrypt(getSecretKey(socket), parseBuffer);
@@ -62,20 +66,8 @@ public class ChatHandler extends BufferHandler {
     
     @Override
     public byte[] processOutgoing(Socket socket, byte[] buffer, int length) {
-        System.out.println("ChatHandler.processOutgoing");
-        /*
-        if (serverHandler) {
-            User user = UserDatabase.getInstance().getSocketOfUser(socket);
-            System.out.println("server's serverSecretKey: " + user.getSecretKey());
-            System.out.println("user's clientPublicKey: " + user.getClientPublicKey());
-        } else {
-            System.out.println("client's serverSecretKey: " + encryptionManager.getServerSecretKey());
-            System.out.println("client's clientPublicKey: " + encryptionManager.getClientPublicKey());
-            System.out.println("client's clientPrivateKey: " + encryptionManager.getClientPrivateKey());
-        }*/
-        
-        // if encryption on
-        // encrypt
+        logger.log(Level.FINEST, "ChatHandler.processOutgoing");
+
         byte[] parseBuffer = Arrays.copyOf(buffer, length);
         if (isStreamEncrypted(socket)) {
             parseBuffer = encryptionManager.encrypt(getSecretKey(socket), parseBuffer);
@@ -87,9 +79,6 @@ public class ChatHandler extends BufferHandler {
     private boolean isStreamEncrypted(Socket socket) {
         
         if (encrypted == null) {
-            // TODO another way to do this?
-            // how can I get clients to view this data as well?
-            // global map won't work if user hosts server and client
             if (serverHandler) {
                 User user = UserDatabase.getInstance().getSocketOfUser(socket);
                 encrypted = (user.getSecretKey() != null);
@@ -112,5 +101,10 @@ public class ChatHandler extends BufferHandler {
         }
         
         return secretKey;
+    }
+    
+    @Override
+    public String getName() {
+        return "ChatHandler";
     }
 }

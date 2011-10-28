@@ -304,11 +304,13 @@ public class TCPSocket {
 
         private Socket incomingSocket = null;
         private BufferedInputStream bis = null;
+        private User user = null;
 
         public IncomingThread(Socket incomingSocket) {
             super("IncomingThread");
 
             this.incomingSocket = incomingSocket;
+            user = userDatabase.getSocketOfUser(incomingSocket);
             try {
                 bis = new BufferedInputStream(incomingSocket.getInputStream());
             } catch (IOException ex) {
@@ -360,16 +362,19 @@ public class TCPSocket {
                     }
                 }
             } catch (SocketException ex) {
-                logger.log(Level.INFO, "Socket disconnected", ex);
+                reportSocketError(user, Level.INFO,
+                        "Socket disconnected", ex);
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "IOException while reading", ex);
+                reportSocketError(user, Level.INFO,
+                        "IOException when reading", ex);
             }
 
             try {
                 sendUserConnectionUpdate(incomingSocket);
                 incomingSocket.close();
             } catch (IOException ex) {
-                logger.log(Level.INFO, "Exception closing socket", ex);
+                reportSocketError(user, Level.INFO,
+                        "Error when closing socket", ex);
             }
         }
 
@@ -382,7 +387,6 @@ public class TCPSocket {
             UserConnection userConnection = new UserConnection();
             if (serverSocket != null) {
                 // Get the user who disconnected
-                User user = userDatabase.getSocketOfUser(socket);
                 if (user == null) {
                     // Hasn't set a username yet
                     user = new User();
@@ -408,8 +412,7 @@ public class TCPSocket {
 
         @Override
         public void run() {
-            //TODO do something when disconnecting everyone?
-
+            User user = null;
             // Write the data
             try {
                 while (true) {
@@ -417,15 +420,17 @@ public class TCPSocket {
 
                     byte[] data = null;
                     for (BufferHandler handler : getHandlers(netData.socket)) {
-                        //TODO how to fix this properly? handshake handler is sending
-                        // the user data since the client doesnt' send a response
-                        // for the server's READY response.. 
-                        if (handler instanceof HandshakeHandler &&
-                                !handler.isServerHandler() &&
-                                handler.isFinished()) {
+                        user = userDatabase.getSocketOfUser(netData.socket);
+
+                        if (handler.isFinished()
+                                && (handler.getSocketData() == null
+                                || handler.getSocketData().isEmpty())) {
+                            //If the hander is finished and has no response
+                            //remove the handler 
                             removeHandler(netData.socket, handler);
                             continue;
                         }
+
                         data = handler.processOutgoing(
                                 netData.socket,
                                 netData.data, netData.data.length);
@@ -433,7 +438,8 @@ public class TCPSocket {
                         if (data != null) {
                             BufferedOutputStream bos =
                                     new BufferedOutputStream(netData.socket.getOutputStream());
-                            System.out.println(handler + " is WRITING:" + Util.byteArrayToHexString(data));
+                            logger.log(Level.FINEST, "{0} is writing:{1}",
+                                    new Object[]{handler, Util.byteArrayToHexString(data)});
                             bos.write(data);
                             bos.flush();
                         }
@@ -442,7 +448,7 @@ public class TCPSocket {
                         if (handler.isFinished()) {
                             removeHandler(netData.socket, handler);
                         }
-                        
+
                         // If this handler consumes the message, stop iterating
                         if (handler.isMessageConsumed()) {
                             break;
@@ -451,19 +457,44 @@ public class TCPSocket {
                 }
 
 
-            } catch (SocketException se) {
-                logger.log(Level.INFO,
-                        "Closing connection due to SocketException", se);
+            } catch (SocketException ex) {
+                reportSocketError(user, Level.INFO,
+                        "Closing connection due to SocketException", ex);
             } catch (IOException ex) {
-                logger.log(Level.WARNING,
+                reportSocketError(user, Level.INFO,
                         "Closing connection due to IOException", ex);
-            } catch (InterruptedException ie) {
+            } catch (InterruptedException ex) {
                 // Thread was interrupted so exit this thread
-                logger.fine("Exiting thread due to interruption");
+                reportSocketError(user, Level.FINE,
+                        "Exiting outgoing thread due to interruption", ex);
             } finally {
                 cleanup();
             }
         }
+    }
+
+    /**
+     * Reports socket errors
+     * 
+     * @param user The user
+     * @param level The level
+     * @param message The message
+     * @param ex The exception
+     */
+    private void reportSocketError(User user, Level level,
+            String message, Exception ex) {
+
+        StringBuilder sb = new StringBuilder();
+
+        if (user != null) {
+            sb.append(user.toString());
+            sb.append("> ");
+        }
+        sb.append(message);
+        sb.append(": ");
+        sb.append(ex);
+
+        logger.log(level, sb.toString());
     }
 
     /*

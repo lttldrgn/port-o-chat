@@ -142,6 +142,8 @@ public class UserDatabase {
             Socket userSocket = getUserOfSocket(user);
             userMap.remove(user);
             socketMap.remove(userSocket);
+            logger.log(Level.INFO, "{0} has been removed", 
+                    new Object[]{user});
             success = true;
         }
         
