@@ -38,7 +38,9 @@ import javax.crypto.spec.SecretKeySpec;
 import portochat.common.Util;
 
 /**
- *
+ * This class is used to generate encryption keys, encode, and decode.
+ * Also, clients can store their keys in here as well for future use.
+ * 
  * @author Mike
  */
 public class EncryptionManager {
@@ -49,9 +51,15 @@ public class EncryptionManager {
     private SecretKey serverSecretKey = null; // used for clients to store in
     private KeyPair clientKeyPair = null;
 
+    /**
+     * Private constructor
+     */
     private EncryptionManager() {
     }
 
+    /**
+     * @return The singleton instance of the EncryptionManager
+     */
     public synchronized static EncryptionManager getInstance() {
         if (instance == null) {
             instance = new EncryptionManager();
@@ -60,6 +68,12 @@ public class EncryptionManager {
         return instance;
     }
 
+    /**
+     * This is used by the server to generate a secret key. The secret key
+     * is used by both the client and server to encode/decode with.
+     * 
+     * @return The secret key
+     */
     public SecretKey generateServerSecretKey() {
 
         SecretKey secretKey = null;
@@ -84,8 +98,8 @@ public class EncryptionManager {
     public byte[] encrypt(SecretKey secretKey, byte[] data) {
         EncryptedData encryptedData = null;
 
-        System.out.println("\nencrypt(data) ->"
-                + "\ndata:" + Util.byteArrayToHexString(data));
+        logger.log(Level.FINEST, "\nencrypt(data) ->" + "\ndata:{0}",
+                Util.byteArrayToHexString(data));
 
         try {
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
@@ -107,8 +121,8 @@ public class EncryptionManager {
             logger.log(Level.SEVERE, "Unable to encrypt message!", ex);
         }
 
-        System.out.println("encryptedData:"
-                + Util.byteArrayToHexString(encryptedData.getByteArray()));
+        logger.log(Level.FINEST, "encryptedData:{0}", 
+                Util.byteArrayToHexString(encryptedData.getByteArray()));
 
         return encryptedData.getByteArray();
     }
@@ -123,33 +137,48 @@ public class EncryptionManager {
     public byte[] decrypt(SecretKey secretKey, byte[] encryptedBytes) {
         byte[] data = null;
 
-        System.out.println("\ndecrypt(encryptedData) ->"
-                + "\nencryptedData:"
-                + Util.byteArrayToHexString(encryptedBytes));
+        logger.log(Level.FINEST,"\ndecrypt(encryptedData) ->"
+                + "\nencryptedData:{0}", Util.byteArrayToHexString(encryptedBytes));
         try {
             EncryptedData encryptedData = new EncryptedData();
             encryptedData.setData(encryptedBytes);
-            IvParameterSpec iv = new IvParameterSpec(encryptedData.ivBytes);
+            IvParameterSpec iv = new IvParameterSpec(encryptedData.getIvBytes());
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
             cipher.init(Cipher.DECRYPT_MODE, secretKey, iv);
-            data = cipher.doFinal(encryptedData.encodedData);
+            data = cipher.doFinal(encryptedData.getEncodedData());
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Unable to decrypt data", ex);
         }
 
-        System.out.println("data:" + Util.byteArrayToHexString(data));
+        logger.log(Level.FINEST, "data:{0}", Util.byteArrayToHexString(data));
 
         return data;
     }
 
-    public void setServerSecretKey(SecretKey secretKey) {
-        serverSecretKey = secretKey;
+    /**
+     * Client's use this method to store the secret key received from the server.
+     * 
+     * @param serverSecretKey The server's secret key
+     */
+    public void setServerSecretKey(SecretKey serverSecretKey) {
+        this.serverSecretKey = serverSecretKey;
     }
 
+    /**
+     * Client's use this method to retrieve their secret key, which is used
+     * to talk to the server.
+     * 
+     * @return The server's secret key
+     */
     public SecretKey getServerSecretKey() {
         return serverSecretKey;
     }
 
+    /**
+     * Generates a client key
+     * 
+     * @throws NoSuchAlgorithmException 
+     */
     private void generateClientKey()
             throws NoSuchAlgorithmException {
         if (clientKeyPair == null) {
@@ -161,24 +190,24 @@ public class EncryptionManager {
         }
     }
 
+    /**
+     * Gets the client's encoded public key. This is used to transfer the
+     * client's public key over the network.
+     * 
+     * @return the byte array of the client's public key
+     */
     public byte[] getClientEncodedPublicKey() {
-        byte[] encodedPublicKey = null;
-
-        try {
-            if (clientKeyPair == null) {
-                generateClientKey();
-            }
-            encodedPublicKey = clientKeyPair.getPublic().getEncoded();
-            System.out.println("public: "
-                    + Util.byteArrayToHexString(
-                    clientKeyPair.getPublic().getEncoded()));
-        } catch (NoSuchAlgorithmException ex) {
-            logger.log(Level.SEVERE, "No such algorithm", ex);
-        }
-
-        return encodedPublicKey;
+        PublicKey publicKey = getClientPublicKey();
+       
+        return (publicKey != null?publicKey.getEncoded():null);
     }
 
+    /**
+     * Gets the client's public key. The client's public key is used by
+     * the server to encode messages sent to the client.
+
+     * @return The client's public key
+     */
     public PublicKey getClientPublicKey() {
         PublicKey publicKey = null;
 
@@ -194,6 +223,15 @@ public class EncryptionManager {
         return publicKey;
     }
 
+    /**
+     * This method takes in the encoded public key, and returns the public key
+     * of the client.
+     * 
+     * @param encodedClientPublicKey The byte array representing the client's
+     *          public key.
+     * 
+     * @return The client's public key
+     */
     public PublicKey getClientPublicKey(byte[] encodedClientPublicKey) {
 
         PublicKey publicKey = null;
@@ -211,6 +249,12 @@ public class EncryptionManager {
         return publicKey;
     }
 
+    /**
+     * This is used by the client to decode the messages from the server which
+     * are encoded with the public key.
+     * 
+     * @return The private key
+     */
     public PrivateKey getClientPrivateKey() {
         PrivateKey privateKey = null;
 
@@ -226,6 +270,16 @@ public class EncryptionManager {
         return privateKey;
     }
 
+    /**
+     * This method is used by the server to encrypt the server's secret 
+     * key with the client's public key. This is a safe way to transfer 
+     * the server's secret key.
+     * 
+     * @param serverSecretKey The server's secret key.
+     * @param clientPublicKey The client's public key.
+     
+     * @return The encrypted secret key using the public key.
+     */
     public byte[] encryptSecretKeyWithPublicKey(
             SecretKey serverSecretKey,
             PublicKey clientPublicKey) {
@@ -245,26 +299,40 @@ public class EncryptionManager {
         return encodedEncryptedSecretKey;
     }
 
+    /**
+     * This method is used by the client to decode the server's secret key
+     * using the client's private key. The secret key will be used to 
+     * encrypt and decrypt messages from the client and server.
+     * 
+     * @param encodedEncryptedSecretKey The encrypted secret key from the server.
+
+     * @return The secret key
+     */
     public SecretKey decodeSecretKeyWithPrivateKey(byte[] encodedEncryptedSecretKey) {
 
-        SecretKey serverSecretKey = null;
+        SecretKey secretKey = null;
 
         try {
             Cipher privateCipher = Cipher.getInstance("RSA");
             privateCipher.init(Cipher.DECRYPT_MODE, getClientPrivateKey());
-            System.out.println("encodedEncryptedSecretKey: " + Util.byteArrayToHexString(encodedEncryptedSecretKey));
+            logger.log(Level.FINEST, "encodedEncryptedSecretKey: {0}",
+                    Util.byteArrayToHexString(encodedEncryptedSecretKey));
             byte[] encodedSecretKey =
                     privateCipher.doFinal(encodedEncryptedSecretKey);
-            System.out.println("encodedSecretKey: " + Util.byteArrayToHexString(encodedSecretKey));
-            serverSecretKey = new SecretKeySpec(encodedSecretKey, "AES");
+            logger.log(Level.FINEST, "encodedSecretKey: {0}", 
+                    Util.byteArrayToHexString(encodedSecretKey));
+            secretKey = new SecretKeySpec(encodedSecretKey, "AES");
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Unable to decode secret key with "
                     + "private key!", ex);
         }
 
-        return serverSecretKey;
+        return secretKey;
     }
 
+    /**
+     * Private class for containing the encrypted data.
+     */
     private class EncryptedData {
 
         private byte[] ivBytes = null;

@@ -18,8 +18,7 @@ package portochat.common.socket.handler;
 
 import java.net.Socket;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import portochat.common.protocol.DefaultData;
 
 /**
@@ -28,28 +27,28 @@ import portochat.common.protocol.DefaultData;
  * handlers should be used as such:
  * 
  * 1.) A list of handlers is presented to the server/client. 
- * 2.) When reading the incoming buffer, an iteration of the handlers is done
- * 2a.) If the chosen handler consumes the message, iteration stops.
- * 2b.) If the chosen handler is finished, the handler is removed from the list.
- * 
+ * 2.) When reading the incoming buffer, an iteration of the handlers is done.
+ * 2a.) If the chosen handler is finished, the handler skipped.
+ * 2b.) If the chosen handler consumes the message, iteration stops.
+ * 3.) When writing the outgoing buffer, an iteration of the handlers is done.
+ * 3a.) If the chosen handler is finished, the handler is removed from the list.
+ * 3b.) If the chosen handler consumes the message, iteration stops.
+  * 
  * @author Mike
  */
 public abstract class BufferHandler {
     protected boolean messageConsumed = false;
     protected boolean finished = false;
     protected boolean serverHandler = false;
-    protected static Map<String, Object> globalMap = null;
     protected List<DefaultData> listenerDataList = null;
     protected List<DefaultData> socketDataList = null;
-    
-    static {
-        globalMap = new ConcurrentHashMap<String, Object>();
-    }
     
     /**
      * Constructor
      */
     public BufferHandler() {
+        listenerDataList = new CopyOnWriteArrayList<DefaultData>();
+        socketDataList = new CopyOnWriteArrayList<DefaultData>();
     }
     
     /**
@@ -85,29 +84,46 @@ public abstract class BufferHandler {
     public boolean isFinished() {
         return finished;
     }
-    
-    public static Object getGlobal(String key) {
-        return globalMap.get(key);
-    }
 
-    public static void putGlobal(String key, Object value) {
-        globalMap.put(key, value);
-    }
-
+    /**
+     * This retrieves any messages which should be broadcasted out to
+     * registered listeners in TCPSocket
+     * 
+     * @return The list of data that should be fired to registered listeners
+     */
     public List<DefaultData> getListenerData() {
         return listenerDataList;
     }
     
+    /**
+     * This retrieves any messages which should be written out in the
+     * socket buffer.
+     * 
+     * @return The list of data which should be written out in the socket 
+     *  buffer.
+     */
     public List<DefaultData> getSocketData() {
         return socketDataList;
     }
 
+    /**
+     * @return true if the handler is ran on a server
+     */
     public boolean isServerHandler() {
         return serverHandler;
     }
 
+    /**
+     * Sets if the handler is ran on a server.
+     * 
+     * @param serverHandler true if the handler is ran on a server.
+     */
     public void setServerHandler(boolean serverHandler) {
         this.serverHandler = serverHandler;
     }
     
+    /**
+     * @return Retrieves the name of the handler.
+     */
+    public abstract String getName();
 }

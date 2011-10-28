@@ -101,7 +101,7 @@ public class Server {
                 // TODO: Send disconnect server message to clients
                 socket.close();
             } catch (IOException ex) {
-                Logger.getLogger(Server.class.getName()).log(Level.SEVERE, null, ex);
+                logger.log(Level.SEVERE, null, ex);
             }
         }
         tcpSocket.disconnect();
