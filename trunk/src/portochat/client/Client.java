@@ -247,8 +247,9 @@ public class Client extends JFrame implements ActionListener,
                         ChatPane pane = chatPaneMap.get(contact);
                         if (pane == null) {
                             pane = createChatPane(contact);
+                            updateCurrentView();
                         }
-                        updateCurrentView();
+                        
                         tabbedChatPane.setSelectedComponent(pane);
                     }
                 }
@@ -328,9 +329,9 @@ public class Client extends JFrame implements ActionListener,
 
         chatContainerDialog.getContentPane().add(chatContainerPanel);
         if (tabbedChatPane.getTabCount() > 0) {
-            chatContainerDialog.pack();
             chatContainerDialog.setVisible(true);
         }
+        chatContainerDialog.pack();
         currentView = View.SPLIT;
     }
     
@@ -340,8 +341,12 @@ public class Client extends JFrame implements ActionListener,
     private void updateCurrentView() {
         if (currentView == View.SPLIT) {
             // make sure dialog is visible
-            chatContainerDialog.pack();
-            chatContainerDialog.setVisible(true);
+            SwingUtilities.invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                    chatContainerDialog.setVisible(true);
+                }
+            });
         }
     }
     
@@ -365,6 +370,7 @@ public class Client extends JFrame implements ActionListener,
             tabbedChatPane.setTabComponentAt(
                     tabbedChatPane.indexOfComponent(statusPane), 
                     new ButtonTabComponent(tabbedChatPane, this));
+            updateCurrentView();
         }
     }
     
@@ -386,8 +392,9 @@ public class Client extends JFrame implements ActionListener,
                 new ButtonTabComponent(tabbedChatPane, this));
             connection.joinChannel(channel);
             connection.requestUsersInChannel(channel);
+            updateCurrentView();
         }
-        updateCurrentView();
+        
         tabbedChatPane.setSelectedComponent(pane);
         pane.setFocus();
 
@@ -440,7 +447,6 @@ public class Client extends JFrame implements ActionListener,
             disconnectFromServer();
         } else if (e.getActionCommand().equals(STATUS_MENU)) {
             showStatusPane();
-            updateCurrentView();
         } else if (e.getActionCommand().equals(THEME_MENU)) {
             ThemeManager themeManager = ThemeManager.getInstance();
             themeManager.setTopLevelComponent(this);
@@ -875,7 +881,6 @@ public class Client extends JFrame implements ActionListener,
                     setTabColor(tabIndex, Color.red);
                 }
                 timerListener.notifyMessageReceived();
-                updateCurrentView();
             }
         } else {
             ChatPane pane = channelPaneMap.get(channel);
@@ -887,7 +892,6 @@ public class Client extends JFrame implements ActionListener,
                     setTabColor(tabIndex, Color.red);
                 }
                 timerListener.notifyMessageReceived();
-                updateCurrentView();
             } else {
                 logger.warning("Received a message from a channel that is not joined.");
             }
@@ -965,7 +969,11 @@ public class Client extends JFrame implements ActionListener,
                 messageReceived = true;
                 if (isWindows) {
                     // flash taskbar icon in windows
-                    toFront();
+                    if (currentView == View.COMBINED) {
+                        toFront();
+                    } else {
+                        chatContainerDialog.toFront();
+                    }
                 }
             }
         }
