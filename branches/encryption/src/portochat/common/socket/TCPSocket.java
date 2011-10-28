@@ -444,7 +444,7 @@ public class TCPSocket {
                             bos.flush();
                         }
 
-                        // If handler is finished, remove
+                        // If handler is finished, remove it
                         if (handler.isFinished()) {
                             removeHandler(netData.socket, handler);
                         }
