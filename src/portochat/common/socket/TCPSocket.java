@@ -455,8 +455,6 @@ public class TCPSocket {
                         }
                     }
                 }
-
-
             } catch (SocketException ex) {
                 reportSocketError(user, Level.INFO,
                         "Closing connection due to SocketException", ex);
