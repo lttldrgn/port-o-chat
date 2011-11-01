@@ -325,6 +325,7 @@ public class Client extends JFrame implements ActionListener,
                     chatContainerDialog.setVisible(false);
                 }
             });
+            chatContainerDialog.addWindowFocusListener(timerListener);
         }
 
         chatContainerDialog.getContentPane().add(chatContainerPanel);
@@ -940,6 +941,7 @@ public class Client extends JFrame implements ActionListener,
             WindowFocusListener {
         
         private String currentTitle;
+        private String dialogTitle = "Chat";
         private boolean isWindows = false;
         private volatile boolean messageReceived = false;
         
@@ -956,22 +958,38 @@ public class Client extends JFrame implements ActionListener,
             if (messageReceived) {
                 // if the window is not active and a message is received
                 // set the title to give a visual cue to user
-                if (getTitle().equals(currentTitle)) {
-                    setTitle("Message received " + currentTitle);
+                if (currentView == View.COMBINED) {
+                    if (getTitle().equals(currentTitle)) {
+                        setTitle("Message received " + currentTitle);
+                    } else {
+                        setTitle(currentTitle);
+                    }
                 } else {
-                    setTitle(currentTitle);
+                    // split view, update dialog instead
+                    if (chatContainerDialog.getTitle().equals(dialogTitle)) {
+                        chatContainerDialog.setTitle("Message received");
+                    } else {
+                        chatContainerDialog.setTitle(dialogTitle);
+                    }
                 }
             }
         }
         
         public void notifyMessageReceived() {
-            if (!Client.this.isActive()) {
-                messageReceived = true;
-                if (isWindows) {
-                    // flash taskbar icon in windows
-                    if (currentView == View.COMBINED) {
+            if (currentView == View.COMBINED) {
+                if (!Client.this.isActive()) {
+                    messageReceived = true;
+                    if (isWindows) {
+                        // flash taskbar icon in windows
                         toFront();
-                    } else {
+                    }
+                }
+            } else {
+                // split view
+                if (!chatContainerDialog.isActive()) {
+                    messageReceived = true;
+                    if (isWindows) {
+                        // flash taskbar icon in windows
                         chatContainerDialog.toFront();
                     }
                 }
@@ -984,11 +1002,18 @@ public class Client extends JFrame implements ActionListener,
 
         @Override
         public void windowGainedFocus(WindowEvent e) {
-            messageReceived = false;
+            
             // handle the case where the title has been reset but user has not
             // regained focus
-            if (currentTitle != null) {
-                setTitle(currentTitle);
+            if (e.getSource().equals(Client.this) && currentView == View.COMBINED) {
+                messageReceived = false;
+                if (currentTitle != null) {
+                    setTitle(currentTitle);
+                }
+            } else if (e.getSource().equals(chatContainerDialog)) {
+                // split view, update dialog instead
+                messageReceived = false;
+                chatContainerDialog.setTitle(dialogTitle);
             }
         }
 
