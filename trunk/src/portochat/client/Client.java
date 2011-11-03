@@ -477,17 +477,17 @@ public class Client extends JFrame implements ActionListener,
             themeManager.setTopLevelComponent(this);
             themeManager.setVisible(true);
         } else if (e.getActionCommand().equals(OPACITY_MENU_UP)) {
-            //stop it from going completely invisible
-            if(currentOpacity >= .3f){
-                currentOpacity-=.25f;
-            }
-            setOpacity(currentOpacity);
-        } else if (e.getActionCommand().equals(OPACITY_MENU_DOWN)) {
-            //do not go over 1
+            //do not go over 1   
             if(currentOpacity <=.75f){               
                 currentOpacity+=.25f;
             } else {
                 currentOpacity = 1.0f;
+            }
+            setOpacity(currentOpacity);
+        } else if (e.getActionCommand().equals(OPACITY_MENU_DOWN)) {            
+            //stop it from going completely invisible
+            if(currentOpacity >= .3f){
+                currentOpacity-=.25f;
             }
             setOpacity(currentOpacity);
         } else if (e.getActionCommand().equals(START_SERVER)) {
