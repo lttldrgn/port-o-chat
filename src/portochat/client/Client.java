@@ -16,6 +16,7 @@
  */
 package portochat.client;
 
+import com.sun.awt.AWTUtilities;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -86,6 +87,8 @@ public class Client extends JFrame implements ActionListener,
     private static final String START_SERVER = "START_SERVER";
     private static final String STATUS_MENU = "STATUS_MENU";
     private static final String THEME_MENU = "THEME_MENU";
+    private static final String OPACITY_MENU_UP = "OPACITY_MENU_UP";
+    private static final String OPACITY_MENU_DOWN = "OPACITY_MENU_DOWN";
     private static final String COMBINED_VIEW = "COMBINED_VIEW";
     private static final String SPLIT_VIEW = "SPLIT_VIEW";
     private HashMap<String, ChatPane> chatPaneMap = 
@@ -108,6 +111,7 @@ public class Client extends JFrame implements ActionListener,
     private String myUserName = null;
     private ServerConnection connection = null;
     private boolean connected = false;
+    private float currentOpacity = 1.0f;
     
     // previous state
     private String username = "user";
@@ -183,6 +187,16 @@ public class Client extends JFrame implements ActionListener,
         themeMenu.addActionListener(this);
         themeMenu.setActionCommand(THEME_MENU);
         settingsMenu.add(themeMenu); 
+        
+        JMenuItem opacityMenuUp = new JMenuItem("Increase opacity");
+        opacityMenuUp.addActionListener(this);
+        opacityMenuUp.setActionCommand(OPACITY_MENU_UP);
+        settingsMenu.add(opacityMenuUp); 
+        
+        JMenuItem opacityMenuDown = new JMenuItem("Decrease opacity");
+        opacityMenuDown.addActionListener(this);
+        opacityMenuDown.setActionCommand(OPACITY_MENU_DOWN);
+        settingsMenu.add(opacityMenuDown); 
         
         JMenu viewMenu = new JMenu("View");
         viewMenu.setMnemonic(KeyEvent.VK_V);
@@ -279,8 +293,9 @@ public class Client extends JFrame implements ActionListener,
                 int tabIndex = tabbedChatPane.getSelectedIndex();
                 setTabColor(tabIndex, Color.black);
             }
-        });
+        });        
         
+   
         addWindowFocusListener(timerListener);
         
         statusPane = StatusPane.createStatusPane(this);
@@ -288,7 +303,16 @@ public class Client extends JFrame implements ActionListener,
         username = GuiUtil.getUserName(this.getClass());
         server = GuiUtil.getServerName(this.getClass());
         serverPort = GuiUtil.getServerPort(this.getClass());
+        setOpacity(currentOpacity);
         pack();
+    }
+    
+    private void setOpacity(float opacity){
+        if (AWTUtilities.isTranslucencySupported(AWTUtilities.Translucency.TRANSLUCENT)){
+            AWTUtilities.setWindowOpacity(this, Float.valueOf(opacity));
+        }else {
+            System.out.println("translucency not supported");
+        }
     }
     
     private void setCombinedView() {
@@ -452,6 +476,20 @@ public class Client extends JFrame implements ActionListener,
             ThemeManager themeManager = ThemeManager.getInstance();
             themeManager.setTopLevelComponent(this);
             themeManager.setVisible(true);
+        } else if (e.getActionCommand().equals(OPACITY_MENU_UP)) {
+            //stop it from going completely invisible
+            if(currentOpacity >= .3f){
+                currentOpacity-=.25f;
+            }
+            setOpacity(currentOpacity);
+        } else if (e.getActionCommand().equals(OPACITY_MENU_DOWN)) {
+            //do not go over 1
+            if(currentOpacity <=.75f){               
+                currentOpacity+=.25f;
+            } else {
+                currentOpacity = 1.0f;
+            }
+            setOpacity(currentOpacity);
         } else if (e.getActionCommand().equals(START_SERVER)) {
             startServer();
         } else if (e.getActionCommand().equals(SPLIT_VIEW)) {
