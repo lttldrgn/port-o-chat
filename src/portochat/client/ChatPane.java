@@ -57,6 +57,7 @@ import javax.swing.text.html.HTMLEditorKit;
 import portochat.common.Settings;
 import portochat.common.User;
 import portochat.common.Util;
+import java.util.ResourceBundle;
 
 /**
  *
@@ -66,6 +67,7 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
 
     private static final Logger logger =
             Logger.getLogger(ChatPane.class.getName());
+    private ResourceBundle messages = ResourceBundle.getBundle("portochat/resource/MessagesBundle", java.util.Locale.getDefault());
     private DefaultListModel participantListModel = null;
     private JList participantList = null;
     private JPopupMenu viewPaneRightClickMenu;
@@ -175,9 +177,9 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
                                         viewPane.getStyledDocument().getLength());
                             } catch (IOException ex) {
                                 JOptionPane.showMessageDialog(viewPane, 
-                                        "Could not launch default browser. See log for reason.");
+                                        messages.getString("ChatPane.msg.CouldNotLaunchDefaultBrowserSeeLogForReason"));
                                 logger.log(Level.INFO, 
-                                        "Could not launch browser.", ex);
+                                        messages.getString("ChatPane.msg.CouldNotLaunchBrowser"), ex);
                             }
                         }
                     }
@@ -220,7 +222,7 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
     private void setupRightClickMenu() {
         viewPaneRightClickMenu = new JPopupMenu();
 
-        JMenuItem clear = new JMenuItem("Clear");
+        JMenuItem clear = new JMenuItem(messages.getString("ChatPane.menu.Clear"));
         viewPaneRightClickMenu.add(clear);
         clear.addActionListener(new ActionListener() {
             @Override
@@ -380,7 +382,8 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
 
                         String message = "<span class=\"joinpart\">" + 
                                 Util.getTimestamp() + " " + user +
-                                " has joined the channel</span><br>";
+                                messages.getString("ChatPane.msg.HasJoinedTheChannel") +
+                                "</span><br>";
                         try {
                             htdoc.insertBeforeEnd(chatTextElement, message);
                         } catch (BadLocationException ex) {
@@ -394,7 +397,8 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
 
                     String message = "<span class=\"joinpart\">" + 
                             Util.getTimestamp() + " " + user +
-                            " has left the channel</span><br>";
+                            messages.getString("ChatPane.msg.HasLeftTheChannel") +
+                            "</span><br>";
                     try {
                         htdoc.insertBeforeEnd(chatTextElement, message);
                     } catch (BadLocationException ex) {
@@ -422,7 +426,8 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
 
                     String message = "<span class=\"disconnect\">" + 
                             Util.getTimestamp() + " " + user +
-                            " has disconnected from the server</span><br>";
+                            messages.getString("ChatPane.msg.HasDisconnectedFromTheServer") +
+                            "</span><br>";
                     try {
                         htdoc.insertBeforeEnd(chatTextElement, message);
                     } catch (BadLocationException ex) {
@@ -574,7 +579,7 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
             } catch (BadLocationException ex) {
                 logger.log(Level.SEVERE, null, ex);
             } catch (IOException ioe) {
-                logger.log(Level.SEVERE, "Error appending", ioe);
+                logger.log(Level.SEVERE, messages.getString("ChatPane.msg.ErrorAppending"), ioe);
             }
             sendMessage(action, message);
         }
@@ -605,7 +610,7 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
                 StringBuilder sb = new StringBuilder();
                 sb.append("<span class=\"unknowncommand\">");
                 sb.append(Util.getTimestamp());
-                sb.append(" Unknown command: ");
+                sb.append(messages.getString("ChatPane.msg.UnknownCommand"));
                 sb.append(command.split(" ")[0]);
                 sb.append("</span>");
                 sb.append("<br>");
@@ -624,9 +629,10 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
 
     // main for visual test purposes only
     public static void main(String args[]) {
+        ResourceBundle messages = ResourceBundle.getBundle("portochat/resource/MessagesBundle", java.util.Locale.getDefault());
         JFrame frame = new JFrame();
         frame.setSize(600, 400);
-        frame.getContentPane().add(createChatPane(null, "channel", "bob", true));
+        frame.getContentPane().add(createChatPane(null, messages.getString("ChatPane.msg.channel"), messages.getString("ChatPane.msg.bob"), true));
         frame.setVisible(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }

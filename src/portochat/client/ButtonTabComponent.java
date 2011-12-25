@@ -49,7 +49,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 import javax.swing.plaf.basic.BasicButtonUI;
-
+import java.util.ResourceBundle;
 
 
 /**
@@ -58,8 +58,9 @@ import javax.swing.plaf.basic.BasicButtonUI;
  * pane.
  */ 
 public class ButtonTabComponent extends JPanel {
+    public static final String CLOSE_TAB = "CLOSE_TAB";
     private final JTabbedPane pane;
-
+    
     private final JLabel label;
     private JButton closeButton;
     /**
@@ -70,8 +71,9 @@ public class ButtonTabComponent extends JPanel {
     public ButtonTabComponent(final JTabbedPane pane, ActionListener listener) {
         //unset default FlowLayout' gaps
         super(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        ResourceBundle messages = ResourceBundle.getBundle("portochat/resource/MessagesBundle", java.util.Locale.getDefault());
         if (pane == null) {
-            throw new NullPointerException("TabbedPane is null");
+            throw new NullPointerException(messages.getString("ButtonTabComponent.msg.TabbedPaneIsNull"));
         }
         this.pane = pane;
         setOpaque(false);
@@ -116,9 +118,10 @@ public class ButtonTabComponent extends JPanel {
     
     public class TabButton extends JButton {
         public TabButton(ActionListener listener) {
+            ResourceBundle messages = ResourceBundle.getBundle("portochat/resource/MessagesBundle", java.util.Locale.getDefault());
             int size = 17;
             setPreferredSize(new Dimension(size, size));
-            setToolTipText("close this tab");
+            setToolTipText(messages.getString("ButtonTabComponent.tooltip.CloseThisTab"));
             //Make the button looks the same for all Laf's
             setUI(new BasicButtonUI());
             //Make it transparent
@@ -133,7 +136,7 @@ public class ButtonTabComponent extends JPanel {
             setRolloverEnabled(true);
             //Close the proper tab by clicking the button
             addActionListener(listener);
-            setActionCommand("CLOSE_TAB");
+            setActionCommand(CLOSE_TAB);
         }
 
         /**

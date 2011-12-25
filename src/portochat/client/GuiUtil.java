@@ -7,6 +7,7 @@ package portochat.client;
 
 import java.awt.Point;
 import java.util.prefs.Preferences;
+import java.util.ResourceBundle;
 
 /**
  *
@@ -70,8 +71,9 @@ public class GuiUtil {
      * @return Saved user name or "user" if none is saved
      */
     public static String getUserName(Class<?> clazz) {
+        ResourceBundle messages = ResourceBundle.getBundle("portochat/resource/MessagesBundle", java.util.Locale.getDefault());
         Preferences prefs = Preferences.userNodeForPackage(clazz);
-        return prefs.get(USERNAME, "user");
+        return prefs.get(USERNAME, messages.getString("GuiUtil.defaultvalue.User"));
     }
     
     /**
