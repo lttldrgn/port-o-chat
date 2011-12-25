@@ -72,6 +72,7 @@ import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import portochat.common.User;
+import java.util.ResourceBundle;
 
 /**
  *
@@ -79,6 +80,7 @@ import portochat.common.User;
  */
 public class Client extends JFrame implements ActionListener, 
         ServerConnectionProvider, ServerDataListener {
+    private ResourceBundle messages = ResourceBundle.getBundle("portochat/resource/MessagesBundle", java.util.Locale.getDefault());
     private static final Logger logger = Logger.getLogger(Client.class.getName());
     private static final String EXIT_COMMAND = "EXIT";
     private static final String CONNECT = "CONNECT";
@@ -100,9 +102,9 @@ public class Client extends JFrame implements ActionListener,
     private JDialog chatContainerDialog = null;
     private JList contactList = new JList(contactListModel);
     private JList channelList = new JList(channelListModel);
-    private JMenuItem connectMenu = new JMenuItem("Connect");
-    private JMenuItem createChannelMenu = new JMenuItem("Create Channel...");
-    private JMenuItem disconnect = new JMenuItem("Disconnect");
+    private JMenuItem connectMenu = new JMenuItem(messages.getString("Client.menu.Connect"));
+    private JMenuItem createChannelMenu = new JMenuItem(messages.getString("Client.menu.CreateChannel"));
+    private JMenuItem disconnect = new JMenuItem(messages.getString("Client.menu.Disconnect"));
     private JPanel userChannelContainerPanel = null;
     private JPanel chatContainerPanel = null;
     private JTabbedPane tabbedChatPane = new JTabbedPane(JTabbedPane.BOTTOM, 
@@ -114,7 +116,7 @@ public class Client extends JFrame implements ActionListener,
     private float currentOpacity = 1.0f;
     
     // previous state
-    private String username = "user";
+    private String username = messages.getString("Client.defaultvalue.User");
     private String server = "localhost";
     private int serverPort = ClientSettings.DEFAULT_SERVER_PORT;
     
@@ -129,7 +131,7 @@ public class Client extends JFrame implements ActionListener,
     }
     
     public Client() {
-        setTitle("Port-O-Chat");
+        setTitle(messages.getString("Client.title.PortOChat"));
     }
     
     /**
@@ -147,7 +149,7 @@ public class Client extends JFrame implements ActionListener,
         JMenuBar menuBar = new JMenuBar();
         setJMenuBar(menuBar);
         
-        JMenu fileMenu = new JMenu("File");
+        JMenu fileMenu = new JMenu(messages.getString("Client.menu.File"));
         fileMenu.setMnemonic(KeyEvent.VK_F);
         menuBar.add(fileMenu);
         
@@ -168,41 +170,41 @@ public class Client extends JFrame implements ActionListener,
         disconnect.setEnabled(false);
         fileMenu.add(disconnect);
         
-        JMenuItem startServer = new JMenuItem("Start Server");
+        JMenuItem startServer = new JMenuItem(messages.getString("Client.menu.StartServer"));
         startServer.setActionCommand(START_SERVER);
         fileMenu.add(startServer);
         startServer.addActionListener(this);
         
-        JMenuItem exitMenu = new JMenuItem("Exit");
+        JMenuItem exitMenu = new JMenuItem(messages.getString("Client.menu.Exit"));
         exitMenu.setMnemonic(KeyEvent.VK_X);
         exitMenu.setActionCommand(EXIT_COMMAND);
         fileMenu.add(exitMenu);
         exitMenu.addActionListener(this);
         
-        JMenu settingsMenu = new JMenu("Settings");
+        JMenu settingsMenu = new JMenu(messages.getString("Client.menu.Settings"));
         settingsMenu.setMnemonic(KeyEvent.VK_S);
         menuBar.add(settingsMenu);
         
-        JMenuItem themeMenu = new JMenuItem("Change theme");
+        JMenuItem themeMenu = new JMenuItem(messages.getString("Client.menu.ChangeTheme"));
         themeMenu.addActionListener(this);
         themeMenu.setActionCommand(THEME_MENU);
         settingsMenu.add(themeMenu); 
-        
-        JMenuItem opacityMenuUp = new JMenuItem("Increase opacity");
+
+        JMenuItem opacityMenuUp = new JMenuItem(messages.getString("Client.menu.IncreaseOpacity"));
         opacityMenuUp.addActionListener(this);
         opacityMenuUp.setActionCommand(OPACITY_MENU_UP);
         settingsMenu.add(opacityMenuUp); 
         
-        JMenuItem opacityMenuDown = new JMenuItem("Decrease opacity");
+        JMenuItem opacityMenuDown = new JMenuItem(messages.getString("Client.menu.DecreaseOpacity"));
         opacityMenuDown.addActionListener(this);
         opacityMenuDown.setActionCommand(OPACITY_MENU_DOWN);
         settingsMenu.add(opacityMenuDown); 
-        
-        JMenu viewMenu = new JMenu("View");
+       
+        JMenu viewMenu = new JMenu(messages.getString("Client.menu.View"));
         viewMenu.setMnemonic(KeyEvent.VK_V);
         menuBar.add(viewMenu);
         
-        JMenuItem statusMenu = new JMenuItem("Status");
+        JMenuItem statusMenu = new JMenuItem(messages.getString("Client.menu.Status"));
         statusMenu.addActionListener(this);
         statusMenu.setMnemonic(KeyEvent.VK_S);
         statusMenu.setActionCommand(STATUS_MENU);
@@ -210,14 +212,14 @@ public class Client extends JFrame implements ActionListener,
         
         viewMenu.addSeparator();
         ButtonGroup viewGroup = new ButtonGroup();
-        JRadioButtonMenuItem combined = new JRadioButtonMenuItem("Combined Layout");
+        JRadioButtonMenuItem combined = new JRadioButtonMenuItem(messages.getString("Client.menu.CombinedLayout"));
         combined.setSelected(true);
         combined.setActionCommand(COMBINED_VIEW);
         combined.addActionListener(this);
         viewMenu.add(combined);
         viewGroup.add(combined);
         
-        JRadioButtonMenuItem split = new JRadioButtonMenuItem("Split Layout");
+        JRadioButtonMenuItem split = new JRadioButtonMenuItem(messages.getString("Client.menu.SplitLayout"));
         split.setActionCommand(SPLIT_VIEW);
         split.addActionListener(this);
         viewGroup.add(split);
@@ -237,7 +239,7 @@ public class Client extends JFrame implements ActionListener,
         userChannelContainerPanel.setLayout(leftPaneLayout);
         contactPanel.setLayout(new BorderLayout());
         contactPanel.setBorder(BorderFactory.createLineBorder(Color.black));
-        contactPanel.setBorder(BorderFactory.createTitledBorder("Contacts"));
+        contactPanel.setBorder(BorderFactory.createTitledBorder(messages.getString("Client.title.Contacts")));
         contactPanel.add(new JScrollPane(contactList));
         userChannelContainerPanel.add(contactPanel);
         
@@ -245,7 +247,7 @@ public class Client extends JFrame implements ActionListener,
         JPanel channelPanel = new JPanel();
         channelPanel.setPreferredSize(new Dimension(250, 250));
         channelPanel.setMinimumSize(new Dimension(200, 200));
-        channelPanel.setBorder(BorderFactory.createTitledBorder("Channels"));
+        channelPanel.setBorder(BorderFactory.createTitledBorder(messages.getString("Client.title.Channels")));
         channelPanel.setLayout(new BorderLayout());
         channelPanel.add(new JScrollPane(channelList));
         userChannelContainerPanel.add(channelPanel);
@@ -293,9 +295,8 @@ public class Client extends JFrame implements ActionListener,
                 int tabIndex = tabbedChatPane.getSelectedIndex();
                 setTabColor(tabIndex, Color.black);
             }
-        });        
+        });
         
-   
         addWindowFocusListener(timerListener);
         
         statusPane = StatusPane.createStatusPane(this);
@@ -303,15 +304,15 @@ public class Client extends JFrame implements ActionListener,
         username = GuiUtil.getUserName(this.getClass());
         server = GuiUtil.getServerName(this.getClass());
         serverPort = GuiUtil.getServerPort(this.getClass());
-        setOpacity(currentOpacity);
+        setViewOpacity(currentOpacity);
         pack();
     }
     
-    private void setOpacity(float opacity){
+    private void setViewOpacity(float opacity){
         if (AWTUtilities.isTranslucencySupported(AWTUtilities.Translucency.TRANSLUCENT)){
             AWTUtilities.setWindowOpacity(this, Float.valueOf(opacity));
         }else {
-            System.out.println("translucency not supported");
+            System.out.println(messages.getString("Client.msg.TranslucencyNotSupported"));
         }
     }
     
@@ -335,7 +336,7 @@ public class Client extends JFrame implements ActionListener,
         pack();
         
         if (chatContainerDialog == null) {
-            chatContainerDialog = new JDialog(this, "Chat");
+            chatContainerDialog = new JDialog(this, messages.getString("Client.title.Chat"));
             chatContainerDialog.setLocation(getX() + getWidth(), getY());
             chatContainerDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
             chatContainerDialog.addWindowListener(new WindowAdapter() {
@@ -428,8 +429,8 @@ public class Client extends JFrame implements ActionListener,
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getActionCommand().equals(EXIT_COMMAND)) {
-            int returnVal = JOptionPane.showConfirmDialog(this, "Exit?", 
-                    "Exit confirmation", JOptionPane.OK_CANCEL_OPTION);
+            int returnVal = JOptionPane.showConfirmDialog(this, messages.getString("Client.msg.Exit"), 
+                    messages.getString("Client.title.ExitConfirmation"), JOptionPane.OK_CANCEL_OPTION);
             if (returnVal == JOptionPane.OK_OPTION) {
                 shutdown();
             }
@@ -437,12 +438,14 @@ public class Client extends JFrame implements ActionListener,
             connectToServer();
         } else if (e.getActionCommand().equals(CREATE_CHANNEL)) {
             String returnVal = JOptionPane.showInputDialog(rootPane, 
-                    "Enter channel name to create", "Channel creation", 
+                    messages.getString("Client.msg.EnterChannelNameToCreate"), messages.getString("Client.title.ChannelCreation"), 
                     JOptionPane.QUESTION_MESSAGE);
             if (returnVal != null) {
                 if (returnVal.isEmpty()) {
                     JOptionPane.showMessageDialog(this, 
-                            "Invalid name", "Error", JOptionPane.ERROR_MESSAGE);
+                            messages.getString("Client.msg.InvalidName"), 
+                            messages.getString("Client.title.Error"), 
+                            JOptionPane.ERROR_MESSAGE);
                     return;
                 }
                 String channel = returnVal;
@@ -450,7 +453,7 @@ public class Client extends JFrame implements ActionListener,
                     channel = "#" + channel;
                 joinChannel(channel);
             }
-        } else if (e.getActionCommand().equals("CLOSE_TAB")) {
+        } else if (e.getActionCommand().equals(ButtonTabComponent.CLOSE_TAB)) {
             if (e.getSource() instanceof ButtonTabComponent.TabButton) {
                 int i = ((ButtonTabComponent.TabButton) e.getSource()).getComponentIndex();
                 String name = tabbedChatPane.getTitleAt(i);
@@ -483,13 +486,13 @@ public class Client extends JFrame implements ActionListener,
             } else {
                 currentOpacity = 1.0f;
             }
-            setOpacity(currentOpacity);
+            setViewOpacity(currentOpacity);
         } else if (e.getActionCommand().equals(OPACITY_MENU_DOWN)) {            
             //stop it from going completely invisible
             if(currentOpacity >= .3f){
                 currentOpacity-=.25f;
             }
-            setOpacity(currentOpacity);
+            setViewOpacity(currentOpacity);
         } else if (e.getActionCommand().equals(START_SERVER)) {
             startServer();
         } else if (e.getActionCommand().equals(SPLIT_VIEW)) {
@@ -517,7 +520,7 @@ public class Client extends JFrame implements ActionListener,
         c.gridx = 0;
         c.gridy = 0;
         c.insets = new Insets(1,1,1,5);
-        optionPanel.add(new JLabel("username", SwingConstants.RIGHT), c);
+        optionPanel.add(new JLabel(messages.getString("Client.msg.Username"), SwingConstants.RIGHT), c);
         c.gridx++;
         c.fill = GridBagConstraints.BOTH;
         c.anchor = GridBagConstraints.LINE_END;
@@ -527,7 +530,7 @@ public class Client extends JFrame implements ActionListener,
         c.gridx--;
         c.gridy++;
         c.fill = GridBagConstraints.NONE;
-        optionPanel.add(new JLabel("server", SwingConstants.RIGHT), c);
+        optionPanel.add(new JLabel(messages.getString("Client.msg.Server"), SwingConstants.RIGHT), c);
         c.gridx++;
         c.fill = GridBagConstraints.BOTH;
         optionPanel.add(serverTextField, c);
@@ -536,7 +539,7 @@ public class Client extends JFrame implements ActionListener,
         c.gridx = 0;
         c.gridy++;
         c.fill = GridBagConstraints.NONE;
-        optionPanel.add(new JLabel("port", SwingConstants.RIGHT), c);
+        optionPanel.add(new JLabel(messages.getString("Client.msg.Port"), SwingConstants.RIGHT), c);
         c.gridx++;
         c.fill = GridBagConstraints.BOTH;
         optionPanel.add(serverPortTextField, c);
@@ -556,7 +559,7 @@ public class Client extends JFrame implements ActionListener,
         serverPortTextField.addFocusListener(focusListener);
         
         int returnVal = JOptionPane.showConfirmDialog(this, optionPanel, 
-                "Enter information", JOptionPane.OK_CANCEL_OPTION);
+                messages.getString("Client.msg.EnterInformation"), JOptionPane.OK_CANCEL_OPTION);
         if (returnVal != JOptionPane.OK_OPTION) {
             return;
         }
@@ -565,12 +568,12 @@ public class Client extends JFrame implements ActionListener,
         try {
             serverPort = Integer.parseInt(serverPortTextField.getText().trim());
         } catch (NumberFormatException nfe) {
-            JOptionPane.showMessageDialog(this, "Invalid port");
+            JOptionPane.showMessageDialog(this, messages.getString("Client.msg.InvalidPort"));
             return;
         }
         
         if (username == null || username.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Invalid inputs!");
+            JOptionPane.showMessageDialog(this, messages.getString("Client.msg.InvalidInputs"));
             return;
         }
 
@@ -582,19 +585,16 @@ public class Client extends JFrame implements ActionListener,
             connection.sendUsername(username);
             
         } catch (UnknownHostException e) {
-            statusPane.showMessage("Connection failed because of unknown " +
-                    "server name.  Please check the server name.", null);
+            statusPane.showMessage(messages.getString("Client.msg.ConnectionFailedBecauseOfUnknownServerNamePleaseCheckTheServerName"), null);
         } catch (ConnectException e) {
-            statusPane.showMessage("Connection failed.  Please check that the " +
-                    "server is running and that the client is configured " +
-                    "properly (i.e. server port number is correct).", null);
-            statusPane.showMessage("Error message: " + e.getMessage(), null);
+            statusPane.showMessage(messages.getString("Client.msg.ConnectionfailedPleaseCheckThatTheServerIsRunningAndThatTheClientIsConfiguredProperly"), null);
+            statusPane.showMessage(messages.getString("Client.msg.ErrorMessag") + e.getMessage(), null);
         } catch (Exception e) {
-            statusPane.showMessage("Unknown error trying to connect to server. See log.", null);
-            logger.log(Level.SEVERE, "Unknown error.  Please report this issue.", e);
+            statusPane.showMessage(messages.getString("Client.msg.UnknownErrorTryingToConnectToServerSeeLog"), null);
+            logger.log(Level.SEVERE, messages.getString("Client.msg.UnknownErrorPleaseReportThisIssue"), e);
         }
         if (!success) {
-            JOptionPane.showMessageDialog(this, "Could not connect.  See status pane for reason");
+            JOptionPane.showMessageDialog(this, messages.getString("Client.msg.CouldNotConnectSeeStatusPaneForReason"));
         }
     }
     
@@ -610,7 +610,7 @@ public class Client extends JFrame implements ActionListener,
         connectMenu.setEnabled(true);
         createChannelMenu.setEnabled(false);
         disconnect.setEnabled(false);
-        setTitle("Port-O-Chat - Disconnected");
+        setTitle(messages.getString("Client.title.PortOChatDisconnected"));
         contactListModel.clear();
         channelListModel.clear();
         showDisconnectMessage();
@@ -621,14 +621,14 @@ public class Client extends JFrame implements ActionListener,
     private void showDisconnectMessage() {
         Collection<ChatPane> chatPanes = chatPaneMap.values();
         for (ChatPane pane : chatPanes) {
-            pane.showInfoMessage("Disconnected from server", "disconnect");
+            pane.showInfoMessage(messages.getString("Client.msg.DisconnectedFromServer"), messages.getString("Client.title.Disconnect"));
         }
         
         Collection<ChatPane> channelPanes = channelPaneMap.values();
         for (ChatPane pane : channelPanes) {
-            pane.showInfoMessage("Disconnected from server", "disconnect");
+            pane.showInfoMessage(messages.getString("Client.msg.DisconnectedFromServer"), messages.getString("Client.title.Disconnect"));
         }
-        statusPane.showMessage("Disconnected from server", "disconnect");
+        statusPane.showMessage(messages.getString("Client.msg.DisconnectedFromServer"), messages.getString("Client.title.Disconnect"));
     }
     
     private void startServer() {
@@ -652,7 +652,7 @@ public class Client extends JFrame implements ActionListener,
         File jarFile = new File(jarDirectory + File.separator + "PortOChat.jar");
         if (!jarFile.exists()) {
             // allow user to select directory where PortOChat.jar resides
-            JOptionPane.showMessageDialog(this, "Could not find PortOChat.jar.  Select directory where it resides.");
+            JOptionPane.showMessageDialog(this, messages.getString("Client.msg.CouldNotFindPortOChatjarSelectDirectoryWhereItResides"));
             JFileChooser chooser = new JFileChooser(jarDirectory);
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
@@ -660,7 +660,7 @@ public class Client extends JFrame implements ActionListener,
                 try {
                     jarDirectory = chooser.getSelectedFile().getCanonicalPath();
                 } catch (IOException ex) {
-                    logger.log(Level.SEVERE, "Error getting path", ex);
+                    logger.log(Level.SEVERE, messages.getString("Client.msg.ErrorGettingPath"), ex);
                 }
             } else {
                 // user canceled so abort
@@ -676,10 +676,10 @@ public class Client extends JFrame implements ActionListener,
             serverProcess = pb.start();
 
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Error starting Server", ex);
+            logger.log(Level.SEVERE, messages.getString("Client.msg.ErrorStartingServer"), ex);
         }
         if (serverProcess == null) {
-            JOptionPane.showMessageDialog(this, "Couldn't launch process.  See log for error");
+            JOptionPane.showMessageDialog(this, messages.getString("Client.msg.CouldntLaunchProcessSeeLogForError"));
             return;
         }
         final BufferedReader reader = new BufferedReader(
@@ -694,7 +694,7 @@ public class Client extends JFrame implements ActionListener,
                         System.out.println(line);
                     }
                 } catch (IOException ex) {
-                    logger.log(Level.INFO, "IOException reading stream.", ex);
+                    logger.log(Level.INFO, messages.getString("Client.msg.IOExceptionReadingStream"), ex);
                 }
                 serverProcess = null;
             }
@@ -720,7 +720,7 @@ public class Client extends JFrame implements ActionListener,
                     connectMenu.setEnabled(false);
                     createChannelMenu.setEnabled(true);
                     disconnect.setEnabled(true);
-                    setTitle("Port-O-Chat: Connected as " + myUserName);
+                    setTitle(messages.getString("Client.title.PortOChatConnectedAs") + myUserName);
                     rejoinOpenChannels();
                     if (notificationTimer.isRunning()) {
                         notificationTimer.restart();
@@ -734,8 +734,8 @@ public class Client extends JFrame implements ActionListener,
                 @Override
                 public void run() {
                     String name = JOptionPane.showInputDialog(Client.this, 
-                        "\"" + username + "\" already in use.  Enter another name", 
-                        "Choose another name", JOptionPane.ERROR_MESSAGE);
+                        "\"" + username + "\"" + messages.getString("Client.msg.AlreadyInUseEnterAnotherName"), 
+                        messages.getString("Client.title.ChooseAnotherName"), JOptionPane.ERROR_MESSAGE);
                     if (name != null) {
                         connection.sendUsername(name);
                     } else {
@@ -839,7 +839,7 @@ public class Client extends JFrame implements ActionListener,
      */
     private ChatPane createChatPane(final String userName) {
 
-        assert SwingUtilities.isEventDispatchThread(): "createChatPane called outside EDT";
+        assert SwingUtilities.isEventDispatchThread(): messages.getString("Client.msg.CreateChatPaneCalledOutsideEDT");
         ChatPane pane = ChatPane.createChatPane(this, 
                         userName, myUserName, false);
         chatPaneMap.put(userName, pane);
@@ -932,9 +932,9 @@ public class Client extends JFrame implements ActionListener,
                 }
                 timerListener.notifyMessageReceived();
             } else {
-                logger.warning("Received a message from a channel that is not joined.");
-            }
-        }
+                logger.warning(messages.getString("Client.msg.ReceivedAMessageFromAChannelThatIsNotJoined"));
+           }
+       }
 
     }
 
@@ -979,7 +979,7 @@ public class Client extends JFrame implements ActionListener,
             WindowFocusListener {
         
         private String currentTitle;
-        private String dialogTitle = "Chat";
+        private String dialogTitle = messages.getString("client.title.DialogTitle");
         private boolean isWindows = false;
         private volatile boolean messageReceived = false;
         
@@ -998,14 +998,14 @@ public class Client extends JFrame implements ActionListener,
                 // set the title to give a visual cue to user
                 if (currentView == View.COMBINED) {
                     if (getTitle().equals(currentTitle)) {
-                        setTitle("Message received " + currentTitle);
+                        setTitle(messages.getString("Client.title.MessageReceived") + currentTitle);
                     } else {
                         setTitle(currentTitle);
                     }
                 } else {
                     // split view, update dialog instead
                     if (chatContainerDialog.getTitle().equals(dialogTitle)) {
-                        chatContainerDialog.setTitle("Message received");
+                        chatContainerDialog.setTitle(messages.getString("Client.title.splitview.MessageReceived"));
                     } else {
                         chatContainerDialog.setTitle(dialogTitle);
                     }

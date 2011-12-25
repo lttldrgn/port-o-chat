@@ -29,12 +29,14 @@ import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.Border;
+import java.util.ResourceBundle;
 
 /**
  *
  * @author Brandon
  */
 public class ThemeManager extends JDialog implements ActionListener {
+    ResourceBundle messages = ResourceBundle.getBundle("portochat/resource/MessagesBundle", java.util.Locale.getDefault());
     private static final Logger logger = Logger.getLogger(ThemeManager.class.getName());
     public static final String TOP_PANE_BACKGROUND = "topPaneBackground";
     public static final String TOP_PANE_FOREGROUND = "topPaneForeground";
@@ -47,16 +49,16 @@ public class ThemeManager extends JDialog implements ActionListener {
     private final String values[] = {TOP_PANE_BACKGROUND, TOP_PANE_FOREGROUND};
     private JComboBox themeChooser = new JComboBox();
     private JComboBox componentChooser = new JComboBox(values);
-    private JButton ok = new JButton("OK");
-    private JButton apply = new JButton("Apply");
-    private JButton cancel = new JButton("Cancel");
+    private JButton ok = new JButton(messages.getString("ThemeManager.button.OK"));
+    private JButton apply = new JButton(messages.getString("ThemeManager.button.Apply"));
+    private JButton cancel = new JButton(messages.getString("ThemeManager.button.Cancel"));
     private HashMap<String, String> lookAndFeelMap = new HashMap<String, String>();
     private Component topLevelComponent;
     private LookAndFeel currentLAF;
     
     private ThemeManager() {
         super();
-        setTitle("Settings");
+        setTitle(messages.getString("ThemeManager.title.Settings"));
     }
     
     public static synchronized ThemeManager getInstance() {
@@ -83,9 +85,9 @@ public class ThemeManager extends JDialog implements ActionListener {
         top.add(themeChooser,c);
         c.gridy++;
         //top.add(componentChooser,c);
-        chatPane = ChatPane.createChatPane(null, "recipient", "yourname", false);
+        chatPane = ChatPane.createChatPane(null, messages.getString("ThemeManager.msg.recipient"), messages.getString("ThemeManager.msg.yourname"), false);
         add(top, BorderLayout.PAGE_START);
-        Border border = BorderFactory.createTitledBorder("Example");
+        Border border = BorderFactory.createTitledBorder(messages.getString("ThemeManager.title.Example"));
         chatPane.setBorder(border);
         
         add(chatPane, BorderLayout.CENTER);
@@ -155,7 +157,7 @@ public class ThemeManager extends JDialog implements ActionListener {
                 SwingUtilities.updateComponentTreeUI(this);
             }
         } catch (UnsupportedLookAndFeelException ex) {
-            logger.severe("Unable to restore previous LAF: " + currentLAF.getName());
+            logger.severe(messages.getString("ThemeManager.msg.UnableToRestorePreviousLAF") + currentLAF.getName());
         }
     }
     

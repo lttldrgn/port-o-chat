@@ -36,6 +36,7 @@ import portochat.common.protocol.UserList;
 import portochat.common.socket.TCPSocket;
 import portochat.common.socket.event.NetEvent;
 import portochat.common.socket.event.NetListener;
+import java.util.ResourceBundle;
 
 /**
  * Handles all the client interaction with the server
@@ -138,14 +139,15 @@ public class ServerConnection {
 
         @Override
         public void incomingMessage(NetEvent event) {
+            ResourceBundle messages = ResourceBundle.getBundle("portochat/resource/MessagesBundle", java.util.Locale.getDefault());
             DefaultData defaultData = event.getData();
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine(defaultData.toString());
             }
             
             if (defaultData instanceof Pong) {
-                System.out.println("Server lag: " + 
-                        ((Pong)defaultData).getCalculatedLag() + "ms");
+                System.out.println(messages.getString("ServerConnection.msg.ServerLag") + 
+                        ((Pong)defaultData).getCalculatedLag() + messages.getString("ServerConnection.msg.Ms"));
             } else if (defaultData instanceof ServerMessage) {
                 ServerMessage message = (ServerMessage) defaultData;
                 if (message.getMessageEnum().equals(ServerMessageEnum.USERNAME_SET)) {
@@ -196,7 +198,7 @@ public class ServerConnection {
                             status.isCreated());
                 }
             } else {
-                logger.warning("Unknown message: " + defaultData);
+                logger.warning(messages.getString("ServerConnection.msg.UnknownMessage") + defaultData);
             }
         }
     }

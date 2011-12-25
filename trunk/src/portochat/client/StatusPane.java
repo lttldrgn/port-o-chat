@@ -31,6 +31,7 @@ import javax.swing.text.StyleContext;
 import javax.swing.text.StyledDocument;
 import portochat.common.User;
 import portochat.common.Util;
+import java.util.ResourceBundle;
 
 /**
  *
@@ -92,7 +93,8 @@ public class StatusPane extends JPanel {
     }
 
     public String getPaneTitle() {
-        return "Status";
+        ResourceBundle messages = ResourceBundle.getBundle("portochat/resource/MessagesBundle", java.util.Locale.getDefault());
+        return messages.getString("StatusPane.msg.Status");
     }
     
     /**
@@ -117,10 +119,11 @@ public class StatusPane extends JPanel {
 
             @Override
             public void run() {
+                ResourceBundle messages = ResourceBundle.getBundle("portochat/resource/MessagesBundle", java.util.Locale.getDefault());
 
                 StyledDocument doc = viewPane.getStyledDocument();
                 String message = Util.getTimestamp() + " " + user
-                        + " has disconnected from the server\n";
+                        + messages.getString("StatusPane.msg.HasDisconnectedFromTheServer");
                 try {
                     doc.insertString(doc.getLength(), message,
                             doc.getStyle("disconnect"));
