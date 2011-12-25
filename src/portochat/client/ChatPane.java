@@ -495,10 +495,14 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
                         String text = "<span class=\"bold\">" + 
                                 Util.getTimestamp() + ": </span>" + message + "<br>";
                         htdoc.insertBeforeEnd(chatTextElement, text);
-                    }
-                    if (style.equals("disconnect")) {
+                    } else if (style.equals("disconnect")) {
                         String text =  "<span class=\"disconnect\">" + 
                                 Util.getTimestamp() + ": " + message + "</span>" + "<br>";
+                        htdoc.insertBeforeEnd(chatTextElement, text);
+                    } else {
+                        // show something even if we don't recognize the style
+                        String text = "<span class=\"bold\">" + 
+                                Util.getTimestamp() + ": </span>" + message + "<br>";
                         htdoc.insertBeforeEnd(chatTextElement, text);
                     }
                 } catch (BadLocationException ex) {

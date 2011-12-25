@@ -158,6 +158,14 @@ public class StatusPane extends JPanel {
                         doc.insertString(doc.getLength(), 
                                     Util.getTimestamp() + ": " + message + "\n",
                                     doc.getStyle("disconnect"));
+                    } else {
+                        // default to show message with no style
+                        doc.insertString(doc.getLength(),
+                                Util.getTimestamp() + ": ",
+                                doc.getStyle("bold"));
+                        doc.insertString(doc.getLength(),
+                                message + "\n",
+                                doc.getStyle("normal"));
                     }
                 } catch (BadLocationException ex) {
                     logger.log(Level.SEVERE, null, ex);

@@ -621,14 +621,14 @@ public class Client extends JFrame implements ActionListener,
     private void showDisconnectMessage() {
         Collection<ChatPane> chatPanes = chatPaneMap.values();
         for (ChatPane pane : chatPanes) {
-            pane.showInfoMessage(messages.getString("Client.msg.DisconnectedFromServer"), messages.getString("Client.title.Disconnect"));
+            pane.showInfoMessage(messages.getString("Client.msg.DisconnectedFromServer"), "disconnect");
         }
         
         Collection<ChatPane> channelPanes = channelPaneMap.values();
         for (ChatPane pane : channelPanes) {
-            pane.showInfoMessage(messages.getString("Client.msg.DisconnectedFromServer"), messages.getString("Client.title.Disconnect"));
+            pane.showInfoMessage(messages.getString("Client.msg.DisconnectedFromServer"), "disconnect");
         }
-        statusPane.showMessage(messages.getString("Client.msg.DisconnectedFromServer"), messages.getString("Client.title.Disconnect"));
+        statusPane.showMessage(messages.getString("Client.msg.DisconnectedFromServer"), "disconnect");
     }
     
     private void startServer() {
