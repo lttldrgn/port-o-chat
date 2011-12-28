@@ -73,6 +73,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import portochat.common.User;
 import java.util.ResourceBundle;
+import javax.swing.JSlider;
 
 /**
  *
@@ -89,8 +90,7 @@ public class Client extends JFrame implements ActionListener,
     private static final String START_SERVER = "START_SERVER";
     private static final String STATUS_MENU = "STATUS_MENU";
     private static final String THEME_MENU = "THEME_MENU";
-    private static final String OPACITY_MENU_UP = "OPACITY_MENU_UP";
-    private static final String OPACITY_MENU_DOWN = "OPACITY_MENU_DOWN";
+    private static final String OPACITY_MENU = "OPACITY_MENU";
     private static final String COMBINED_VIEW = "COMBINED_VIEW";
     private static final String SPLIT_VIEW = "SPLIT_VIEW";
     private HashMap<String, ChatPane> chatPaneMap = 
@@ -190,15 +190,15 @@ public class Client extends JFrame implements ActionListener,
         themeMenu.setActionCommand(THEME_MENU);
         settingsMenu.add(themeMenu); 
 
-        JMenuItem opacityMenuUp = new JMenuItem(messages.getString("Client.menu.IncreaseOpacity"));
-        opacityMenuUp.addActionListener(this);
-        opacityMenuUp.setActionCommand(OPACITY_MENU_UP);
-        settingsMenu.add(opacityMenuUp); 
-        
-        JMenuItem opacityMenuDown = new JMenuItem(messages.getString("Client.menu.DecreaseOpacity"));
-        opacityMenuDown.addActionListener(this);
-        opacityMenuDown.setActionCommand(OPACITY_MENU_DOWN);
-        settingsMenu.add(opacityMenuDown); 
+        String version = System.getProperty("java.version");
+        if (version != null && version.startsWith("1.6")) {
+            // only supported for 1.6 since our frame is decorated and will fail
+            // in 1.7
+            JMenuItem opacityMenuItem = new JMenuItem(messages.getString("Client.menu.Opacity"));
+            opacityMenuItem.addActionListener(this);
+            opacityMenuItem.setActionCommand(OPACITY_MENU);
+            settingsMenu.add(opacityMenuItem);
+        }
        
         JMenu viewMenu = new JMenu(messages.getString("Client.menu.View"));
         viewMenu.setMnemonic(KeyEvent.VK_V);
@@ -479,20 +479,8 @@ public class Client extends JFrame implements ActionListener,
             ThemeManager themeManager = ThemeManager.getInstance();
             themeManager.setTopLevelComponent(this);
             themeManager.setVisible(true);
-        } else if (e.getActionCommand().equals(OPACITY_MENU_UP)) {
-            //do not go over 1   
-            if(currentOpacity <=.75f){               
-                currentOpacity+=.25f;
-            } else {
-                currentOpacity = 1.0f;
-            }
-            setViewOpacity(currentOpacity);
-        } else if (e.getActionCommand().equals(OPACITY_MENU_DOWN)) {            
-            //stop it from going completely invisible
-            if(currentOpacity >= .3f){
-                currentOpacity-=.25f;
-            }
-            setViewOpacity(currentOpacity);
+        } else if (e.getActionCommand().equals(OPACITY_MENU)) {
+            showOpacityDialog();
         } else if (e.getActionCommand().equals(START_SERVER)) {
             startServer();
         } else if (e.getActionCommand().equals(SPLIT_VIEW)) {
@@ -829,6 +817,32 @@ public class Client extends JFrame implements ActionListener,
                 }
             });
         }
+    }
+    
+    private void showOpacityDialog() {
+        JDialog dialog = new JDialog(this, messages.getString("Client.menu.Opacity"));
+        float opacity = AWTUtilities.getWindowOpacity(this);
+        JSlider slider = new JSlider(25, 100, (int)(opacity*100));
+        slider.setMajorTickSpacing(25);
+        slider.setMinorTickSpacing(5);
+        slider.setPaintLabels(true);
+        slider.setPaintTicks(true);
+        JPanel contentPane = new JPanel();
+        contentPane.add(new JLabel(messages.getString("Client.dialog.OpacityPercent")));
+        contentPane.add(slider);
+        dialog.setContentPane(contentPane);
+        
+        slider.addChangeListener(new ChangeListener() {
+            @Override
+            public void stateChanged(ChangeEvent e) {
+                JSlider source = (JSlider) e.getSource();
+                if (!source.getValueIsAdjusting()) {
+                    setViewOpacity((float)(source.getValue())/100);
+                }
+            }
+        });
+        dialog.pack();
+        dialog.setVisible(true);
     }
     
     /**
