@@ -24,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import portochat.common.User;
+import portochat.common.socket.handler.BufferHandler;
 
 /**
  * This class is a singleton class used to contain the user database.
@@ -57,6 +58,21 @@ public class UserDatabase {
         return instance;
     }
     
+    public boolean addConnection(Socket socket) {
+        boolean success = false;
+        
+        if (!socketMap.containsKey(socket)) {
+            User user = new User();
+            user.setHost(socket.getInetAddress().getHostName());
+
+            socketMap.put(socket, user);
+            logger.log(Level.INFO, "{0} has connected", 
+                    new Object[]{user});
+            success = true;
+        }
+        
+        return success;
+    }
     /**
      * Adds a user to the database
      * 
@@ -68,14 +84,16 @@ public class UserDatabase {
     public boolean addUser(String userName, Socket socket) {
         boolean success = false;
         
-        User user = new User(userName, socket.getInetAddress().getHostName());
-        
-        if (!userMap.containsKey(user)) {
-            userMap.put(user, socket);
-            socketMap.put(socket, user);
-            logger.log(Level.INFO, "{0} has connected", 
-                    new Object[]{user});
-            success = true;
+        User user = socketMap.get(socket);
+        if (user != null) {
+            if (!userNameInUse(userName)) {
+                user.setName(userName);
+
+                userMap.put(user, socket);
+                logger.log(Level.INFO, "{0} has registered", 
+                        new Object[]{user});
+                success = true;
+            }
         }
         
         return success;
@@ -124,6 +142,8 @@ public class UserDatabase {
             Socket userSocket = getUserOfSocket(user);
             userMap.remove(user);
             socketMap.remove(userSocket);
+            logger.log(Level.INFO, "{0} has been removed", 
+                    new Object[]{user});
             success = true;
         }
         
@@ -231,5 +251,19 @@ public class UserDatabase {
         }
         return socketList;
     }
-    
+
+    public void clearHandlers(Socket socket) {
+        User user = socketMap.get(socket);
+        if (user != null) {
+            user.clearHandlers();
+        }
+    }
+
+    public void addHandler(Socket socket, BufferHandler handler) {
+        User user = socketMap.get(socket);
+        if (user != null) {
+            user.addHandler(handler);
+        }
+    }
+
 }
