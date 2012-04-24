@@ -8,7 +8,7 @@ Change Summary:
   * Implemented support for encryption. This feature is turned on by default for now.
 
 List of fixes:
-issue 47
+issue 44, issue 46, issue 47, issue 48
 
 == October 26, 2011 ==
 Change Summary:
