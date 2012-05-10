@@ -4,7 +4,8 @@
 = Release history =
 
 == April 8, 2012 ==
-Oops, this build was removed since we broke something.
+Oops, this build was removed since we broke something in this release.
+
 Change Summary:
   * Implemented support for encryption. This feature is turned on by default for now.
 
