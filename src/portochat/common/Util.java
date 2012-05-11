@@ -24,6 +24,7 @@ import java.util.Date;
  * @author Mike
  */
 public class Util {
+
     public static final int MASK_1_BIT = 0x1;
     public static final int MASK_2_BIT = 0x3;
     public static final int MASK_3_BIT = 0x7;
@@ -31,19 +32,19 @@ public class Util {
     public static final int MASK_8_BIT = 0xFF;
     private static final SimpleDateFormat formatDate =
             new SimpleDateFormat("hh:mm.ssa");
-    
+
     public static int getBitValue(int value, int bitStart, int bitMask) {
         if (bitStart > 0) {
             value = value >> bitStart;
         }
         return value & bitMask;
     }
-    
+
     public static String getTimestamp() {
         Date currentDate = new Date();
         return formatDate.format(currentDate);
     }
-    
+
     public static String byteArrayToHexString(byte[] data) {
         StringBuilder sb = new StringBuilder(data.length * 2);
         for (int i = 0; i < data.length; i++) {
@@ -58,5 +59,13 @@ public class Util {
             sb.append(" ");
         }
         return sb.toString().toUpperCase();
+    }
+
+    public static byte[] concat(byte[] A, byte[] B) {
+        byte[] C = new byte[A.length + B.length];
+        System.arraycopy(A, 0, C, 0, A.length);
+        System.arraycopy(B, 0, C, A.length, B.length);
+
+        return C;
     }
 }

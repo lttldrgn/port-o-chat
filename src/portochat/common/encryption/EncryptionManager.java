@@ -28,6 +28,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.crypto.Cipher;
@@ -50,11 +51,18 @@ public class EncryptionManager {
     private static EncryptionManager instance = null;
     private SecretKey serverSecretKey = null; // used for clients to store in
     private KeyPair clientKeyPair = null;
-
+    private final boolean DEBUG = false;
+    
     /**
      * Private constructor
      */
     private EncryptionManager() {
+        if (DEBUG) {
+            logger.setLevel(Level.ALL);
+            ConsoleHandler consoleHandler = new ConsoleHandler();
+            consoleHandler.setLevel(Level.ALL);
+            logger.addHandler(consoleHandler);
+        }
     }
 
     /**
@@ -121,8 +129,10 @@ public class EncryptionManager {
             logger.log(Level.SEVERE, "Unable to encrypt message!", ex);
         }
 
-        logger.log(Level.FINEST, "encryptedData:{0}", 
-                Util.byteArrayToHexString(encryptedData.getByteArray()));
+        logger.log(Level.FINEST, "encryptedData[{0}]:{1}", 
+                new Object[]{
+                    encryptedData.getByteArray().length,
+                    Util.byteArrayToHexString(encryptedData.getByteArray())});
 
         return encryptedData.getByteArray();
     }
@@ -135,17 +145,33 @@ public class EncryptionManager {
      * @return The decrypted byte array (can be null if an error occurred)
      */
     public byte[] decrypt(SecretKey secretKey, byte[] encryptedBytes) {
-        byte[] data = null;
+        byte[] data = new byte[0];
 
         logger.log(Level.FINEST,"\ndecrypt(encryptedData) ->"
-                + "\nencryptedData:{0}", Util.byteArrayToHexString(encryptedBytes));
+                + "\nencryptedData:[{0}]:{1}", 
+                new Object[]{
+                    encryptedBytes.length,
+                    Util.byteArrayToHexString(encryptedBytes)});
         try {
-            EncryptedData encryptedData = new EncryptedData();
-            encryptedData.setData(encryptedBytes);
-            IvParameterSpec iv = new IvParameterSpec(encryptedData.getIvBytes());
-            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-            cipher.init(Cipher.DECRYPT_MODE, secretKey, iv);
-            data = cipher.doFinal(encryptedData.getEncodedData());
+            int remainingBytes = encryptedBytes.length;
+            while (remainingBytes > 0) {
+                EncryptedData encryptedData = new EncryptedData();
+                encryptedData.setData(encryptedBytes);
+
+                // Get the remaining bytes to be decoded
+                remainingBytes -= encryptedData.getParsedLength();
+                byte[] remainingEncryptedBytes = new byte[remainingBytes];
+                System.arraycopy(encryptedBytes, encryptedData.getParsedLength(), 
+                        remainingEncryptedBytes, 0, remainingBytes);
+                encryptedBytes = remainingEncryptedBytes;
+                
+                IvParameterSpec iv = new IvParameterSpec(encryptedData.getIvBytes());
+                Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+                cipher.init(Cipher.DECRYPT_MODE, secretKey, iv);
+                data = Util.concat(data, 
+                        cipher.doFinal(encryptedData.getEncodedData()));                
+            }
+            
         } catch (Exception ex) {
             logger.log(Level.SEVERE, "Unable to decrypt data", ex);
         }
@@ -337,7 +363,8 @@ public class EncryptionManager {
 
         private byte[] ivBytes = null;
         private byte[] encodedData = null;
-
+        int parsedLength = -1;
+        
         private EncryptedData() {
         }
 
@@ -367,6 +394,8 @@ public class EncryptionManager {
                 int encodedDataLength = dis.readInt();
                 encodedData = new byte[encodedDataLength];
                 dis.read(encodedData);
+                parsedLength = 4/*ivBytesLength*/ + ivBytesLength + 
+                        4/*encodedDataLength*/ + encodedDataLength;
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Unable to set data from EncryptedData", ex);
             }
@@ -386,6 +415,10 @@ public class EncryptionManager {
 
         private void setIvBytes(byte[] ivBytes) {
             this.ivBytes = ivBytes;
+        }
+
+        public int getParsedLength() {
+            return parsedLength;
         }
     }
 }

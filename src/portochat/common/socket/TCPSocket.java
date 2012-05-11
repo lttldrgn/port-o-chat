@@ -329,6 +329,7 @@ public class TCPSocket {
 
                     //TODO how to handle chunk data?
                     for (BufferHandler handler : getHandlers(incomingSocket)) {
+
                         // If finished go to next, remove on outgoing
                         if (handler.isFinished()) {
                             continue;
@@ -425,8 +426,8 @@ public class TCPSocket {
                         if (handler.isFinished()
                                 && (handler.getSocketData() == null
                                 || handler.getSocketData().isEmpty())) {
-                            //If the hander is finished and has no response,
-                            //remove the handler 
+                            // If the hander is finished and has no response,
+                            // remove the handler 
                             removeHandler(netData.socket, handler);
                             continue;
                         }
@@ -502,5 +503,15 @@ public class TCPSocket {
 
         Socket socket = null;
         byte[] data = null;
+        
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append(socket.getInetAddress());
+            sb.append("> ");
+            sb.append(Util.byteArrayToHexString(data));
+            
+            return sb.toString();
+        }
     }
 }
