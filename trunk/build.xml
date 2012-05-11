@@ -72,7 +72,7 @@
 
     -->
     <target name="-post-compile">
-        <copy file="${src.dir}/portochat/resource/MessagesBundle_en.properties" todir="${build.classes.dir}/portochat/resource"/>
+        <copy file="${src.dir}/portochat/resource/MessagesBundle_en.properties" tofile="${build.classes.dir}/portochat/resource/MessagesBundle.properties"/>
     </target>
     <target name="-post-jar">
         <copy file="scripts/client.bat" todir="${dist.dir}"/>
