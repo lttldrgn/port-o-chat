@@ -71,4 +71,13 @@
     nbproject/build-impl.xml file. 
 
     -->
+    <target name="-post-compile">
+        <copy file="${src.dir}/portochat/resource/MessagesBundle_en.properties" todir="${build.classes.dir}/portochat/resource"/>
+    </target>
+    <target name="-post-jar">
+        <copy file="scripts/client.bat" todir="${dist.dir}"/>
+        <copy file="scripts/client.sh" todir="${dist.dir}"/>
+        <copy file="scripts/server.bat" todir="${dist.dir}"/>
+        <copy file="scripts/server.sh" todir="${dist.dir}"/>
+    </target>
 </project>
