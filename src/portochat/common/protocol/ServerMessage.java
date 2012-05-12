@@ -82,6 +82,7 @@ public class ServerMessage extends DefaultData {
     }
 
     /**
+     * @see ServerMessage#setAdditionalMessage(java.lang.String) 
      * @return The message
      */
     public String getAdditionalMessage() {
@@ -92,7 +93,7 @@ public class ServerMessage extends DefaultData {
      * Sets the message
      * 
      * @param message the message
-     * @see getAdditionalMessage()
+     * @see ServerMessage#getAdditionalMessage()
      */
     public void setAdditionalMessage(String message) {
         this.additionalMessage = message;

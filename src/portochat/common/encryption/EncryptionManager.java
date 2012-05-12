@@ -99,7 +99,7 @@ public class EncryptionManager {
     /**
      * Encrypts a byte array encryption
      * 
-     * @param node TCPnode of the connection
+     * @param secretKey Key to encrypt message
      * @param data The byte array to encrypt
      * @return The encrypted byte array (can be null if an error occurred)
      */
@@ -140,7 +140,7 @@ public class EncryptionManager {
     /**
      * Decrypts the byte array
      * 
-     * @param node TCPNode of the connection
+     * @param secretKey Key to decode message
      * @param encryptedBytes The encrypted bytes to be decrypted
      * @return The decrypted byte array (can be null if an error occurred)
      */

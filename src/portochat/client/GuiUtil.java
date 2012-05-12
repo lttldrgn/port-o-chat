@@ -99,7 +99,7 @@ public class GuiUtil {
     /**
      * Save server name to preferences
      * @param clazz Class calling this method
-     * @param serverName Server name to write to preferences
+     * @param serverPort Server port to write to preferences
      */
     public static void saveServerPort(Class<?> clazz, int serverPort) {
         Preferences prefs = Preferences.userNodeForPackage(clazz);
