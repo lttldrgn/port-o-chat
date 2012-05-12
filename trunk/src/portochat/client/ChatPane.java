@@ -342,7 +342,7 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
      * @param recipient Recipient of messages coming from this chat pane, either
      * a user name or channel name
      * @param myName 
-     * @param channel True if this chat pane is a channel
+     * @param isChannel True if this chat pane is a channel
      */
     public static ChatPane createChatPane(
             ServerConnectionProvider serverConnectionProvider,

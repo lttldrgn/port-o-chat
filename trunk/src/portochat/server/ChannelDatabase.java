@@ -169,7 +169,7 @@ public class ChannelDatabase {
      * Returns true if the user is in a channel
      * 
      * @param channel
-     * @param suer
+     * @param user
      * 
      * @return true if the user is in the channel
      */

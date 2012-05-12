@@ -103,7 +103,7 @@ public class UserDatabase {
      * Renames a user in the database.
      * 
      * @param oldUser old username
-     * @param newUser new username
+     * @param newUserName new username
      * 
      * @return true if successful
      */
@@ -182,7 +182,7 @@ public class UserDatabase {
     /**
      * Returns the user's socket
      * 
-     * @param user the user
+     * @param userName the user
      * 
      * @return the user's socket
      */
