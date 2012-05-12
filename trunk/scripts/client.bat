@@ -1,1 +1,1 @@
-javaw -jar PortOChat.jar
+javaw -Djava.util.logging.config.file=logging.properties -jar PortOChat.jar

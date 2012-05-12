@@ -79,5 +79,6 @@
         <copy file="scripts/client.sh" todir="${dist.dir}"/>
         <copy file="scripts/server.bat" todir="${dist.dir}"/>
         <copy file="scripts/server.sh" todir="${dist.dir}"/>
+        <copy file="${src.dir}/logging.properties" todir="${dist.dir}"/>
     </target>
 </project>
