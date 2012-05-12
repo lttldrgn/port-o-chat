@@ -2,15 +2,16 @@
 #labels Featured
 
 = Release history =
-
-== April 8, 2012 ==
-Oops, this build was removed since we broke something in this release.
+== May 12, 2012 ==
 
 Change Summary:
   * Implemented support for encryption. This feature is turned on by default for now.
 
 List of fixes:
-issue 44, issue 46, issue 47, issue 48
+issue 38, issue 44, issue 46, issue 47, issue 48, issue 49, issue 50, issue 51
+
+== April 8, 2012 ==
+This build was removed since there was a critical issue in this release.  Please upgrade to the latest release.
 
 == October 26, 2011 ==
 Change Summary:
