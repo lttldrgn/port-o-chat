@@ -1,2 +1,2 @@
 #!/bin/sh
-java -jar PortOChat.jar
+java -Djava.util.logging.config.file=logging.properties -jar PortOChat.jar
