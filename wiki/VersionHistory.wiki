@@ -5,7 +5,7 @@
 == May 12, 2012 ==
 
 Change Summary:
-  * Implemented support for encryption. This feature is turned on by default for now.
+  * Implemented support for encryption. This feature is turned on by default for now.  If you had the Apr 8th build, please upgrade since there was a critical bug in that build.
 
 List of fixes:
 issue 38, issue 44, issue 46, issue 47, issue 48, issue 49, issue 50, issue 51
