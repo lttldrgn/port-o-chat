@@ -93,6 +93,7 @@ public class Client extends JFrame implements ActionListener,
     private static final String OPACITY_MENU = "OPACITY_MENU";
     private static final String COMBINED_VIEW = "COMBINED_VIEW";
     private static final String SPLIT_VIEW = "SPLIT_VIEW";
+    private static final String SHOW_ABOUT_DIALOG = "SHOW_ABOUT_DIALOG";
     private HashMap<String, ChatPane> chatPaneMap = 
             new HashMap<String, ChatPane>();
     private HashMap<String, ChatPane> channelPaneMap = 
@@ -145,85 +146,8 @@ public class Client extends JFrame implements ActionListener,
                 shutdown();
             }
         });
-        // add menu bar
-        JMenuBar menuBar = new JMenuBar();
-        setJMenuBar(menuBar);
         
-        JMenu fileMenu = new JMenu(messages.getString("Client.menu.File"));
-        fileMenu.setMnemonic(KeyEvent.VK_F);
-        menuBar.add(fileMenu);
-        
-        connectMenu.setActionCommand(CONNECT);
-        connectMenu.addActionListener(this);
-        connectMenu.setMnemonic(KeyEvent.VK_C);
-        fileMenu.add(connectMenu);
-
-        createChannelMenu.setActionCommand(CREATE_CHANNEL);
-        createChannelMenu.addActionListener(this);
-        createChannelMenu.setMnemonic(KeyEvent.VK_H);
-        fileMenu.add(createChannelMenu);
-        createChannelMenu.setEnabled(false);
-        
-        disconnect.setMnemonic(KeyEvent.VK_D);
-        disconnect.setActionCommand(DISCONNECT);
-        disconnect.addActionListener(this);
-        disconnect.setEnabled(false);
-        fileMenu.add(disconnect);
-        
-        JMenuItem startServer = new JMenuItem(messages.getString("Client.menu.StartServer"));
-        startServer.setActionCommand(START_SERVER);
-        fileMenu.add(startServer);
-        startServer.addActionListener(this);
-        
-        JMenuItem exitMenu = new JMenuItem(messages.getString("Client.menu.Exit"));
-        exitMenu.setMnemonic(KeyEvent.VK_X);
-        exitMenu.setActionCommand(EXIT_COMMAND);
-        fileMenu.add(exitMenu);
-        exitMenu.addActionListener(this);
-        
-        JMenu settingsMenu = new JMenu(messages.getString("Client.menu.Settings"));
-        settingsMenu.setMnemonic(KeyEvent.VK_S);
-        menuBar.add(settingsMenu);
-        
-        JMenuItem themeMenu = new JMenuItem(messages.getString("Client.menu.ChangeTheme"));
-        themeMenu.addActionListener(this);
-        themeMenu.setActionCommand(THEME_MENU);
-        settingsMenu.add(themeMenu); 
-
-        String version = System.getProperty("java.version");
-        if (version != null && version.startsWith("1.6")) {
-            // only supported for 1.6 since our frame is decorated and will fail
-            // in 1.7
-            JMenuItem opacityMenuItem = new JMenuItem(messages.getString("Client.menu.Opacity"));
-            opacityMenuItem.addActionListener(this);
-            opacityMenuItem.setActionCommand(OPACITY_MENU);
-            settingsMenu.add(opacityMenuItem);
-        }
-       
-        JMenu viewMenu = new JMenu(messages.getString("Client.menu.View"));
-        viewMenu.setMnemonic(KeyEvent.VK_V);
-        menuBar.add(viewMenu);
-        
-        JMenuItem statusMenu = new JMenuItem(messages.getString("Client.menu.Status"));
-        statusMenu.addActionListener(this);
-        statusMenu.setMnemonic(KeyEvent.VK_S);
-        statusMenu.setActionCommand(STATUS_MENU);
-        viewMenu.add(statusMenu); 
-        
-        viewMenu.addSeparator();
-        ButtonGroup viewGroup = new ButtonGroup();
-        JRadioButtonMenuItem combined = new JRadioButtonMenuItem(messages.getString("Client.menu.CombinedLayout"));
-        combined.setSelected(true);
-        combined.setActionCommand(COMBINED_VIEW);
-        combined.addActionListener(this);
-        viewMenu.add(combined);
-        viewGroup.add(combined);
-        
-        JRadioButtonMenuItem split = new JRadioButtonMenuItem(messages.getString("Client.menu.SplitLayout"));
-        split.setActionCommand(SPLIT_VIEW);
-        split.addActionListener(this);
-        viewGroup.add(split);
-        viewMenu.add(split);
+        createMenuBar();
         
         // construct panels 
         userChannelContainerPanel = new JPanel();
@@ -306,6 +230,99 @@ public class Client extends JFrame implements ActionListener,
         serverPort = GuiUtil.getServerPort(this.getClass());
         setViewOpacity(currentOpacity);
         pack();
+    }
+    
+    private void createMenuBar() {
+        
+        // add menu bar
+        JMenuBar menuBar = new JMenuBar();
+        setJMenuBar(menuBar);
+        
+        JMenu fileMenu = new JMenu(messages.getString("Client.menu.File"));
+        fileMenu.setMnemonic(KeyEvent.VK_F);
+        menuBar.add(fileMenu);
+        
+        connectMenu.setActionCommand(CONNECT);
+        connectMenu.addActionListener(this);
+        connectMenu.setMnemonic(KeyEvent.VK_C);
+        fileMenu.add(connectMenu);
+
+        createChannelMenu.setActionCommand(CREATE_CHANNEL);
+        createChannelMenu.addActionListener(this);
+        createChannelMenu.setMnemonic(KeyEvent.VK_H);
+        fileMenu.add(createChannelMenu);
+        createChannelMenu.setEnabled(false);
+        
+        disconnect.setMnemonic(KeyEvent.VK_D);
+        disconnect.setActionCommand(DISCONNECT);
+        disconnect.addActionListener(this);
+        disconnect.setEnabled(false);
+        fileMenu.add(disconnect);
+        
+        JMenuItem startServer = new JMenuItem(messages.getString("Client.menu.StartServer"));
+        startServer.setActionCommand(START_SERVER);
+        fileMenu.add(startServer);
+        startServer.addActionListener(this);
+        
+        JMenuItem exitMenu = new JMenuItem(messages.getString("Client.menu.Exit"));
+        exitMenu.setMnemonic(KeyEvent.VK_X);
+        exitMenu.setActionCommand(EXIT_COMMAND);
+        fileMenu.add(exitMenu);
+        exitMenu.addActionListener(this);
+        
+        JMenu settingsMenu = new JMenu(messages.getString("Client.menu.Settings"));
+        settingsMenu.setMnemonic(KeyEvent.VK_S);
+        menuBar.add(settingsMenu);
+        
+        JMenuItem themeMenu = new JMenuItem(messages.getString("Client.menu.ChangeTheme"));
+        themeMenu.addActionListener(this);
+        themeMenu.setActionCommand(THEME_MENU);
+        settingsMenu.add(themeMenu); 
+
+        String version = System.getProperty("java.version");
+        if (version != null && version.startsWith("1.6")) {
+            // only supported for 1.6 since our frame is decorated and will fail
+            // in 1.7
+            JMenuItem opacityMenuItem = new JMenuItem(messages.getString("Client.menu.Opacity"));
+            opacityMenuItem.addActionListener(this);
+            opacityMenuItem.setActionCommand(OPACITY_MENU);
+            settingsMenu.add(opacityMenuItem);
+        }
+       
+        JMenu viewMenu = new JMenu(messages.getString("Client.menu.View"));
+        viewMenu.setMnemonic(KeyEvent.VK_V);
+        menuBar.add(viewMenu);
+        
+        JMenuItem statusMenu = new JMenuItem(messages.getString("Client.menu.Status"));
+        statusMenu.addActionListener(this);
+        statusMenu.setMnemonic(KeyEvent.VK_S);
+        statusMenu.setActionCommand(STATUS_MENU);
+        viewMenu.add(statusMenu); 
+        
+        viewMenu.addSeparator();
+        ButtonGroup viewGroup = new ButtonGroup();
+        JRadioButtonMenuItem combined = new JRadioButtonMenuItem(messages.getString("Client.menu.CombinedLayout"));
+        combined.setSelected(true);
+        combined.setActionCommand(COMBINED_VIEW);
+        combined.addActionListener(this);
+        viewMenu.add(combined);
+        viewGroup.add(combined);
+        
+        JRadioButtonMenuItem split = new JRadioButtonMenuItem(messages.getString("Client.menu.SplitLayout"));
+        split.setActionCommand(SPLIT_VIEW);
+        split.addActionListener(this);
+        viewGroup.add(split);
+        viewMenu.add(split);
+        
+        JMenu helpMenu = new JMenu(messages.getString("Client.menu.Help"));
+        helpMenu.setMnemonic(KeyEvent.VK_H);
+        menuBar.add(helpMenu);
+        
+        JMenuItem about = new JMenuItem(messages.getString("Client.menu.About"));
+        about.setActionCommand(SHOW_ABOUT_DIALOG);
+        about.addActionListener(this);
+        about.setMnemonic(KeyEvent.VK_A);
+        helpMenu.add(about);
     }
     
     private void setViewOpacity(float opacity){
@@ -487,6 +504,8 @@ public class Client extends JFrame implements ActionListener,
             setSplitView();
         } else if (e.getActionCommand().equals(COMBINED_VIEW)) {
             setCombinedView();
+        } else if (e.getActionCommand().equals(SHOW_ABOUT_DIALOG)) {
+            AboutDialog.showAboutDialog(this);
         }
     }
     
