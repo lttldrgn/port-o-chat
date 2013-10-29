@@ -22,6 +22,7 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
@@ -327,6 +328,21 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
             serverConnectionProvider.sendMessage(recipient, action, messageText);
         }
     }
+    
+    private Rectangle rect = new Rectangle(0, 0, 50, 50);
+    private void appendToChatText(String text) {
+        try {
+            htdoc.insertBeforeEnd(chatTextElement, text);
+        } catch (BadLocationException ex) {
+            logger.log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, null, ex);
+        }
+
+        // force view to scroll down
+        rect.y = viewPane.getBounds().height - 50;
+        viewPane.scrollRectToVisible(rect);
+    }
 
     public String getPaneTitle() {
         return recipient;
@@ -387,13 +403,7 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
                                 Util.getTimestamp() + " " + user +
                                 messages.getString("ChatPane.msg.HasJoinedTheChannel") +
                                 "</span><br>";
-                        try {
-                            htdoc.insertBeforeEnd(chatTextElement, message);
-                        } catch (BadLocationException ex) {
-                            logger.log(Level.SEVERE, null, ex);
-                        } catch (IOException ioe) {
-                            logger.log(Level.SEVERE, null, ioe);
-                        }
+                        appendToChatText(message);
                     }
                 } else {
                     participantListModel.removeElement(user.getName());
@@ -402,13 +412,7 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
                             Util.getTimestamp() + " " + user +
                             messages.getString("ChatPane.msg.HasLeftTheChannel") +
                             "</span><br>";
-                    try {
-                        htdoc.insertBeforeEnd(chatTextElement, message);
-                    } catch (BadLocationException ex) {
-                        logger.log(Level.SEVERE, null, ex);
-                    } catch (IOException ioe) {
-                            logger.log(Level.SEVERE, null, ioe);
-                    }
+                    appendToChatText(message);
                 }
             }
         });
@@ -431,13 +435,7 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
                             Util.getTimestamp() + " " + user +
                             messages.getString("ChatPane.msg.HasDisconnectedFromTheServer") +
                             "</span><br>";
-                    try {
-                        htdoc.insertBeforeEnd(chatTextElement, message);
-                    } catch (BadLocationException ex) {
-                        logger.log(Level.SEVERE, null, ex);
-                    } catch (IOException ioe) {
-                        logger.log(Level.SEVERE, null, ioe);
-                    }
+                    appendToChatText(message);
                 }
             }
         });
@@ -458,24 +456,17 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
 
             @Override
             public void run() {
-                
-                try {
-                    if (action) {
-                        String text = "<span class=\"boldaction\">" + 
-                                Util.getTimestamp() + " " + user + ": </span>" + 
-                                "<span class=\"action\">" + message + 
-                                "</span><br>";
-                        
-                        htdoc.insertBeforeEnd(chatTextElement, text);
-                    } else {
-                        String text = "<b>" + Util.getTimestamp() + " " + user + 
-                                ": </b>" + convertLinks(message) + "<br>";
-                        htdoc.insertBeforeEnd(chatTextElement, text);
-                    }
-                } catch (BadLocationException ex) {
-                    logger.log(Level.SEVERE, null, ex);
-                }  catch (IOException ex) {
-                        logger.log(Level.SEVERE, null, ex);
+                if (action) {
+                    String text = "<span class=\"boldaction\">" + 
+                            Util.getTimestamp() + " " + user + ": </span>" + 
+                            "<span class=\"action\">" + message + 
+                            "</span><br>";
+
+                    appendToChatText(text);
+                } else {
+                    String text = "<b>" + Util.getTimestamp() + " " + user + 
+                            ": </b>" + convertLinks(message) + "<br>";
+                    appendToChatText(text);
                 }
             }
         });
@@ -492,26 +483,20 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
             @Override
             public void run() {
 
-                try {
-                    if (style == null) {
-                        // no style applied
-                        String text = "<span class=\"bold\">" + 
-                                Util.getTimestamp() + ": </span>" + message + "<br>";
-                        htdoc.insertBeforeEnd(chatTextElement, text);
-                    } else if (style.equals("disconnect")) {
-                        String text =  "<span class=\"disconnect\">" + 
-                                Util.getTimestamp() + ": " + message + "</span>" + "<br>";
-                        htdoc.insertBeforeEnd(chatTextElement, text);
-                    } else {
-                        // show something even if we don't recognize the style
-                        String text = "<span class=\"bold\">" + 
-                                Util.getTimestamp() + ": </span>" + message + "<br>";
-                        htdoc.insertBeforeEnd(chatTextElement, text);
-                    }
-                } catch (BadLocationException ex) {
-                    logger.log(Level.SEVERE, null, ex);
-                } catch (IOException ioe) {
-                    logger.log(Level.SEVERE, null, ioe);
+                if (style == null) {
+                    // no style applied
+                    String text = "<span class=\"bold\">" + 
+                            Util.getTimestamp() + ": </span>" + message + "<br>";
+                    appendToChatText(text);
+                } else if (style.equals("disconnect")) {
+                    String text =  "<span class=\"disconnect\">" + 
+                            Util.getTimestamp() + ": " + message + "</span>" + "<br>";
+                    appendToChatText(text);
+                } else {
+                    // show something even if we don't recognize the style
+                    String text = "<span class=\"bold\">" + 
+                            Util.getTimestamp() + ": </span>" + message + "<br>";
+                    appendToChatText(text);
                 }
             }
         });
@@ -569,25 +554,20 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
             }
             
             // Display message
-            try {
-                String insertText = null;
-                if (action) {
-                    insertText = "<span class=\"boldaction\">"
-                            + Util.getTimestamp() + " " + myUserName
-                            + ": </span>" + "<span class=\"action\">"
-                            + message + "</span><br>";
-                } else {
-                    insertText = "<b>" + Util.getTimestamp() + " "
-                            + myUserName + ": </b>" + convertLinks(message)
-                            + "<br>";
+            String insertText;
+            if (action) {
+                insertText = "<span class=\"boldaction\">"
+                        + Util.getTimestamp() + " " + myUserName
+                        + ": </span>" + "<span class=\"action\">"
+                        + message + "</span><br>";
+            } else {
+                insertText = "<b>" + Util.getTimestamp() + " "
+                        + myUserName + ": </b>" + convertLinks(message)
+                        + "<br>";
 
-                }
-                htdoc.insertBeforeEnd(chatTextElement, insertText);
-            } catch (BadLocationException ex) {
-                logger.log(Level.SEVERE, null, ex);
-            } catch (IOException ioe) {
-                logger.log(Level.SEVERE, messages.getString("ChatPane.msg.ErrorAppending"), ioe);
             }
+            appendToChatText(insertText);
+            
             sendMessage(action, message);
         }
     }
@@ -613,21 +593,16 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
         if (command.startsWith(Settings.COMMAND_PREFIX + "clear")) {
             resetViewPane();
         } else {
-            try {
-                StringBuilder sb = new StringBuilder();
-                sb.append("<span class=\"unknowncommand\">");
-                sb.append(Util.getTimestamp());
-                sb.append(messages.getString("ChatPane.msg.UnknownCommand"));
-                sb.append(command.split(" ")[0]);
-                sb.append("</span>");
-                sb.append("<br>");
-                htdoc.insertBeforeEnd(chatTextElement,
-                        sb.toString());
-            } catch (BadLocationException ex) {
-                logger.log(Level.SEVERE, null, ex);
-            } catch (IOException ioe) {
-                logger.log(Level.SEVERE, null, ioe);
-            }
+            StringBuilder sb = new StringBuilder();
+            sb.append("<span class=\"unknowncommand\">");
+            sb.append(Util.getTimestamp());
+            sb.append(messages.getString("ChatPane.msg.UnknownCommand"));
+            sb.append(command.split(" ")[0]);
+            sb.append("</span>");
+            sb.append("<br>");
+
+            appendToChatText(sb.toString());
+
             success = false;
         }
         
