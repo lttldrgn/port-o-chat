@@ -144,7 +144,7 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
 
                     String text = textEntry.getText();
                     if (!text.isEmpty()) {
-                        processInputMessage(text);
+                        processInputMessage(stripHtml(text));
                         textEntry.setText("");
                     }
                     e.consume();
@@ -323,7 +323,12 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
         return nextLinkStart;
     }
 
+    private String stripHtml(String originalText) {
+        return originalText.replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+    }
+    
     private void sendMessage(boolean action, String messageText) {
+        messageText = stripHtml(messageText);
         if (serverConnectionProvider != null) {
             serverConnectionProvider.sendMessage(recipient, action, messageText);
         }
