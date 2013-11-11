@@ -454,18 +454,21 @@ public class Client extends JFrame implements ActionListener,
         } else if (e.getActionCommand().equals(CONNECT)) {
             connectToServer();
         } else if (e.getActionCommand().equals(CREATE_CHANNEL)) {
-            String returnVal = JOptionPane.showInputDialog(rootPane, 
-                    messages.getString("Client.msg.EnterChannelNameToCreate"), messages.getString("Client.title.ChannelCreation"), 
-                    JOptionPane.QUESTION_MESSAGE);
-            if (returnVal != null) {
-                if (returnVal.isEmpty()) {
+            JTextField channelName = new JTextField();
+            channelName.setDocument(new FilteredPlainDoc("\\w*", 16));
+            Object msg[] = {messages.getString("Client.msg.EnterChannelNameToCreate"), channelName};
+            int returnVal = JOptionPane.showConfirmDialog(rootPane, 
+                    msg, messages.getString("Client.title.ChannelCreation"), 
+                    JOptionPane.OK_CANCEL_OPTION);
+            if (returnVal == JOptionPane.OK_OPTION) {
+                if (channelName.getText().isEmpty()) {
                     JOptionPane.showMessageDialog(this, 
                             messages.getString("Client.msg.InvalidName"), 
                             messages.getString("Client.title.Error"), 
                             JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                String channel = returnVal;
+                String channel = channelName.getText();
                 if (!channel.startsWith("#"))
                     channel = "#" + channel;
                 joinChannel(channel);
@@ -519,7 +522,8 @@ public class Client extends JFrame implements ActionListener,
         
         JPanel optionPanel = new JPanel(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
-        JTextField userTextField = new JTextField(username, 10);
+        
+        JTextField userTextField = new JTextField(new FilteredPlainDoc("\\w*",16), username, 10);
         JTextField serverTextField = new JTextField(server);
         JTextField serverPortTextField = new JTextField(Integer.toString(serverPort));
         
@@ -564,7 +568,7 @@ public class Client extends JFrame implements ActionListener,
         userTextField.addFocusListener(focusListener);
         serverTextField.addFocusListener(focusListener);
         serverPortTextField.addFocusListener(focusListener);
-        
+        userTextField.requestFocusInWindow();
         int returnVal = JOptionPane.showConfirmDialog(this, optionPanel, 
                 messages.getString("Client.msg.EnterInformation"), JOptionPane.OK_CANCEL_OPTION);
         if (returnVal != JOptionPane.OK_OPTION) {
