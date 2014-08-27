@@ -254,9 +254,12 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
     private String convertLinks(String text) {
         String returnText = text;
         String temp = text.toLowerCase();
-        if (temp.contains("http://") || text.contains("www")) {
+        if (temp.contains("http://")
+                || temp.contains("https://")
+                || text.contains("www")) {
+
             int currentIndex = getNextLinkIndex(text, 0);
-            
+
             StringBuilder sb = new StringBuilder(text);
             while (currentIndex != -1 && currentIndex < temp.length()) {
                 int endLink = temp.indexOf(" ", currentIndex);
@@ -301,6 +304,9 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
         String temp = text.toLowerCase();
         int nextLinkStart = -1;
         int httpIndex = temp.indexOf("http://", start);
+        if (httpIndex == -1) {
+            httpIndex = temp.indexOf("https://", start);
+        }
         int wwwIndex = temp.indexOf("www", start);
 
         if (httpIndex == -1 && wwwIndex == -1) {
