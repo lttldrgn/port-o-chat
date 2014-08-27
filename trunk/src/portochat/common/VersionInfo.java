@@ -33,7 +33,7 @@ import java.util.logging.Logger;
  */
 public class VersionInfo {
 
-    public static final String CURRENT_VERSION = "20140826";
+    public static final String CURRENT_VERSION = "20140827";
     private static final Logger logger = Logger.getLogger(VersionInfo.class.getName());
 
     /**
