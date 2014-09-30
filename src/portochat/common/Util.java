@@ -31,7 +31,7 @@ public class Util {
     public static final int MASK_4_BIT = 0xF;
     public static final int MASK_8_BIT = 0xFF;
     private static final SimpleDateFormat formatDate =
-            new SimpleDateFormat("hh:mm.ssa");
+            new SimpleDateFormat("MMM-dd hh:mm.ssa");
 
     public static int getBitValue(int value, int bitStart, int bitMask) {
         if (bitStart > 0) {
