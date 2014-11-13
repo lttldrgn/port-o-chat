@@ -16,7 +16,6 @@
  */
 package portochat.client;
 
-import com.sun.awt.AWTUtilities;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -44,6 +43,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -72,8 +72,6 @@ import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import portochat.common.User;
-import java.util.ResourceBundle;
-import javax.swing.JSlider;
 
 /**
  *
@@ -90,31 +88,27 @@ public class Client extends JFrame implements ActionListener,
     private static final String START_SERVER = "START_SERVER";
     private static final String STATUS_MENU = "STATUS_MENU";
     private static final String THEME_MENU = "THEME_MENU";
-    private static final String OPACITY_MENU = "OPACITY_MENU";
     private static final String COMBINED_VIEW = "COMBINED_VIEW";
     private static final String SPLIT_VIEW = "SPLIT_VIEW";
     private static final String SHOW_ABOUT_DIALOG = "SHOW_ABOUT_DIALOG";
-    private HashMap<String, ChatPane> chatPaneMap = 
-            new HashMap<String, ChatPane>();
-    private HashMap<String, ChatPane> channelPaneMap = 
-            new HashMap<String, ChatPane>();
-    private DefaultListModel contactListModel = new DefaultListModel();
-    private DefaultListModel channelListModel = new DefaultListModel();
+    private final HashMap<String, ChatPane> chatPaneMap = new HashMap<>();
+    private final HashMap<String, ChatPane> channelPaneMap = new HashMap<>();
+    private final DefaultListModel contactListModel = new DefaultListModel();
+    private final DefaultListModel channelListModel = new DefaultListModel();
     private JDialog chatContainerDialog = null;
-    private JList contactList = new JList(contactListModel);
-    private JList channelList = new JList(channelListModel);
-    private JMenuItem connectMenu = new JMenuItem(messages.getString("Client.menu.Connect"));
-    private JMenuItem createChannelMenu = new JMenuItem(messages.getString("Client.menu.CreateChannel"));
-    private JMenuItem disconnect = new JMenuItem(messages.getString("Client.menu.Disconnect"));
-    private JPanel userChannelContainerPanel = null;
-    private JPanel chatContainerPanel = null;
-    private JTabbedPane tabbedChatPane = new JTabbedPane(JTabbedPane.BOTTOM, 
+    private final JList contactList = new JList(contactListModel);
+    private final JList channelList = new JList(channelListModel);
+    private final JMenuItem connectMenu = new JMenuItem(messages.getString("Client.menu.Connect"));
+    private final JMenuItem createChannelMenu = new JMenuItem(messages.getString("Client.menu.CreateChannel"));
+    private final JMenuItem disconnect = new JMenuItem(messages.getString("Client.menu.Disconnect"));
+    private JPanel userChannelContainerPanel;
+    private JPanel chatContainerPanel;
+    private final JTabbedPane tabbedChatPane = new JTabbedPane(JTabbedPane.BOTTOM, 
             JTabbedPane.SCROLL_TAB_LAYOUT);
     private StatusPane statusPane = null;
     private String myUserName = null;
     private ServerConnection connection = null;
     private boolean connected = false;
-    private float currentOpacity = 1.0f;
     
     // previous state
     private String username = messages.getString("Client.defaultvalue.User");
@@ -122,8 +116,8 @@ public class Client extends JFrame implements ActionListener,
     private int serverPort = ClientSettings.DEFAULT_SERVER_PORT;
     
     // Timer to alert user when a message has been received
-    private NotificationTimerListener timerListener = new NotificationTimerListener();
-    private Timer notificationTimer = new Timer(1500, timerListener);
+    private final NotificationTimerListener timerListener = new NotificationTimerListener();
+    private final Timer notificationTimer = new Timer(1500, timerListener);
     
     private Process serverProcess = null;
     private View currentView = View.COMBINED;
@@ -132,6 +126,7 @@ public class Client extends JFrame implements ActionListener,
     }
     
     public Client() {
+        this.userChannelContainerPanel = null;
         setTitle(messages.getString("Client.title.PortOChat"));
     }
     
@@ -228,7 +223,6 @@ public class Client extends JFrame implements ActionListener,
         username = GuiUtil.getUserName(this.getClass());
         server = GuiUtil.getServerName(this.getClass());
         serverPort = GuiUtil.getServerPort(this.getClass());
-        setViewOpacity(currentOpacity);
         pack();
     }
     
@@ -278,16 +272,6 @@ public class Client extends JFrame implements ActionListener,
         themeMenu.addActionListener(this);
         themeMenu.setActionCommand(THEME_MENU);
         settingsMenu.add(themeMenu); 
-
-        String version = System.getProperty("java.version");
-        if (version != null && version.startsWith("1.6")) {
-            // only supported for 1.6 since our frame is decorated and will fail
-            // in 1.7
-            JMenuItem opacityMenuItem = new JMenuItem(messages.getString("Client.menu.Opacity"));
-            opacityMenuItem.addActionListener(this);
-            opacityMenuItem.setActionCommand(OPACITY_MENU);
-            settingsMenu.add(opacityMenuItem);
-        }
        
         JMenu viewMenu = new JMenu(messages.getString("Client.menu.View"));
         viewMenu.setMnemonic(KeyEvent.VK_V);
@@ -323,14 +307,6 @@ public class Client extends JFrame implements ActionListener,
         about.addActionListener(this);
         about.setMnemonic(KeyEvent.VK_A);
         helpMenu.add(about);
-    }
-    
-    private void setViewOpacity(float opacity){
-        if (AWTUtilities.isTranslucencySupported(AWTUtilities.Translucency.TRANSLUCENT)){
-            AWTUtilities.setWindowOpacity(this, Float.valueOf(opacity));
-        }else {
-            System.out.println(messages.getString("Client.msg.TranslucencyNotSupported"));
-        }
     }
     
     private void setCombinedView() {
@@ -499,8 +475,6 @@ public class Client extends JFrame implements ActionListener,
             ThemeManager themeManager = ThemeManager.getInstance();
             themeManager.setTopLevelComponent(this);
             themeManager.setVisible(true);
-        } else if (e.getActionCommand().equals(OPACITY_MENU)) {
-            showOpacityDialog();
         } else if (e.getActionCommand().equals(START_SERVER)) {
             startServer();
         } else if (e.getActionCommand().equals(SPLIT_VIEW)) {
@@ -843,32 +817,6 @@ public class Client extends JFrame implements ActionListener,
         }
     }
     
-    private void showOpacityDialog() {
-        JDialog dialog = new JDialog(this, messages.getString("Client.menu.Opacity"));
-        float opacity = AWTUtilities.getWindowOpacity(this);
-        JSlider slider = new JSlider(25, 100, (int)(opacity*100));
-        slider.setMajorTickSpacing(25);
-        slider.setMinorTickSpacing(5);
-        slider.setPaintLabels(true);
-        slider.setPaintTicks(true);
-        JPanel contentPane = new JPanel();
-        contentPane.add(new JLabel(messages.getString("Client.dialog.OpacityPercent")));
-        contentPane.add(slider);
-        dialog.setContentPane(contentPane);
-        
-        slider.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                JSlider source = (JSlider) e.getSource();
-                if (!source.getValueIsAdjusting()) {
-                    setViewOpacity((float)(source.getValue())/100);
-                }
-            }
-        });
-        dialog.pack();
-        dialog.setVisible(true);
-    }
-    
     /**
      * Creates a ChatPane.  Note that it should only be called from the
      * EDT or will throw an error
@@ -1017,7 +965,7 @@ public class Client extends JFrame implements ActionListener,
             WindowFocusListener {
         
         private String currentTitle;
-        private String dialogTitle = messages.getString("client.title.DialogTitle");
+        private final String dialogTitle = messages.getString("client.title.DialogTitle");
         private boolean isWindows = false;
         private volatile boolean messageReceived = false;
         
