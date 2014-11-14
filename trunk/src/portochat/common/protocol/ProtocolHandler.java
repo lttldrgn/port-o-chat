@@ -75,8 +75,9 @@ public class ProtocolHandler {
         protocolClassMap.put((byte)0x7, "portochat.common.protocol.ChatMessage");
         protocolClassMap.put((byte)0x8, "portochat.common.protocol.UserList");
         protocolClassMap.put((byte)0x9, "portochat.common.protocol.ChannelStatus");
-        protocolClassMap.put((byte)0x10, "portochat.common.protocol.ChannelList");
-        protocolClassMap.put((byte)0x11, "portochat.common.protocol.ChannelJoinPart");
+        protocolClassMap.put((byte)0xa, "portochat.common.protocol.ChannelList");
+        protocolClassMap.put((byte)0xb, "portochat.common.protocol.ChannelJoinPart");
+        protocolClassMap.put((byte)0xc, "portochat.common.protocol.UserDoesNotExist");
 
         protocolHeaderMap = new HashMap<String, Byte>();
         for (Map.Entry<Byte, String> entry : protocolClassMap.entrySet()) {

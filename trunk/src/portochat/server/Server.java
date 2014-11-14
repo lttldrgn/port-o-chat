@@ -40,6 +40,7 @@ import portochat.common.protocol.UserList;
 import portochat.common.network.ConnectionHandler;
 import portochat.common.network.event.NetEvent;
 import portochat.common.network.event.NetListener;
+import portochat.common.protocol.UserDoesNotExist;
 
 /**
  * This class handles the server connection, and populating the user/channel
@@ -220,10 +221,8 @@ public class Server {
                     if (toUserSocket != null) {
                         connection.writeData(toUserSocket, chatMessage);
                     } else {
-                        ServerMessage serverMessage = new ServerMessage();
-                        serverMessage.setMessageEnum(ServerMessageEnum.ERROR_USER_NON_EXISTENT);
-                        serverMessage.setAdditionalMessage(chatMessage.getTo());
-                        connection.writeData(socket, serverMessage);
+                        UserDoesNotExist userDoesNotExist = new UserDoesNotExist(chatMessage.getTo());
+                        connection.writeData(socket, userDoesNotExist);
                     }
                 }
             } else if (defaultData instanceof UserList) {

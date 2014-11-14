@@ -81,4 +81,10 @@ public interface ServerDataListener {
      * @param success True if connection was successful to the server
      */
     public void handleServerConnection(String username, boolean success);
+    
+    /**
+     * Notification from the server when a message is sent to a user that does not exist
+     * @param username Name of the message recipient
+     */
+    public void userDoesNotExist(String username);
 }
