@@ -950,6 +950,14 @@ public class Client extends JFrame implements ActionListener,
     }
 
     @Override
+    public void userDoesNotExist(String username) {
+        ChatPane pane = chatPaneMap.get(username);
+        if (pane != null) {
+            pane.showInfoMessage(username + " is not connected", "disconnect");
+        }
+    }
+    
+    @Override
     public void sendMessage(String recipient, boolean action, String message) {
         if (connection != null) {
             connection.sendMessage(recipient, action, message);

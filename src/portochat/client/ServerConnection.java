@@ -32,7 +32,6 @@ import portochat.common.protocol.InitializationEnum;
 import portochat.common.protocol.Ping;
 import portochat.common.protocol.Pong;
 import portochat.common.protocol.ServerMessage;
-import portochat.common.protocol.ServerMessageEnum;
 import portochat.common.protocol.UserConnection;
 import portochat.common.protocol.UserData;
 import portochat.common.protocol.UserList;
@@ -40,6 +39,7 @@ import portochat.common.network.ConnectionHandler;
 import portochat.common.network.event.NetEvent;
 import portochat.common.network.event.NetListener;
 import java.util.ResourceBundle;
+import portochat.common.protocol.UserDoesNotExist;
 
 /**
  * Handles all the client interaction with the server
@@ -172,14 +172,18 @@ public class ServerConnection {
                         ((Pong)defaultData).getCalculatedLag() + messages.getString("ServerConnection.msg.Ms"));
             } else if (defaultData instanceof ServerMessage) {
                 ServerMessage message = (ServerMessage) defaultData;
-                if (message.getMessageEnum().equals(ServerMessageEnum.USERNAME_SET)) {
-                    for (ServerDataListener listener : listeners) {
-                        listener.handleServerConnection(message.getAdditionalMessage(), true);
-                    }
-                } else if (message.getMessageEnum().equals(ServerMessageEnum.ERROR_USERNAME_IN_USE)) {
-                    for (ServerDataListener listener : listeners) {
-                        listener.handleServerConnection(message.getAdditionalMessage(), false);
-                    }
+                switch (message.getMessageEnum()) {
+                    case USERNAME_SET:
+                        for (ServerDataListener listener : listeners) {
+                            listener.handleServerConnection(message.getAdditionalMessage(), true);
+                        }
+                        break;
+                        
+                    case ERROR_USERNAME_IN_USE:
+                        for (ServerDataListener listener : listeners) {
+                            listener.handleServerConnection(message.getAdditionalMessage(), false);
+                        }
+                        break;
                 }
             } else if (defaultData instanceof ChatMessage) {
                 ChatMessage message = (ChatMessage)defaultData;
@@ -229,6 +233,10 @@ public class ServerConnection {
                 Pong pong = new Pong();
                 pong.setTimestamp(((Ping) defaultData).getTimestamp());
                 socket.writeData(socket.getClientSocket(), pong);
+            } else if (defaultData instanceof UserDoesNotExist) { 
+                for (ServerDataListener listener : listeners) {
+                    listener.userDoesNotExist(((UserDoesNotExist)defaultData).getUser());
+                }
             } else {
                 logger.log(Level.WARNING, "{0}{1}", new Object[]{messages.getString("ServerConnection.msg.UnknownMessage"), defaultData});
             }

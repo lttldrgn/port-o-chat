@@ -29,7 +29,7 @@ import java.util.logging.Logger;
  * 
  * @author Mike
  */
-public class DefaultData {
+public abstract class DefaultData {
 
     private static final Logger logger = Logger.getLogger(DefaultData.class.getName());
     protected long time = 0;
@@ -81,9 +81,7 @@ public class DefaultData {
      * 
      * @param dos The data output stream
      */
-    public int writeBody(DataOutputStream dos) {
-        return 0;
-    }
+    public abstract int writeBody(DataOutputStream dos);
 
     /**
      * Converts the data into a byte array

@@ -24,8 +24,8 @@ public enum ServerMessageEnum {
     USERNAME_SET(0, "Username set to"),
     ERROR_USERNAME_IN_USE(1, "Username in use"),
     ERROR_CHANNEL_NON_EXISTENT(2, "Can't send message to a non-existant channel"),
-    ERROR_USER_NON_EXISTENT(2, "Can't send message to a non-existant user"),
-    ERROR_NO_USERNAME(3, "You must first send a username!");
+    ERROR_USER_NON_EXISTENT(3, "Can't send message to a non-existant user"),
+    ERROR_NO_USERNAME(4, "You must first send a username!");
 
     private int value;
     private String message;
