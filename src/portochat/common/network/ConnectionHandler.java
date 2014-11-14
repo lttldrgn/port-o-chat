@@ -33,9 +33,9 @@ import portochat.common.protocol.DefaultData;
 import portochat.common.protocol.UserConnection;
 import portochat.common.network.event.NetEvent;
 import portochat.common.network.event.NetListener;
-import portochat.common.socket.handler.BufferHandler;
-import portochat.common.socket.handler.ChatHandler;
-import portochat.common.socket.handler.HandshakeHandler;
+import portochat.common.network.handler.BufferHandler;
+import portochat.common.network.handler.ChatHandler;
+import portochat.common.network.handler.HandshakeHandler;
 import portochat.server.UserDatabase;
 
 /**
