@@ -14,7 +14,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package portochat.common.socket.event;
+package portochat.common.network.event;
 
 import java.util.EventObject;
 import portochat.common.protocol.DefaultData;
