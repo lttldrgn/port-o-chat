@@ -36,9 +36,9 @@ import portochat.common.protocol.ServerMessageEnum;
 import portochat.common.protocol.UserConnection;
 import portochat.common.protocol.UserData;
 import portochat.common.protocol.UserList;
-import portochat.common.socket.TCPSocket;
-import portochat.common.socket.event.NetEvent;
-import portochat.common.socket.event.NetListener;
+import portochat.common.network.ConnectionHandler;
+import portochat.common.network.event.NetEvent;
+import portochat.common.network.event.NetListener;
 import java.util.ResourceBundle;
 
 /**
@@ -48,11 +48,11 @@ import java.util.ResourceBundle;
 public class ServerConnection {
     private static final Logger logger = 
             Logger.getLogger(ServerConnection.class.getName());
-    private CopyOnWriteArrayList<ServerDataListener> listeners = 
-            new CopyOnWriteArrayList<ServerDataListener>();
-    private TCPSocket socket = null;
+    private final CopyOnWriteArrayList<ServerDataListener> listeners = 
+            new CopyOnWriteArrayList<>();
+    private ConnectionHandler socket = null;
     private ClientHandler clientHandler = null;
-    private static String username = null;
+    private String username = null;
     private EncryptionManager encryptionManager = null;
     
     public ServerConnection() {
@@ -61,8 +61,8 @@ public class ServerConnection {
     
     public boolean connectToServer(String serverAddress, int port) 
             throws IOException {
-        boolean successful = true;
-        socket = new TCPSocket("Client");
+        boolean successful;
+        socket = new ConnectionHandler("Client");
         successful = socket.connect(serverAddress, port);
         
         if (successful) {
@@ -223,14 +223,14 @@ public class ServerConnection {
                 Initialization init = (Initialization) defaultData;
                 if (init.getInitializationEnum() == InitializationEnum.READY) {
                     // Send username
-                    sendUsername(username);
+                    sendUsername(ServerConnection.this.username);
                 }
             } else if (defaultData instanceof Ping) { 
                 Pong pong = new Pong();
                 pong.setTimestamp(((Ping) defaultData).getTimestamp());
                 socket.writeData(socket.getClientSocket(), pong);
             } else {
-                logger.warning(messages.getString("ServerConnection.msg.UnknownMessage") + defaultData);
+                logger.log(Level.WARNING, "{0}{1}", new Object[]{messages.getString("ServerConnection.msg.UnknownMessage"), defaultData});
             }
         }
     }
