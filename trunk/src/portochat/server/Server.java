@@ -163,6 +163,7 @@ public class Server {
 
                 ServerMessage serverMessage = new ServerMessage();
                 if (success) {
+                    user.setLastSeen(System.currentTimeMillis());
                     if (!rename) {
                         // Notify other users of connection
                         UserConnection userConnection = new UserConnection();
@@ -189,6 +190,7 @@ public class Server {
                 pong.setTimestamp(((Ping) defaultData).getTimestamp());
                 connection.writeData(socket, pong);
             } else if (defaultData instanceof Pong) {
+                logger.log(Level.INFO, "Updating {0} last seen", user);
                 user.setLastSeen(System.currentTimeMillis());
             } else if (defaultData instanceof ChatMessage) {
                 ChatMessage chatMessage = ((ChatMessage) defaultData);
@@ -350,12 +352,13 @@ public class Server {
     private void removeStaleClients() {
         long now = System.currentTimeMillis();
         for (User user : userDatabase.getUserList()) {
-            if (now - user.getLastSeen() > CLIENT_TIMEOUT) {
+            if ((now - user.getLastSeen()) > CLIENT_TIMEOUT) {
+                logger.log(Level.INFO, "{0} timed out", user);
                 // disconnect socket for user and remove
                 // TODO we can clean up manually or maybe try to send a message over that socket to make it error out?
                 Socket socket = userDatabase.getSocketForUser(user);
 //                socket.close();
-                userDatabase.removeUser(user);
+//                userDatabase.removeUser(user);
             }
         }
     }

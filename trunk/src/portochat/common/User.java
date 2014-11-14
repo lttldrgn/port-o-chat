@@ -44,7 +44,7 @@ public class User {
      * User constructor
      */
     public User() {
-        handlers = new CopyOnWriteArrayList<BufferHandler>();
+        handlers = new CopyOnWriteArrayList<>();
     }
     
     /**
@@ -146,6 +146,7 @@ public class User {
      * 
      * @param user
      * @param dos 
+     * @throws java.io.IOException 
      */
     public static void writeDos(User user, DataOutputStream dos) throws IOException {
         if (user != null) {
