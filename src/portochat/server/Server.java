@@ -37,9 +37,9 @@ import portochat.common.protocol.ServerMessageEnum;
 import portochat.common.protocol.UserConnection;
 import portochat.common.protocol.UserData;
 import portochat.common.protocol.UserList;
-import portochat.common.socket.TCPSocket;
-import portochat.common.socket.event.NetEvent;
-import portochat.common.socket.event.NetListener;
+import portochat.common.network.ConnectionHandler;
+import portochat.common.network.event.NetEvent;
+import portochat.common.network.event.NetListener;
 
 /**
  * This class handles the server connection, and populating the user/channel
@@ -50,11 +50,11 @@ import portochat.common.socket.event.NetListener;
 public class Server {
 
     private static final Logger logger = Logger.getLogger(Server.class.getName());
-    private TCPSocket tcpSocket = null;
+    private ConnectionHandler connection = null;
     private UserDatabase userDatabase = null;
     private ChannelDatabase channelDatabase = null;
-    private Timer timer;
-    private TimerTask task;
+    private final Timer timer;
+    private final TimerTask task;
     private final int CLIENT_POLL_INTERVAL_MILLIS = 60000;
     
     /**
@@ -87,14 +87,14 @@ public class Server {
      */
     public boolean bind(int port) {
 
-        boolean success = true;
+        boolean success;
 
         try {
-            tcpSocket = new TCPSocket("Server");
-            success = tcpSocket.bind(port);
+            connection = new ConnectionHandler("Server");
+            success = connection.bind(port);
 
             if (success) {
-                tcpSocket.addListener(new ServerHandler());
+                connection.addListener(new ServerHandler());
                 logger.log(Level.INFO, "Server bound to port: {0}", port);
             } else {
                 logger.log(Level.SEVERE, "Server unable to bind to port: {0}", port);
@@ -122,7 +122,7 @@ public class Server {
                 logger.log(Level.SEVERE, null, ex);
             }
         }
-        tcpSocket.disconnect();
+        connection.disconnect();
         // TODO: Clear out databases
     }
 
@@ -146,7 +146,7 @@ public class Server {
                 UserData userData = (UserData) defaultData;
                 String oldUserName = user.getName();
                 boolean rename = (oldUserName != null);
-                boolean success = false;
+                boolean success;
 
                 if (!rename) {
                     // First time setting a name
@@ -182,12 +182,12 @@ public class Server {
                     serverMessage.setMessageEnum(ServerMessageEnum.ERROR_USERNAME_IN_USE);
                     serverMessage.setAdditionalMessage(userData.getName());
                 }
-                tcpSocket.writeData(socket, serverMessage);
+                connection.writeData(socket, serverMessage);
             } else if (defaultData instanceof Ping) {
                 // Send a pong
                 Pong pong = new Pong();
                 pong.setTimestamp(((Ping) defaultData).getTimestamp());
-                tcpSocket.writeData(socket, pong);
+                connection.writeData(socket, pong);
             } else if (defaultData instanceof Pong) {
                 user.setLastSeen(System.currentTimeMillis());
             } else if (defaultData instanceof ChatMessage) {
@@ -205,23 +205,23 @@ public class Server {
 
                     if (userSocketList != null) {
                         for (Socket userSocket : userSocketList) {
-                            tcpSocket.writeData(userSocket, chatMessage);
+                            connection.writeData(userSocket, chatMessage);
                         }
                     } else {
                         ServerMessage serverMessage = new ServerMessage();
                         serverMessage.setMessageEnum(ServerMessageEnum.ERROR_CHANNEL_NON_EXISTENT);
                         serverMessage.setAdditionalMessage(chatMessage.getTo());
-                        tcpSocket.writeData(socket, serverMessage);
+                        connection.writeData(socket, serverMessage);
                     }
                 } else {
                     Socket toUserSocket = userDatabase.getSocketForUser(chatMessage.getTo());
                     if (toUserSocket != null) {
-                        tcpSocket.writeData(toUserSocket, chatMessage);
+                        connection.writeData(toUserSocket, chatMessage);
                     } else {
                         ServerMessage serverMessage = new ServerMessage();
                         serverMessage.setMessageEnum(ServerMessageEnum.ERROR_USER_NON_EXISTENT);
                         serverMessage.setAdditionalMessage(chatMessage.getTo());
-                        tcpSocket.writeData(socket, serverMessage);
+                        connection.writeData(socket, serverMessage);
                     }
                 }
             } else if (defaultData instanceof UserList) {
@@ -233,7 +233,7 @@ public class Server {
                 } else {
                     userList.setUserList(userDatabase.getUserList());
                 }
-                tcpSocket.writeData(socket, userList);
+                connection.writeData(socket, userList);
             } else if (defaultData instanceof UserConnection) {
                 UserConnection userConnection = ((UserConnection) defaultData);
 
@@ -265,7 +265,7 @@ public class Server {
             } else if (defaultData instanceof ChannelList) {
                 ChannelList channelList = ((ChannelList) defaultData);
                 channelList.setChannelList(channelDatabase.getListOfChannels());
-                tcpSocket.writeData(socket, channelList);
+                connection.writeData(socket, channelList);
             } else if (defaultData instanceof ChannelJoinPart) {
                 ChannelJoinPart channelJoinPart = ((ChannelJoinPart) defaultData);
 
@@ -316,7 +316,7 @@ public class Server {
     private void sendToAllSockets(List<Socket> userSocketList, DefaultData data) {
         if (userSocketList != null && userSocketList.size() > 0) {
             for (Socket userSocket : userSocketList) {
-                tcpSocket.writeData(userSocket, data);
+                connection.writeData(userSocket, data);
             }
         }
     }

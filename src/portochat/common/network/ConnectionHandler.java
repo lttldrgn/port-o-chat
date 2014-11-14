@@ -14,7 +14,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package portochat.common.socket;
+package portochat.common.network;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -31,8 +31,8 @@ import portochat.common.User;
 import portochat.common.Util;
 import portochat.common.protocol.DefaultData;
 import portochat.common.protocol.UserConnection;
-import portochat.common.socket.event.NetEvent;
-import portochat.common.socket.event.NetListener;
+import portochat.common.network.event.NetEvent;
+import portochat.common.network.event.NetListener;
 import portochat.common.socket.handler.BufferHandler;
 import portochat.common.socket.handler.ChatHandler;
 import portochat.common.socket.handler.HandshakeHandler;
@@ -43,9 +43,9 @@ import portochat.server.UserDatabase;
  * 
  * @author Mike
  */
-public class TCPSocket {
+public class ConnectionHandler {
 
-    private static final Logger logger = Logger.getLogger(TCPSocket.class.getName());
+    private static final Logger logger = Logger.getLogger(ConnectionHandler.class.getName());
     private String name = "TCPSocket";
     private volatile boolean listening = false;
     private ServerSocket serverSocket = null;
@@ -64,7 +64,7 @@ public class TCPSocket {
      * 
      * @param name The socket name
      */
-    public TCPSocket(String name) {
+    public ConnectionHandler(String name) {
         this.name = name;
         writeQueue = new LinkedBlockingQueue<>();
         userDatabase = UserDatabase.getInstance();
