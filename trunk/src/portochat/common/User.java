@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import javax.crypto.SecretKey;
 import portochat.common.protocol.InitializationEnum;
-import portochat.common.socket.handler.BufferHandler;
+import portochat.common.network.handler.BufferHandler;
 
 /**
  *

@@ -14,7 +14,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package portochat.common.socket.handler;
+package portochat.common.network.handler;
 
 import java.net.Socket;
 import java.util.List;

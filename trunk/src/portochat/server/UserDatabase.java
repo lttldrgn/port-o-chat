@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import portochat.common.User;
-import portochat.common.socket.handler.BufferHandler;
+import portochat.common.network.handler.BufferHandler;
 
 /**
  * This class is a singleton class used to contain the user database.
