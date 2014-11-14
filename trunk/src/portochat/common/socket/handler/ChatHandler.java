@@ -80,7 +80,7 @@ public class ChatHandler extends BufferHandler {
         
         if (encrypted == null) {
             if (serverHandler) {
-                User user = UserDatabase.getInstance().getSocketOfUser(socket);
+                User user = UserDatabase.getInstance().getUserOfSocket(socket);
                 encrypted = (user.getSecretKey() != null);
             } else {
                 encrypted = (encryptionManager.getServerSecretKey() != null);
@@ -94,7 +94,7 @@ public class ChatHandler extends BufferHandler {
         SecretKey secretKey = null;
     
         if (serverHandler) {
-            User user = UserDatabase.getInstance().getSocketOfUser(socket);
+            User user = UserDatabase.getInstance().getUserOfSocket(socket);
             secretKey = user.getSecretKey();
         } else {
             secretKey = encryptionManager.getServerSecretKey();

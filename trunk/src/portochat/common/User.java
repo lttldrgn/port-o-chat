@@ -34,6 +34,7 @@ public class User {
 
     private String name = null;
     private String host = null;
+    private long lastSeen;
     private SecretKey secretKey = null;
     private PublicKey clientPublicKey = null;
     private InitializationEnum initEnum = null;
@@ -106,6 +107,14 @@ public class User {
 
     public void setClientPublicKey(PublicKey clientPublicKey) {
         this.clientPublicKey = clientPublicKey;
+    }
+
+    public long getLastSeen() {
+        return lastSeen;
+    }
+
+    public void setLastSeen(long lastSeen) {
+        this.lastSeen = lastSeen;
     }
 
     public InitializationEnum getInitEnum() {
