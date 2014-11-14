@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import portochat.common.User;
@@ -51,13 +53,29 @@ public class Server {
     private TCPSocket tcpSocket = null;
     private UserDatabase userDatabase = null;
     private ChannelDatabase channelDatabase = null;
-
+    private Timer timer;
+    private TimerTask task;
+    private final int CLIENT_POLL_INTERVAL_MILLIS = 60000;
+    
     /**
      * Public constructor
      */
     public Server() {
         userDatabase = UserDatabase.getInstance();
         channelDatabase = ChannelDatabase.getInstance();
+        timer = new Timer();
+        task = new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    pingAllClients();
+                    removeStaleClients();
+                } catch (Exception e) {
+                    
+                }
+            }
+        };
+        timer.schedule(task, 5000, CLIENT_POLL_INTERVAL_MILLIS);
     }
 
     /**
@@ -121,7 +139,7 @@ public class Server {
             Socket socket = (Socket) event.getSource();
             DefaultData defaultData = event.getData();
 
-            User user = userDatabase.getSocketOfUser(socket);
+            User user = userDatabase.getUserOfSocket(socket);
 
             if (defaultData instanceof UserData) {
                 // Set user info
@@ -170,6 +188,8 @@ public class Server {
                 Pong pong = new Pong();
                 pong.setTimestamp(((Ping) defaultData).getTimestamp());
                 tcpSocket.writeData(socket, pong);
+            } else if (defaultData instanceof Pong) {
+                user.setLastSeen(System.currentTimeMillis());
             } else if (defaultData instanceof ChatMessage) {
                 ChatMessage chatMessage = ((ChatMessage) defaultData);
 
@@ -194,7 +214,7 @@ public class Server {
                         tcpSocket.writeData(socket, serverMessage);
                     }
                 } else {
-                    Socket toUserSocket = userDatabase.getUserOfSocket(chatMessage.getTo());
+                    Socket toUserSocket = userDatabase.getSocketForUser(chatMessage.getTo());
                     if (toUserSocket != null) {
                         tcpSocket.writeData(toUserSocket, chatMessage);
                     } else {
@@ -316,5 +336,27 @@ public class Server {
                 (ArrayList<Socket>) userDatabase.getSocketList();
 
         sendToAllSockets(userSocketList, channelStatus);
+    }
+    
+    private void pingAllClients() {
+        Ping ping = new Ping();
+        ArrayList<Socket> userSocketList =
+                (ArrayList<Socket>) userDatabase.getSocketList();
+
+        sendToAllSockets(userSocketList, ping);
+    }
+    
+    private final long CLIENT_TIMEOUT = 3 * 60 * 1000;
+    private void removeStaleClients() {
+        long now = System.currentTimeMillis();
+        for (User user : userDatabase.getUserList()) {
+            if (now - user.getLastSeen() > CLIENT_TIMEOUT) {
+                // disconnect socket for user and remove
+                // TODO we can clean up manually or maybe try to send a message over that socket to make it error out?
+                Socket socket = userDatabase.getSocketForUser(user);
+//                socket.close();
+                userDatabase.removeUser(user);
+            }
+        }
     }
 }

@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -57,7 +56,7 @@ public class TCPSocket {
     private OutgoingThread outgoingThread = null;
     private UserDatabase userDatabase = null;
     private User serverUser = null;
-    private boolean encryptedStream = true;
+    private final boolean encryptedStream = true;
     private volatile boolean isClientSocket = false;
 
     /*
@@ -67,7 +66,7 @@ public class TCPSocket {
      */
     public TCPSocket(String name) {
         this.name = name;
-        writeQueue = new LinkedBlockingQueue<NetData>();
+        writeQueue = new LinkedBlockingQueue<>();
         userDatabase = UserDatabase.getInstance();
     }
 
@@ -161,7 +160,7 @@ public class TCPSocket {
      */
     public void addListener(NetListener listener) {
         if (listeners == null) {
-            listeners = new CopyOnWriteArrayList<NetListener>();
+            listeners = new CopyOnWriteArrayList<>();
         }
         listeners.add(listener);
     }
@@ -187,8 +186,7 @@ public class TCPSocket {
 
         if (listeners != null) {
 
-            for (Iterator<NetListener> it = listeners.iterator(); it.hasNext();) {
-                NetListener l = it.next();
+            for (NetListener l : listeners) {
                 l.incomingMessage(e);
             }
         }
@@ -236,13 +234,10 @@ public class TCPSocket {
     }
 
     private List<BufferHandler> getHandlers(Socket socket) {
-        List<BufferHandler> handlers = null;
-
         User user = (serverUser != null
-                ? serverUser : userDatabase.getSocketOfUser(socket));
-        handlers = user.getHandlers();
+                ? serverUser : userDatabase.getUserOfSocket(socket));
 
-        return handlers;
+        return user.getHandlers();
     }
 
     private void removeHandler(Socket socket, BufferHandler handler) {
@@ -311,7 +306,7 @@ public class TCPSocket {
             super("IncomingThread");
 
             this.incomingSocket = incomingSocket;
-            user = userDatabase.getSocketOfUser(incomingSocket);
+            user = userDatabase.getUserOfSocket(incomingSocket);
             try {
                 bis = new BufferedInputStream(incomingSocket.getInputStream());
             } catch (IOException ex) {
@@ -324,7 +319,7 @@ public class TCPSocket {
 
             byte[] buffer = new byte[8192];
 
-            int length = 0;
+            int length;
             try {
                 while ((length = bis.read(buffer)) != -1) {
 
@@ -420,8 +415,8 @@ public class TCPSocket {
                 while (processingOutbound) {
                     NetData netData = writeQueue.take();
 
-                    byte[] data = null;
-                    user = userDatabase.getSocketOfUser(netData.socket);
+                    byte[] data;
+                    user = userDatabase.getUserOfSocket(netData.socket);
                     for (BufferHandler handler : getHandlers(netData.socket)) {
                         
                         if (handler.isFinished()

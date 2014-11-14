@@ -105,7 +105,7 @@ public class HandshakeHandler extends BufferHandler {
                 userDatabase = UserDatabase.getInstance();
             }
 
-            User user = userDatabase.getSocketOfUser(socket);
+            User user = userDatabase.getUserOfSocket(socket);
             user.setInitEnum(initEnum);
 
             if (initEnum == InitializationEnum.CLIENT_RSA_PRIVATE_KEY) {

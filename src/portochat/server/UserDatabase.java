@@ -35,15 +35,14 @@ public class UserDatabase {
 
     private static final Logger logger = Logger.getLogger(UserDatabase.class.getName());
     private static UserDatabase instance = null;
-    private Map<User, Socket> userMap = null;
-    private Map<Socket, User> socketMap = null;
+    private final Map<User, Socket> userMap = new ConcurrentHashMap<>();;
+    private final Map<Socket, User> socketMap = new ConcurrentHashMap<>();;
     
     /**
      * Private constructor.
      */
     private UserDatabase() {
-        userMap = new ConcurrentHashMap<User, Socket>();
-        socketMap = new ConcurrentHashMap<Socket, User>();
+
     }
     
     /**
@@ -139,7 +138,7 @@ public class UserDatabase {
         boolean success = false;
         
         if (userMap.containsKey(user)) {
-            Socket userSocket = getUserOfSocket(user);
+            Socket userSocket = getSocketForUser(user);
             userMap.remove(user);
             socketMap.remove(userSocket);
             logger.log(Level.INFO, "{0} has been removed", 
@@ -169,13 +168,13 @@ public class UserDatabase {
     }
     
     /**
-     * Returns the user's socket
+     * Returns the socket associated with the User
      * 
      * @param user the user
      * 
      * @return the user's socket
      */
-    public Socket getUserOfSocket(User user) {
+    public Socket getSocketForUser(User user) {
         return userMap.get(user);
     }
     
@@ -186,7 +185,7 @@ public class UserDatabase {
      * 
      * @return the user's socket
      */
-    public Socket getUserOfSocket(String userName) {
+    public Socket getSocketForUser(String userName) {
         Socket socket = null;
         
         for (User user : userMap.keySet()) {
@@ -199,13 +198,13 @@ public class UserDatabase {
     }
     
     /**
-     * Returns the socket's user
+     * Returns the user using the specified socket
      * 
      * @param socket the user's socket
      * 
      * @return the user
      */
-    public User getSocketOfUser(Socket socket) {
+    public User getUserOfSocket(Socket socket) {
         return socketMap.get(socket);
     }
     
@@ -222,32 +221,32 @@ public class UserDatabase {
     /**
      * Returns the whole userlist as User objects
      * 
-     * @return List<String> of the userlist
+     * @return Copy of the user list 
      */
     public List<User> getUserList() {
-        return new ArrayList<User>(userMap.keySet());
+        return new ArrayList<>(userMap.keySet());
     }
 
     /**
      * Returns the whole socketlist
      * 
-     * @return List<Socket> of the socketlist
+     * @return List of sockets
      */
     public List<Socket> getSocketList() {
-        return new ArrayList<Socket>(socketMap.keySet());
+        return new ArrayList<>(socketMap.keySet());
     }
     
     /**
      * Returns the socket list of the specified users
      * 
-     * @param userList The userlist
+     * @param userList The user list
      * 
-     * @return List<User> of the userlist's sockets.
+     * @return List of sockets corresponding to the lists of users
      */
     public List<Socket> getSocketListByUsers(List<User> userList) {
-        List<Socket> socketList = new ArrayList<Socket>();
+        List<Socket> socketList = new ArrayList<>();
         for (User user : userList) {
-            socketList.add(getUserOfSocket(user));
+            socketList.add(UserDatabase.this.getSocketForUser(user));
         }
         return socketList;
     }

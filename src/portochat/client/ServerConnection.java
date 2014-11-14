@@ -225,6 +225,10 @@ public class ServerConnection {
                     // Send username
                     sendUsername(username);
                 }
+            } else if (defaultData instanceof Ping) { 
+                Pong pong = new Pong();
+                pong.setTimestamp(((Ping) defaultData).getTimestamp());
+                socket.writeData(socket.getClientSocket(), pong);
             } else {
                 logger.warning(messages.getString("ServerConnection.msg.UnknownMessage") + defaultData);
             }
