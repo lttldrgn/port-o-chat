@@ -65,7 +65,7 @@ public class ProtocolHandler {
      * Initializes the protocol handler
      */
     private void initialize() {
-        protocolClassMap = new HashMap<Byte, String>();
+        protocolClassMap = new HashMap<>();
         protocolClassMap.put((byte)0x1, "portochat.common.protocol.ServerMessage");
         protocolClassMap.put((byte)0x2, "portochat.common.protocol.Initialization");
         protocolClassMap.put((byte)0x3, "portochat.common.protocol.Ping");
@@ -79,7 +79,7 @@ public class ProtocolHandler {
         protocolClassMap.put((byte)0xb, "portochat.common.protocol.ChannelJoinPart");
         protocolClassMap.put((byte)0xc, "portochat.common.protocol.UserDoesNotExist");
 
-        protocolHeaderMap = new HashMap<String, Byte>();
+        protocolHeaderMap = new HashMap<>();
         for (Map.Entry<Byte, String> entry : protocolClassMap.entrySet()) {
             protocolHeaderMap.put(entry.getValue(), entry.getKey());
         }
@@ -91,10 +91,10 @@ public class ProtocolHandler {
      * @param data the byte array
      * @param length the length of readable portions of the byte array
      * 
-     * @return a List<DefaultData> of all the processed DefaultData objects
+     * @return a List&ltDefaultData&gt of all the processed DefaultData objects
      */
     public List<DefaultData> processData(byte[] data, int length) {
-        ArrayList<DefaultData> defaultDataList = new ArrayList<DefaultData>();
+        ArrayList<DefaultData> defaultDataList = new ArrayList<>();
 
         int index = 0;
         while (index < length) {
@@ -104,7 +104,7 @@ public class ProtocolHandler {
                 try {
                     Class protocolClass = Class.forName(protocolClassString);
                     Constructor cons = protocolClass.getConstructor();
-                    byte[] chunk = null;
+                    byte[] chunk;
                     chunk = Arrays.copyOfRange(data, index, data.length);
                     DataInputStream dis = new DataInputStream(
                         new ByteArrayInputStream(chunk));
@@ -114,20 +114,10 @@ public class ProtocolHandler {
                     defaultDataList.add(defaultData);
                     index += defaultData.getLength();
                 }
-                catch (InstantiationException ex) {
-                    logger.log(Level.SEVERE, null, ex);
-                } catch (IllegalAccessException ex) {
-                    logger.log(Level.SEVERE, null, ex);
-                } catch (IllegalArgumentException ex) {
-                    logger.log(Level.SEVERE, null, ex);
-                } catch (InvocationTargetException ex) {
-                    logger.log(Level.SEVERE, null, ex);
-                } catch (NoSuchMethodException ex) {
-                    logger.log(Level.SEVERE, null, ex);
-                } catch (SecurityException ex) {
-                    logger.log(Level.SEVERE, null, ex);
-                } catch (ClassNotFoundException ex) {
-                    logger.log(Level.SEVERE, null, ex);
+                catch (InstantiationException | IllegalAccessException | 
+                        IllegalArgumentException | InvocationTargetException | 
+                        NoSuchMethodException | SecurityException | ClassNotFoundException ex) {
+                    logger.log(Level.SEVERE, "Error decoding data", ex);
                 }
             } else {
                 logger.log(Level.SEVERE, "Unknown protocol to decode: {0}", data[index]);
@@ -145,10 +135,7 @@ public class ProtocolHandler {
      * @return the byte value of the header for the DefaultData class
      */
     public Byte getHeader(Class clazz) {
-
-        Byte header = null;
-        header = protocolHeaderMap.get(clazz.getName());
-        return header;
+        return protocolHeaderMap.get(clazz.getName());
     }
 }
 
