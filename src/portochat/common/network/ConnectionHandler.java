@@ -19,7 +19,6 @@ package portochat.common.network;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.List;
@@ -47,16 +46,14 @@ public class ConnectionHandler {
 
     private static final Logger logger = Logger.getLogger(ConnectionHandler.class.getName());
     private String name = "TCPSocket";
-    private volatile boolean listening = false;
-    private ServerSocket serverSocket = null;
+    
     private Socket clientSocket = null;
     private List<NetListener> listeners = null;
     private LinkedBlockingQueue<NetData> writeQueue = null;
-    private AcceptThread acceptThread = null;
+    
     private OutgoingThread outgoingThread = null;
-    private UserDatabase userDatabase = null;
+    protected UserDatabase userDatabase = null;
     private User serverUser = null;
-    private final boolean encryptedStream = true;
     private volatile boolean isClientSocket = false;
 
     /*
@@ -68,23 +65,6 @@ public class ConnectionHandler {
         this.name = name;
         writeQueue = new LinkedBlockingQueue<>();
         userDatabase = UserDatabase.getInstance();
-    }
-
-    /**
-     * Binds to the specified port
-     * 
-     * @param port the port number
-     * 
-     * @return true if successful
-     * @throws IOException
-     */
-    public boolean bind(int port) throws IOException {
-
-        serverSocket = new ServerSocket(port);
-        acceptThread = new AcceptThread();
-        acceptThread.start();
-
-        return true;
     }
 
     /*
@@ -126,7 +106,7 @@ public class ConnectionHandler {
      * 
      * @param socket The socket
      */
-    private void startProcessingThreads(Socket socket) {
+    protected void startProcessingThreads(Socket socket) {
 
         //TODO: this will create numerous threads.. and for servers how do these close?
         IncomingThread incomingThread = new IncomingThread(socket);
@@ -209,7 +189,7 @@ public class ConnectionHandler {
     /**
      * Cleans up everything after socket is disconnected
      */
-    private synchronized void cleanup() {
+    protected synchronized void cleanup() {
         if (clientSocket != null) {
             try {
                 clientSocket.close();
@@ -221,14 +201,6 @@ public class ConnectionHandler {
 
         }
 
-        if (serverSocket != null) {
-            try {
-                serverSocket.close();
-            } catch (IOException ex) {
-                logger.log(Level.INFO, "Error closing server socket", ex);
-            }
-            listening = false;
-        }
         writeQueue.clear();
         // TODO: Should listeners be cleared also?
     }
@@ -245,51 +217,6 @@ public class ConnectionHandler {
 
         if (handlers != null) {
             handlers.remove(handler);
-        }
-    }
-
-    /*
-     * This class is used to accept incoming connections.
-     */
-    private class AcceptThread extends Thread {
-
-        public AcceptThread() {
-            super("AcceptThread");
-        }
-
-        @Override
-        public void run() {
-            listening = true;
-
-            while (listening) {
-                try {
-                    Socket socket = serverSocket.accept();
-                    userDatabase.addConnection(socket);
-
-                    // Add the handlers
-                    userDatabase.clearHandlers(socket);
-                    HandshakeHandler handshakeHandler = new HandshakeHandler();
-                    handshakeHandler.setServerHandler(true);
-                    handshakeHandler.setEncryption(encryptedStream);
-                    userDatabase.addHandler(socket, handshakeHandler);
-                    ChatHandler chatHandler = new ChatHandler();
-                    chatHandler.setServerHandler(true);
-                    userDatabase.addHandler(socket, chatHandler);
-
-                    startProcessingThreads(socket);
-                } catch (SocketException ex) {
-                    logger.log(Level.INFO, "Server Socket closed", ex);
-                } catch (IOException ex) {
-                    logger.log(Level.SEVERE, "Unable to accept client", ex);
-                }
-            }
-            try {
-                serverSocket.close();
-            } catch (IOException ex) {
-                logger.log(Level.INFO, "Error closing server socket", ex);
-            }
-
-            logger.log(Level.INFO, "The server has shut down.");
         }
     }
 
@@ -379,10 +306,10 @@ public class ConnectionHandler {
          * Sends a disconnect message for the user associated to this thread
          * 
          */
-        private void sendUserDisconnect() {
+        protected void sendUserDisconnect() {
             UserConnection userConnection = new UserConnection();
-            if (serverSocket != null) {
-                // Get the user who disconnected
+            if (!isClientSocket) {
+                // this is a server so report which user has disconnected
                 if (user == null) {
                     // Hasn't set a username yet
                     user = new User();
