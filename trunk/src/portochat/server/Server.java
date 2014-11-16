@@ -37,10 +37,10 @@ import portochat.common.protocol.ServerMessageEnum;
 import portochat.common.protocol.UserConnection;
 import portochat.common.protocol.UserData;
 import portochat.common.protocol.UserList;
-import portochat.common.network.ConnectionHandler;
 import portochat.common.network.event.NetEvent;
 import portochat.common.network.event.NetListener;
 import portochat.common.protocol.UserDoesNotExist;
+import portochat.server.network.ServerConnectionHandler;
 
 /**
  * This class handles the server connection, and populating the user/channel
@@ -51,7 +51,7 @@ import portochat.common.protocol.UserDoesNotExist;
 public class Server {
 
     private static final Logger logger = Logger.getLogger(Server.class.getName());
-    private ConnectionHandler connection = null;
+    private ServerConnectionHandler connection = null;
     private UserDatabase userDatabase = null;
     private ChannelDatabase channelDatabase = null;
     private final Timer timer;
@@ -91,7 +91,7 @@ public class Server {
         boolean success;
 
         try {
-            connection = new ConnectionHandler("Server");
+            connection = new ServerConnectionHandler("Server");
             success = connection.bind(port);
 
             if (success) {
