@@ -79,7 +79,7 @@ import portochat.common.User;
  */
 public class Client extends JFrame implements ActionListener, 
         ServerConnectionProvider, ServerDataListener {
-    private ResourceBundle messages = ResourceBundle.getBundle("portochat/resource/MessagesBundle", java.util.Locale.getDefault());
+    private final ResourceBundle messages = ResourceBundle.getBundle("portochat/resource/MessagesBundle", java.util.Locale.getDefault());
     private static final Logger logger = Logger.getLogger(Client.class.getName());
     private static final String EXIT_COMMAND = "EXIT";
     private static final String CONNECT = "CONNECT";
@@ -958,10 +958,14 @@ public class Client extends JFrame implements ActionListener,
     }
     
     @Override
-    public void sendMessage(String recipient, boolean action, String message) {
+    public boolean sendMessage(String recipient, boolean action, String message) {
+        boolean sent = true;
         if (connection != null) {
             connection.sendMessage(recipient, action, message);
+        } else {
+            sent = false;
         }
+        return sent;
     }
 
     @Override

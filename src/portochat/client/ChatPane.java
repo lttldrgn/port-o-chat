@@ -68,12 +68,12 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
 
     private static final Logger logger =
             Logger.getLogger(ChatPane.class.getName());
-    private ResourceBundle messages = ResourceBundle.getBundle("portochat/resource/MessagesBundle", java.util.Locale.getDefault());
+    private final ResourceBundle messages = ResourceBundle.getBundle("portochat/resource/MessagesBundle", java.util.Locale.getDefault());
     private DefaultListModel participantListModel = null;
     private JList participantList = null;
     private JPopupMenu viewPaneRightClickMenu;
-    private JTextPane viewPane = new JTextPane();
-    private JTextArea textEntry = new JTextArea();
+    private final JTextPane viewPane = new JTextPane();
+    private final JTextArea textEntry = new JTextArea();
     private String recipient = null;
     private String myUserName = null;
     private ServerConnectionProvider serverConnectionProvider = null;
@@ -153,7 +153,7 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
         });
 
         if (isChannel) {
-            ArrayList<User> me = new ArrayList<User>();
+            ArrayList<User> me = new ArrayList<>();
             User user = new User();
             user.setName(myUserName);
             user.setHost("localhost");
@@ -336,18 +336,18 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
     private void sendMessage(boolean action, String messageText) {
         messageText = stripHtml(messageText);
         if (serverConnectionProvider != null) {
-            serverConnectionProvider.sendMessage(recipient, action, messageText);
+            if (!serverConnectionProvider.sendMessage(recipient, action, messageText)) {
+                showInfoMessage(messages.getString("ChatPane.msg.NotConnected"), "disconnect");
+            }
         }
     }
     
-    private Rectangle rect = new Rectangle(0, 0, 50, 50);
+    private final Rectangle rect = new Rectangle(0, 0, 50, 50);
     private void appendToChatText(String text) {
         try {
             htdoc.insertBeforeEnd(chatTextElement, text);
-        } catch (BadLocationException ex) {
-            logger.log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, null, ex);
+        } catch (BadLocationException | IOException ex) {
+            logger.log(Level.SEVERE, "Error inserting chat text", ex);
         }
 
         // force view to scroll down
@@ -370,6 +370,7 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
      * a user name or channel name
      * @param myName 
      * @param isChannel True if this chat pane is a channel
+     * @return new ChatPane
      */
     public static ChatPane createChatPane(
             ServerConnectionProvider serverConnectionProvider,
