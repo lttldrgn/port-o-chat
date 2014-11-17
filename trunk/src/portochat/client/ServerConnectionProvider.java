@@ -15,8 +15,9 @@ public interface ServerConnectionProvider {
      * @param recipient Person or channel the message is being sent to
      * @param action True if this is an action message
      * @param message Message being sent
+     * @return True if the message was attempted to be sent. False if not connected.
      */
-    public void sendMessage(String recipient, boolean action, String message);
+    public boolean sendMessage(String recipient, boolean action, String message);
     
     /**
      * Returns the name that the client is connected as on the server
