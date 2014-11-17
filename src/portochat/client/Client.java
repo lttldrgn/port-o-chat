@@ -71,6 +71,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import portochat.client.util.VersionChecker;
 import portochat.common.User;
 
 /**
@@ -128,6 +129,20 @@ public class Client extends JFrame implements ActionListener,
     public Client() {
         this.userChannelContainerPanel = null;
         setTitle(messages.getString("Client.title.PortOChat"));
+    }
+    
+    public void checkVersion() {
+        VersionChecker.checkVersion(new VersionChecker.VersionResultCallback() {
+
+            @Override
+            public void onResult(VersionChecker.VersionResultEnum result) {
+                switch(result) {
+                    case OUT_OF_DATE:
+                        JOptionPane.showMessageDialog(Client.this, "A newer version is available");
+                        break;
+                }
+            }
+        });
     }
     
     /**
