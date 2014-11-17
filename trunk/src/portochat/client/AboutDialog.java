@@ -20,18 +20,21 @@ import java.awt.BorderLayout;
 import java.awt.Desktop;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ResourceBundle;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextPane;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.text.html.HTMLEditorKit;
+import portochat.client.util.VersionChecker;
 import portochat.common.VersionInfo;
 
 /**
@@ -47,8 +50,8 @@ public class AboutDialog extends JDialog implements ActionListener {
             "http://code.google.com/p/port-o-chat</a>";
     
     private ResourceBundle messages = ResourceBundle.getBundle("portochat/resource/MessagesBundle", java.util.Locale.getDefault());
-    private JButton close = new JButton("Close");
-    private JButton checkUpdate = new JButton("Check for update");
+    private final JButton close = new JButton("Close");
+    private final JButton checkUpdate = new JButton("Check for update");
     
     private AboutDialog(JFrame parent) {
         super(parent, "About Port-O-Chat");
@@ -113,43 +116,24 @@ public class AboutDialog extends JDialog implements ActionListener {
      * software is up to date.
      */
     private void checkForNewerVersion() {
-        final SwingWorker<Boolean, Void> worker = new SwingWorker<Boolean, Void>() {
+        VersionChecker.checkVersion(new VersionChecker.VersionResultCallback() {
 
             @Override
-            protected Boolean doInBackground() throws Exception {
-                return VersionInfo.isSoftwareCurrent();
-            }
-
-        };
-        worker.addPropertyChangeListener(new PropertyChangeListener() {
-
-            @Override
-            public void propertyChange(PropertyChangeEvent event) {
-                if ("state".equals(event.getPropertyName())
-                        && SwingWorker.StateValue.DONE == event.getNewValue()) {
-
-                    boolean upToDate = true;
-                    try {
-                        upToDate = worker.get();
-                    } catch (InterruptedException ex) {
-                        logger.log(Level.INFO, null, ex);
-                    } catch (ExecutionException ex) {
-                        logger.log(Level.INFO, "Error checking for update", ex);
+            public void onResult(VersionChecker.VersionResultEnum result) {
+                switch(result) {
+                    case CONNECTION_ERROR:
                         JOptionPane.showMessageDialog(AboutDialog.this, 
                                 "Can not check for updates at this time.  Please check your internet connection");
-                        return;
-                    }
-
-                    if (!upToDate) {
+                        break;
+                    case OUT_OF_DATE:
                         JOptionPane.showMessageDialog(AboutDialog.this, "A newer version is available");
-                    } else {
+                        break;
+                    case UP_TO_DATE:
                         JOptionPane.showMessageDialog(AboutDialog.this, "Software is up to date.");
-                    }
-                } 
+                        break;
+                }
             }
-            
         });
-        worker.execute();
     }
     
     private String getAboutText() {
