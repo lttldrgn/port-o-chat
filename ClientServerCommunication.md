@@ -1,0 +1,28 @@
+## Client/Server communication basics ##
+In general, the client and server communication is asynchronous.  This means that neither the client or server waits for a reply to any request that is made.
+
+## Client connection to server ##
+Client opens a TCP connection to the server host and port
+Once connection is established, the client sends the user name to the server.
+If accepted then, a success message is sent to the client.
+Upon success message, the client then sends user and channel list requests.
+
+## Message Header ##
+All messages start with a message header that includes the message type, length of packet and time stamp.  The first byte represents the enumerated message type.  The next four bytes is an unsigned integer that represents the length of the message including the header.  The next eight bytes is a long value representing epoch time.
+| **Field Name** | **Length in bytes** | **Type** |
+|:---------------|:--------------------|:---------|
+| Message Type | 1 | byte |
+| Message Length | 4 | unsigned integer |
+| Time stamp | 8 | long |
+
+## Message Type Enumeration ##
+| **Enumerated value** | **Name** | **Description** |
+|:---------------------|:---------|:----------------|
+| 1 | Server Message | Message from the server to the client |
+| 7 | User List| Dual purpose message.  When sent from client this is a user list request.  When sent from server this message is populated with the list of users on server |
+
+## User List Message ##
+| **Field** | **Length in bytes** | **Description** |
+|:----------|:--------------------|:----------------|
+| Header | 13 | See above |
+| Channel | 1 | If this user list is for a channel. 1 if true |
