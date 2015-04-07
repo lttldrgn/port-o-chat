@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
@@ -68,6 +69,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.Timer;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -576,27 +578,47 @@ public class Client extends JFrame implements ActionListener,
             JOptionPane.showMessageDialog(this, messages.getString("Client.msg.InvalidInputs"));
             return;
         }
+        connection = new ServerConnection();
+        connection.addDataListener(this);
+        SwingWorker<String, Void> worker = new SwingWorker<String, Void>() {
 
-        boolean success = false;
-        try {
-            connection = new ServerConnection();
-            connection.addDataListener(this);
-            success = connection.connectToServer(server, serverPort);
-            connection.setUsername(username);
-            connection.sendInitialize();//connection.sendUsername(username);
+            @Override
+            protected String doInBackground() throws Exception {
+                String error = null;
+                try {
+                    connection.connectToServer(server, serverPort);
+                    connection.setUsername(username);
+                    //connection.sendInitialize();
+                } catch (UnknownHostException e) {
+                    error = messages.getString("Client.msg.ConnectionFailedBecauseOfUnknownServerNamePleaseCheckTheServerName");
+                } catch (ConnectException e) {
+                    error = 
+                        messages.getString("Client.msg.ConnectionfailedPleaseCheckThatTheServerIsRunningAndThatTheClientIsConfiguredProperly")
+                            + "\n" +
+                        messages.getString("Client.msg.ErrorMessag") + e.getMessage();
+                } catch (Exception e) {
+                    error = messages.getString("Client.msg.UnknownErrorTryingToConnectToServerSeeLog");
+                    logger.log(Level.SEVERE, messages.getString("Client.msg.UnknownErrorPleaseReportThisIssue"), e);
+                }
+                return error;
+            }
             
-        } catch (UnknownHostException e) {
-            statusPane.showMessage(messages.getString("Client.msg.ConnectionFailedBecauseOfUnknownServerNamePleaseCheckTheServerName"), null);
-        } catch (ConnectException e) {
-            statusPane.showMessage(messages.getString("Client.msg.ConnectionfailedPleaseCheckThatTheServerIsRunningAndThatTheClientIsConfiguredProperly"), null);
-            statusPane.showMessage(messages.getString("Client.msg.ErrorMessag") + e.getMessage(), null);
-        } catch (Exception e) {
-            statusPane.showMessage(messages.getString("Client.msg.UnknownErrorTryingToConnectToServerSeeLog"), null);
-            logger.log(Level.SEVERE, messages.getString("Client.msg.UnknownErrorPleaseReportThisIssue"), e);
-        }
-        if (!success) {
-            JOptionPane.showMessageDialog(this, messages.getString("Client.msg.CouldNotConnectSeeStatusPaneForReason"));
-        }
+            @Override
+            protected void done() {
+                try {
+                    String error = get();
+                    if (error != null) {
+                        statusPane.showMessage(error, null);
+                        JOptionPane.showMessageDialog(Client.this, messages.getString("Client.msg.CouldNotConnectSeeStatusPaneForReason"));
+                    } else {
+                        connection.sendUsername(username);
+                    }
+                } catch (InterruptedException | ExecutionException ex) {
+                    logger.log(Level.SEVERE, "Error getting connection result", ex);
+                } 
+            }
+        };
+        worker.execute();
     }
     
     private synchronized void disconnectFromServer() {

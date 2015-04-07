@@ -29,16 +29,16 @@ import portochat.common.User;
  * 
  * @author Mike
  */
-public class UserConnection extends DefaultData {
+public class UserConnectionStatus extends DefaultData {
 
-    private static final Logger logger = Logger.getLogger(UserConnection.class.getName());
+    private static final Logger logger = Logger.getLogger(UserConnectionStatus.class.getName());
     private User user = null;
     private boolean connected = false;
     
     /*
      * Public constructor
      */
-    public UserConnection() {
+    public UserConnectionStatus() {
     }
 
     /**
@@ -107,9 +107,6 @@ public class UserConnection extends DefaultData {
         this.connected = connected;
     }
 
-    /**
-     * Overridden toString method
-     */
     @Override
     public String toString() {
 

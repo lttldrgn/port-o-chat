@@ -34,12 +34,14 @@ import portochat.common.protocol.Ping;
 import portochat.common.protocol.Pong;
 import portochat.common.protocol.ServerMessage;
 import portochat.common.protocol.ServerMessageEnum;
-import portochat.common.protocol.UserConnection;
+import portochat.common.protocol.UserConnectionStatus;
 import portochat.common.protocol.UserData;
 import portochat.common.protocol.UserList;
 import portochat.common.network.event.NetEvent;
 import portochat.common.network.event.NetListener;
 import portochat.common.protocol.UserDoesNotExist;
+import portochat.common.protocol.request.ChannelUserListRequest;
+import portochat.common.protocol.request.UserListRequest;
 import portochat.server.network.ServerConnectionHandler;
 
 /**
@@ -167,7 +169,7 @@ public class Server {
                     user.setLastSeen(System.currentTimeMillis());
                     if (!rename) {
                         // Notify other users of connection
-                        UserConnection userConnection = new UserConnection();
+                        UserConnectionStatus userConnection = new UserConnectionStatus();
                         userConnection.setUser(user);
                         userConnection.setConnected(true);
 
@@ -225,18 +227,19 @@ public class Server {
                         connection.writeData(socket, userDoesNotExist);
                     }
                 }
-            } else if (defaultData instanceof UserList) {
-                UserList userList = ((UserList) defaultData);
-                // Fill out the user list
-                String channel = userList.getChannel();
-                if (channel != null) {
-                    userList.setUserList(channelDatabase.getUsersInChannel(channel));
-                } else {
-                    userList.setUserList(userDatabase.getUserList());
-                }
+            } else if (defaultData instanceof UserListRequest) {
+                UserList userList = new UserList();
+                userList.setUserList(userDatabase.getUserList());
                 connection.writeData(socket, userList);
-            } else if (defaultData instanceof UserConnection) {
-                UserConnection userConnection = ((UserConnection) defaultData);
+            } else if (defaultData instanceof ChannelUserListRequest) {
+                ChannelUserListRequest request = (ChannelUserListRequest)defaultData; 
+                UserList channelUserList = new UserList();
+                String channel = request.getChannelName();
+                channelUserList.setChannel(channel);
+                channelUserList.setUserList(channelDatabase.getUsersInChannel(channel));
+                connection.writeData(socket, channelUserList);
+            } else if (defaultData instanceof UserConnectionStatus) {
+                UserConnectionStatus userConnection = ((UserConnectionStatus) defaultData);
 
                 // Shouldn't have connects here anyways
                 if (!userConnection.isConnected()) {

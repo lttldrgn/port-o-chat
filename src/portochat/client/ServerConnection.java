@@ -32,7 +32,7 @@ import portochat.common.protocol.InitializationEnum;
 import portochat.common.protocol.Ping;
 import portochat.common.protocol.Pong;
 import portochat.common.protocol.ServerMessage;
-import portochat.common.protocol.UserConnection;
+import portochat.common.protocol.UserConnectionStatus;
 import portochat.common.protocol.UserData;
 import portochat.common.protocol.UserList;
 import portochat.common.network.ConnectionHandler;
@@ -40,6 +40,8 @@ import portochat.common.network.event.NetEvent;
 import portochat.common.network.event.NetListener;
 import java.util.ResourceBundle;
 import portochat.common.protocol.UserDoesNotExist;
+import portochat.common.protocol.request.ChannelUserListRequest;
+import portochat.common.protocol.request.UserListRequest;
 
 /**
  * Handles all the client interaction with the server
@@ -120,8 +122,8 @@ public class ServerConnection {
     }
     
     public void sendUserListRequest() {
-        UserList userList = new UserList();
-        socket.writeData(socket.getClientSocket(), userList);
+        UserListRequest request = new UserListRequest();
+        socket.writeData(socket.getClientSocket(), request);
     }
     
     public void joinChannel(String channel) {
@@ -144,9 +146,8 @@ public class ServerConnection {
     }
     
     public void requestUsersInChannel(String channel) {
-        UserList userList = new UserList();
-        userList.setChannel(channel);
-        socket.writeData(socket.getClientSocket(), userList);        
+        ChannelUserListRequest request = new ChannelUserListRequest(channel);
+        socket.writeData(socket.getClientSocket(), request);        
     }
 
     public void addDataListener(ServerDataListener listener) {
@@ -198,9 +199,9 @@ public class ServerConnection {
                 for (ServerDataListener listener : listeners) {
                     listener.userListReceived(userList.getUserList(), channel);
                 }
-            } else if (defaultData instanceof UserConnection) {
+            } else if (defaultData instanceof UserConnectionStatus) {
                 // if user is null it's the server disconnecting
-                UserConnection user = (UserConnection) defaultData;
+                UserConnectionStatus user = (UserConnectionStatus) defaultData;
                 for (ServerDataListener listener : listeners) {
                     listener.userConnectionEvent(user.getUser(), user.isConnected());
                 }

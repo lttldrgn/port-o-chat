@@ -29,7 +29,7 @@ import java.util.logging.Logger;
 import portochat.common.User;
 import portochat.common.Util;
 import portochat.common.protocol.DefaultData;
-import portochat.common.protocol.UserConnection;
+import portochat.common.protocol.UserConnectionStatus;
 import portochat.common.network.event.NetEvent;
 import portochat.common.network.event.NetListener;
 import portochat.common.network.handler.BufferHandler;
@@ -81,7 +81,7 @@ public class ConnectionHandler {
         serverUser.setHost(host);
 
         // TODO cleanup old handlers on reconnect?
-        serverUser.addHandler(new HandshakeHandler());
+//        serverUser.addHandler(new HandshakeHandler());
         serverUser.addHandler(new ChatHandler());
         isClientSocket = true;
         clientSocket = new Socket(host, port);
@@ -307,7 +307,7 @@ public class ConnectionHandler {
          * 
          */
         protected void sendUserDisconnect() {
-            UserConnection userConnection = new UserConnection();
+            UserConnectionStatus userConnection = new UserConnectionStatus();
             if (!isClientSocket) {
                 // this is a server so report which user has disconnected
                 if (user == null) {

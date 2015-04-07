@@ -80,10 +80,10 @@ public class ServerConnectionHandler extends ConnectionHandler {
 
                     // Add the handlers
                     userDatabase.clearHandlers(socket);
-                    HandshakeHandler handshakeHandler = new HandshakeHandler();
-                    handshakeHandler.setServerHandler(true);
-                    handshakeHandler.setEncryption(encryptedStream);
-                    userDatabase.addHandler(socket, handshakeHandler);
+//                    HandshakeHandler handshakeHandler = new HandshakeHandler();
+//                    handshakeHandler.setServerHandler(true);
+//                    handshakeHandler.setEncryption(encryptedStream);
+//                    userDatabase.addHandler(socket, handshakeHandler);
                     ChatHandler chatHandler = new ChatHandler();
                     chatHandler.setServerHandler(true);
                     userDatabase.addHandler(socket, chatHandler);

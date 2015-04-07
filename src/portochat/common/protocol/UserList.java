@@ -58,7 +58,7 @@ public class UserList extends DefaultData {
             }
             int numUsers = dis.readInt();
             if (numUsers > 0) {
-                userList = new ArrayList<User>();
+                userList = new ArrayList<>();
             }
             for (int i = 0; i < numUsers; i++) {
                 userList.add(new User(dis));
@@ -112,7 +112,7 @@ public class UserList extends DefaultData {
     }
 
     /**
-     * @return A List<User> of the users
+     * @return A List&lt;User&gt; of the users
      */
     public List<User> getUserList() {
         return userList;
@@ -143,9 +143,6 @@ public class UserList extends DefaultData {
         this.channel = channel;
     }
 
-    /**
-     * Overridden toString method
-     */
     @Override
     public String toString() {
 
