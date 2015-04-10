@@ -35,7 +35,7 @@ import portochat.common.protocol.Pong;
 import portochat.common.protocol.ServerMessage;
 import portochat.common.protocol.ServerMessageEnum;
 import portochat.common.protocol.UserConnectionStatus;
-import portochat.common.protocol.UserData;
+import portochat.common.protocol.SetUsernameRequest;
 import portochat.common.protocol.UserList;
 import portochat.common.network.event.NetEvent;
 import portochat.common.network.event.NetListener;
@@ -144,23 +144,23 @@ public class Server {
 
             User user = userDatabase.getUserOfSocket(socket);
 
-            if (defaultData instanceof UserData) {
+            if (defaultData instanceof SetUsernameRequest) {
                 // Set user info
-                UserData userData = (UserData) defaultData;
+                SetUsernameRequest request = (SetUsernameRequest) defaultData;
                 String oldUserName = user.getName();
                 boolean rename = (oldUserName != null);
                 boolean success;
 
                 if (!rename) {
                     // First time setting a name
-                    success = userDatabase.addUser(userData.getName(), socket);
+                    success = userDatabase.addUser(request.getName(), socket);
                 } else {
                     // Rename
-                    success = userDatabase.renameUser(user, userData.getName());
+                    success = userDatabase.renameUser(user, request.getName());
 
                     // Log
                     logger.log(Level.INFO, "Renamed of {0} to {1} was {2}",
-                            new Object[]{oldUserName, userData.getName(),
+                            new Object[]{oldUserName, request.getName(),
                                 success ? "successful!" : "unsuccessful!"});
                 }
 
@@ -178,13 +178,13 @@ public class Server {
                         sendToAllSockets(userSocketList, userConnection);
                     } else {
                         // update channel database
-                        channelDatabase.renameUser(oldUserName, userData.getName());
+                        channelDatabase.renameUser(oldUserName, request.getName());
                     }
                     serverMessage.setMessageEnum(ServerMessageEnum.USERNAME_SET);
-                    serverMessage.setAdditionalMessage(userData.getName());
+                    serverMessage.setAdditionalMessage(request.getName());
                 } else {
                     serverMessage.setMessageEnum(ServerMessageEnum.ERROR_USERNAME_IN_USE);
-                    serverMessage.setAdditionalMessage(userData.getName());
+                    serverMessage.setAdditionalMessage(request.getName());
                 }
                 connection.writeData(socket, serverMessage);
             } else if (defaultData instanceof Ping) {

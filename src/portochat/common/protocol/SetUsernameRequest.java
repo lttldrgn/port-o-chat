@@ -23,19 +23,19 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * This class holds data for setting a username.
+ * This class holds data for requesting a username.
  * 
  * @author Mike
  */
-public class UserData extends DefaultData {
+public class SetUsernameRequest extends DefaultData {
 
-    private static final Logger logger = Logger.getLogger(UserData.class.getName());
+    private static final Logger logger = Logger.getLogger(SetUsernameRequest.class.getName());
     private String name = null;
 
     /**
      * Public constructor
      */
-    public UserData() {
+    public SetUsernameRequest() {
     }
 
     /**
@@ -54,11 +54,6 @@ public class UserData extends DefaultData {
         }
     }
 
-    /**
-     * Writes the data to the data output stream
-     * 
-     * @param dos The data output stream
-     */
     @Override
     public int writeBody(DataOutputStream dos) {
         try {
@@ -86,9 +81,6 @@ public class UserData extends DefaultData {
         this.name = user;
     }
 
-    /**
-     * Overridden toString method
-     */
     @Override
     public String toString() {
 

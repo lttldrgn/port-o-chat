@@ -33,7 +33,7 @@ import portochat.common.protocol.Ping;
 import portochat.common.protocol.Pong;
 import portochat.common.protocol.ServerMessage;
 import portochat.common.protocol.UserConnectionStatus;
-import portochat.common.protocol.UserData;
+import portochat.common.protocol.SetUsernameRequest;
 import portochat.common.protocol.UserList;
 import portochat.common.network.ConnectionHandler;
 import portochat.common.network.event.NetEvent;
@@ -97,9 +97,9 @@ public class ServerConnection {
     }
     
     public void sendUsername(String newUsername) {
-        UserData userData = new UserData();
-        userData.setUser(newUsername);
-        socket.writeData(socket.getClientSocket(), userData);
+        SetUsernameRequest request = new SetUsernameRequest();
+        request.setUser(newUsername);
+        socket.writeData(socket.getClientSocket(), request);
     }
     
     public void sendPing() {
