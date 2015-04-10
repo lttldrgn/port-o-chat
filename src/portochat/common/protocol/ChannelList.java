@@ -52,7 +52,7 @@ public class ChannelList extends DefaultData {
 
         try {
             int numChannels = dis.readInt();
-            channelList = new ArrayList<String>();
+            channelList = new ArrayList<>();
             for (int i = 0; i < numChannels; i++) {
                 
                 String channel = dis.readUTF();
@@ -63,11 +63,6 @@ public class ChannelList extends DefaultData {
         }
     }
 
-    /**
-     * Writes the data to the data output stream
-     * 
-     * @param dos The data output stream
-     */
     @Override
     public int writeBody(DataOutputStream dos) {
 
@@ -89,7 +84,7 @@ public class ChannelList extends DefaultData {
     }
 
     /**
-     * @return a List<String> containing all the channels in the list
+     * @return a List&lt;String&gt; containing all the channels in the list
      */
     public List<String> getChannelList() {
         return channelList;
@@ -104,9 +99,6 @@ public class ChannelList extends DefaultData {
         this.channelList = channelList;
     }
 
-    /**
-     * Overridden toString method
-     */
     @Override
     public String toString() {
 
@@ -126,9 +118,6 @@ public class ChannelList extends DefaultData {
         return sb.toString();
     }
 
-    /**
-     * the object name
-     */
     @Override
     public String getObjectName() {
         return "ChannelList";

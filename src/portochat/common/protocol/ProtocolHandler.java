@@ -68,13 +68,15 @@ public class ProtocolHandler {
         protocolClassMap = new HashMap<>();
         byte typeOrdinal = 0;
         protocolClassMap.put(typeOrdinal++, "portochat.common.protocol.request.UserListRequest");
+        protocolClassMap.put(typeOrdinal++, "portochat.common.protocol.request.ChannelListRequest");
         protocolClassMap.put(typeOrdinal++, "portochat.common.protocol.request.ChannelUserListRequest");
         protocolClassMap.put(typeOrdinal++, "portochat.common.protocol.ServerMessage");
         protocolClassMap.put(typeOrdinal++, "portochat.common.protocol.Initialization");
         protocolClassMap.put(typeOrdinal++, "portochat.common.protocol.Ping");
         protocolClassMap.put(typeOrdinal++, "portochat.common.protocol.Pong");
         protocolClassMap.put(typeOrdinal++, "portochat.common.protocol.UserConnectionStatus");
-        protocolClassMap.put(typeOrdinal++, "portochat.common.protocol.UserData");
+        protocolClassMap.put(typeOrdinal++, "portochat.common.protocol.SetUsernameRequest");
+        protocolClassMap.put(typeOrdinal++, "portochat.common.protocol.SetPublicKey");
         protocolClassMap.put(typeOrdinal++, "portochat.common.protocol.ChatMessage");
         protocolClassMap.put(typeOrdinal++, "portochat.common.protocol.UserList");
         protocolClassMap.put(typeOrdinal++, "portochat.common.protocol.ChannelStatus");

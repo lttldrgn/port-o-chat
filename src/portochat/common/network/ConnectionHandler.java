@@ -131,6 +131,14 @@ public class ConnectionHandler {
         netData.data = defaultData.toByteArray();
         writeQueue.offer(netData);
     }
+    
+    /**
+     * Writes the data to the client socket
+     * @param defaultData Data to write
+     */
+    public void writeData(DefaultData defaultData) {
+        writeData(clientSocket, defaultData);
+    }
 
     /**
      * This method is used to add listeners who wish to know about 

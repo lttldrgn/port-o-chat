@@ -39,6 +39,7 @@ import portochat.common.network.ConnectionHandler;
 import portochat.common.network.event.NetEvent;
 import portochat.common.network.event.NetListener;
 import java.util.ResourceBundle;
+import portochat.common.protocol.SetPublicKey;
 import portochat.common.protocol.UserDoesNotExist;
 import portochat.common.protocol.request.ChannelUserListRequest;
 import portochat.common.protocol.request.UserListRequest;
@@ -84,6 +85,18 @@ public class ServerConnection {
         this.username = username;
     }
     
+    /**
+     * Send the user public key to the server
+     */
+    public void sendUserPublicKey() {
+        SetPublicKey setKey = new SetPublicKey();
+        byte encodedKey[] = encryptionManager.getClientEncodedPublicKey();
+        if (encodedKey != null) {
+            setKey.setEncodedPublicKey(encodedKey);
+            socket.writeData(setKey);
+        }
+        
+    }
     public void sendInitialize() {
         Initialization initialization = new Initialization();
         initialization.setInitializationEnum(InitializationEnum.CLIENT_RSA_PRIVATE_KEY);
@@ -93,18 +106,18 @@ public class ServerConnection {
         initialization.setEncodedPublicKey(
                 encryptionManager.getClientEncodedPublicKey());
         
-        socket.writeData(socket.getClientSocket(), initialization);
+        socket.writeData(initialization);
     }
     
     public void sendUsername(String newUsername) {
         SetUsernameRequest request = new SetUsernameRequest();
         request.setUser(newUsername);
-        socket.writeData(socket.getClientSocket(), request);
+        socket.writeData(request);
     }
     
     public void sendPing() {
         Ping ping = new Ping();
-        socket.writeData(socket.getClientSocket(), ping);
+        socket.writeData(ping);
     }
     
     /**
@@ -118,36 +131,36 @@ public class ServerConnection {
         chatMessage.setTo(recipient);
         chatMessage.setAction(action);
         chatMessage.setMessage(message);
-        socket.writeData(socket.getClientSocket(), chatMessage);
+        socket.writeData(chatMessage);
     }
     
     public void sendUserListRequest() {
         UserListRequest request = new UserListRequest();
-        socket.writeData(socket.getClientSocket(), request);
+        socket.writeData(request);
     }
     
     public void joinChannel(String channel) {
         ChannelJoinPart channelJoinPart = new ChannelJoinPart();
         channelJoinPart.setChannel(channel);
         channelJoinPart.setJoined(true);
-        socket.writeData(socket.getClientSocket(), channelJoinPart);
+        socket.writeData(channelJoinPart);
     }
     
     public void partChannel(String channel) {
         ChannelJoinPart channelJoinPart = new ChannelJoinPart();
         channelJoinPart.setChannel(channel);
         channelJoinPart.setJoined(false);
-        socket.writeData(socket.getClientSocket(), channelJoinPart);
+        socket.writeData(channelJoinPart);
     }
     
     public void requestListOfChannels() {
         ChannelList channelList = new ChannelList();
-        socket.writeData(socket.getClientSocket(), channelList);
+        socket.writeData(channelList);
     }
     
     public void requestUsersInChannel(String channel) {
         ChannelUserListRequest request = new ChannelUserListRequest(channel);
-        socket.writeData(socket.getClientSocket(), request);        
+        socket.writeData(request);        
     }
 
     public void addDataListener(ServerDataListener listener) {
@@ -233,7 +246,7 @@ public class ServerConnection {
             } else if (defaultData instanceof Ping) { 
                 Pong pong = new Pong();
                 pong.setTimestamp(((Ping) defaultData).getTimestamp());
-                socket.writeData(socket.getClientSocket(), pong);
+                socket.writeData(pong);
             } else if (defaultData instanceof UserDoesNotExist) { 
                 for (ServerDataListener listener : listeners) {
                     listener.userDoesNotExist(((UserDoesNotExist)defaultData).getUser());

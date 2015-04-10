@@ -734,7 +734,7 @@ public class Client extends JFrame implements ActionListener,
             connection.sendPing();
             connected = true;
             myUserName = username;
-            
+            connection.sendUserPublicKey();
             connection.sendUserListRequest();
             connection.requestListOfChannels();
             SwingUtilities.invokeLater(new Runnable() {

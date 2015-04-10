@@ -25,6 +25,8 @@ import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import portochat.common.User;
+import portochat.common.Util;
+import portochat.common.encryption.EncryptionManager;
 import portochat.common.protocol.ChannelJoinPart;
 import portochat.common.protocol.ChannelList;
 import portochat.common.protocol.ChannelStatus;
@@ -39,7 +41,9 @@ import portochat.common.protocol.SetUsernameRequest;
 import portochat.common.protocol.UserList;
 import portochat.common.network.event.NetEvent;
 import portochat.common.network.event.NetListener;
+import portochat.common.protocol.SetPublicKey;
 import portochat.common.protocol.UserDoesNotExist;
+import portochat.common.protocol.request.ChannelListRequest;
 import portochat.common.protocol.request.ChannelUserListRequest;
 import portochat.common.protocol.request.UserListRequest;
 import portochat.server.network.ServerConnectionHandler;
@@ -53,9 +57,10 @@ import portochat.server.network.ServerConnectionHandler;
 public class Server {
 
     private static final Logger logger = Logger.getLogger(Server.class.getName());
-    private ServerConnectionHandler connection = null;
-    private UserDatabase userDatabase = null;
-    private ChannelDatabase channelDatabase = null;
+    private final EncryptionManager encryptionManager;
+    private final UserDatabase userDatabase;
+    private final ChannelDatabase channelDatabase;
+    private ServerConnectionHandler connection;
     private final Timer timer;
     private final TimerTask task;
     private final int CLIENT_POLL_INTERVAL_MILLIS = 60000;
@@ -64,6 +69,7 @@ public class Server {
      * Public constructor
      */
     public Server() {
+        encryptionManager = EncryptionManager.getInstance();
         userDatabase = UserDatabase.getInstance();
         channelDatabase = ChannelDatabase.getInstance();
         timer = new Timer();
@@ -266,8 +272,8 @@ public class Server {
 
                 // Log the connection
                 logger.info(userConnection.toString());
-            } else if (defaultData instanceof ChannelList) {
-                ChannelList channelList = ((ChannelList) defaultData);
+            } else if (defaultData instanceof ChannelListRequest) {
+                ChannelList channelList = new ChannelList();
                 channelList.setChannelList(channelDatabase.getListOfChannels());
                 connection.writeData(socket, channelList);
             } else if (defaultData instanceof ChannelJoinPart) {
@@ -311,6 +317,18 @@ public class Server {
 
                 // Log the join/part
                 logger.info(channelJoinPart.toString());
+            } else if (defaultData instanceof SetPublicKey) {
+                SetPublicKey pubKey = (SetPublicKey) defaultData;
+                user.setSecretKey(encryptionManager.generateServerSecretKey());
+                user.setClientPublicKey(encryptionManager.getClientPublicKey(pubKey.getEncodedPublicKey()));
+                logger.log(Level.FINEST, "public: {0}",
+                        Util.byteArrayToHexString(user.getClientPublicKey().getEncoded()));
+
+                // Encode the private key using the client's public key
+                byte[] encodedEncryptedSecretKey =
+                        encryptionManager.encryptSecretKeyWithPublicKey(
+                        user.getSecretKey(), user.getClientPublicKey());
+                // TODO send shared key
             } else {
                 logger.log(Level.WARNING, "Unhandled message: {0}", defaultData);
             }
