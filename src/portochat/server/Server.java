@@ -41,6 +41,8 @@ import portochat.common.protocol.SetUsernameRequest;
 import portochat.common.protocol.UserList;
 import portochat.common.network.event.NetEvent;
 import portochat.common.network.event.NetListener;
+import portochat.common.protocol.ServerKeyAccepted;
+import portochat.common.protocol.ServerSharedKey;
 import portochat.common.protocol.SetPublicKey;
 import portochat.common.protocol.UserDoesNotExist;
 import portochat.common.protocol.request.ChannelListRequest;
@@ -328,7 +330,11 @@ public class Server {
                 byte[] encodedEncryptedSecretKey =
                         encryptionManager.encryptSecretKeyWithPublicKey(
                         user.getSecretKey(), user.getClientPublicKey());
-                // TODO send shared key
+                ServerSharedKey sharedKey = new ServerSharedKey();
+                sharedKey.setEncryptedSecretKey(encodedEncryptedSecretKey);
+                connection.writeData(socket, sharedKey);
+            } else if (defaultData instanceof ServerKeyAccepted) {
+                userDatabase.setSocketIsEncrypted(socket, true);
             } else {
                 logger.log(Level.WARNING, "Unhandled message: {0}", defaultData);
             }

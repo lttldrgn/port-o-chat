@@ -77,6 +77,8 @@ public class ProtocolHandler {
         protocolClassMap.put(typeOrdinal++, "portochat.common.protocol.UserConnectionStatus");
         protocolClassMap.put(typeOrdinal++, "portochat.common.protocol.SetUsernameRequest");
         protocolClassMap.put(typeOrdinal++, "portochat.common.protocol.SetPublicKey");
+        protocolClassMap.put(typeOrdinal++, "portochat.common.protocol.ServerSharedKey");
+        protocolClassMap.put(typeOrdinal++, "portochat.common.protocol.ServerKeyAccepted");
         protocolClassMap.put(typeOrdinal++, "portochat.common.protocol.ChatMessage");
         protocolClassMap.put(typeOrdinal++, "portochat.common.protocol.UserList");
         protocolClassMap.put(typeOrdinal++, "portochat.common.protocol.ChannelStatus");

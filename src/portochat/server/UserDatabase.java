@@ -37,6 +37,7 @@ public class UserDatabase {
     private static UserDatabase instance = null;
     private final Map<User, Socket> userMap = new ConcurrentHashMap<>();;
     private final Map<Socket, User> socketMap = new ConcurrentHashMap<>();;
+    private final Map<Socket, Boolean> socketEncryptionMap = new ConcurrentHashMap<>();
     
     /**
      * Private constructor.
@@ -63,6 +64,7 @@ public class UserDatabase {
         if (!socketMap.containsKey(socket)) {
             User user = new User();
             user.setHost(socket.getInetAddress().getHostName());
+            socketEncryptionMap.put(socket, false); // not encrypted initially
 
             socketMap.put(socket, user);
             logger.log(Level.INFO, "{0} has connected", 
@@ -101,21 +103,19 @@ public class UserDatabase {
     /**
      * Renames a user in the database.
      * 
-     * @param oldUser old username
+     * @param user User object with current username
      * @param newUserName new username
      * 
      * @return true if successful
      */
-    public boolean renameUser(User oldUser, String newUserName) {
+    public boolean renameUser(User user, String newUserName) {
         boolean success = false;
         
-        if (userMap.containsKey(oldUser)) {
+        if (userMap.containsKey(user)) {
             
             // Check if the username is in use
             if (!userNameInUse(newUserName)) {
-                String oldUserName = oldUser.getName();
-                Socket socket = userMap.get(oldUser);
-                User user = socketMap.get(socket);
+                String oldUserName = user.getName();
                 user.setName(newUserName);
                 logger.log(Level.INFO, "{0} is now known as {1}", 
                         new Object[]{oldUserName, newUserName});
@@ -141,6 +141,7 @@ public class UserDatabase {
             Socket userSocket = getSocketForUser(user);
             userMap.remove(user);
             socketMap.remove(userSocket);
+            socketEncryptionMap.remove(userSocket);
             logger.log(Level.INFO, "{0} has been removed", 
                     new Object[]{user});
             success = true;
@@ -265,4 +266,11 @@ public class UserDatabase {
         }
     }
 
+    public void setSocketIsEncrypted(Socket socket, boolean isEncrypted) {
+        socketEncryptionMap.put(socket, isEncrypted);
+    }
+    
+    public boolean isSocketEncrypted(Socket socket) {
+        return socketEncryptionMap.get(socket);
+    }
 }

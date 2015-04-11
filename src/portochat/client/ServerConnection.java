@@ -39,6 +39,9 @@ import portochat.common.network.ConnectionHandler;
 import portochat.common.network.event.NetEvent;
 import portochat.common.network.event.NetListener;
 import java.util.ResourceBundle;
+import javax.crypto.SecretKey;
+import portochat.common.protocol.ServerKeyAccepted;
+import portochat.common.protocol.ServerSharedKey;
 import portochat.common.protocol.SetPublicKey;
 import portochat.common.protocol.UserDoesNotExist;
 import portochat.common.protocol.request.ChannelUserListRequest;
@@ -251,6 +254,14 @@ public class ServerConnection {
                 for (ServerDataListener listener : listeners) {
                     listener.userDoesNotExist(((UserDoesNotExist)defaultData).getUser());
                 }
+            } else if (defaultData instanceof ServerSharedKey) {
+                ServerSharedKey sharedKey = (ServerSharedKey) defaultData;
+                SecretKey serverSecretKey =
+                encryptionManager.decodeSecretKeyWithPrivateKey(
+                        sharedKey.getEncryptedSecretKey());
+                encryptionManager.setServerSecretKey(serverSecretKey);
+                ServerKeyAccepted accepted = new ServerKeyAccepted();
+                socket.writeData(accepted);
             } else {
                 logger.log(Level.WARNING, "{0}{1}", new Object[]{messages.getString("ServerConnection.msg.UnknownMessage"), defaultData});
             }
