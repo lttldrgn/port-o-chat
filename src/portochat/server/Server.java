@@ -37,7 +37,7 @@ import portochat.common.protocol.Pong;
 import portochat.common.protocol.ServerMessage;
 import portochat.common.protocol.ServerMessageEnum;
 import portochat.common.protocol.UserConnectionStatus;
-import portochat.common.protocol.SetUsernameRequest;
+import portochat.common.protocol.request.SetUsernameRequest;
 import portochat.common.protocol.UserList;
 import portochat.common.network.event.NetEvent;
 import portochat.common.network.event.NetListener;

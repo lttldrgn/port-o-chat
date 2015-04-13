@@ -14,13 +14,14 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package portochat.common.protocol;
+package portochat.common.protocol.request;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import portochat.common.protocol.DefaultData;
 
 /**
  * This class holds data for requesting a username.

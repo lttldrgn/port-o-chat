@@ -588,7 +588,6 @@ public class Client extends JFrame implements ActionListener,
                 try {
                     connection.connectToServer(server, serverPort);
                     connection.setUsername(username);
-                    //connection.sendInitialize();
                 } catch (UnknownHostException e) {
                     error = messages.getString("Client.msg.ConnectionFailedBecauseOfUnknownServerNamePleaseCheckTheServerName");
                 } catch (ConnectException e) {

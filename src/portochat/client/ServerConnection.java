@@ -27,13 +27,11 @@ import portochat.common.protocol.ChannelList;
 import portochat.common.protocol.ChannelStatus;
 import portochat.common.protocol.ChatMessage;
 import portochat.common.protocol.DefaultData;
-import portochat.common.protocol.Initialization;
-import portochat.common.protocol.InitializationEnum;
 import portochat.common.protocol.Ping;
 import portochat.common.protocol.Pong;
 import portochat.common.protocol.ServerMessage;
 import portochat.common.protocol.UserConnectionStatus;
-import portochat.common.protocol.SetUsernameRequest;
+import portochat.common.protocol.request.SetUsernameRequest;
 import portochat.common.protocol.UserList;
 import portochat.common.network.ConnectionHandler;
 import portochat.common.network.event.NetEvent;
@@ -100,17 +98,6 @@ public class ServerConnection {
             socket.writeData(setKey);
         }
         
-    }
-    public void sendInitialize() {
-        Initialization initialization = new Initialization();
-        initialization.setInitializationEnum(InitializationEnum.CLIENT_RSA_PRIVATE_KEY);
-        initialization.setServer(false);
-        initialization.setInitializationEnum(
-                    InitializationEnum.CLIENT_RSA_PRIVATE_KEY);
-        initialization.setEncodedPublicKey(
-                encryptionManager.getClientEncodedPublicKey());
-        
-        socket.writeData(initialization);
     }
     
     public void sendUsername(String newUsername) {
@@ -241,12 +228,6 @@ public class ServerConnection {
                     listener.channelStatusReceived(status.getChannel(), 
                             status.isCreated());
                 }
-            } else if (defaultData instanceof Initialization) {
-                Initialization init = (Initialization) defaultData;
-                if (init.getInitializationEnum() == InitializationEnum.READY) {
-                    // Send username
-                    sendUsername(ServerConnection.this.username);
-                }
             } else if (defaultData instanceof Ping) { 
                 Pong pong = new Pong();
                 pong.setTimestamp(((Ping) defaultData).getTimestamp());
@@ -263,6 +244,7 @@ public class ServerConnection {
                 encryptionManager.setServerSecretKey(serverSecretKey);
                 ServerKeyAccepted accepted = new ServerKeyAccepted();
                 socket.writeData(accepted);
+                // sendUsername(ServerConnection.this.username);
             } else {
                 logger.log(Level.WARNING, "{0}{1}", new Object[]{messages.getString("ServerConnection.msg.UnknownMessage"), defaultData});
             }

@@ -23,7 +23,6 @@ import java.security.PublicKey;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import javax.crypto.SecretKey;
-import portochat.common.protocol.InitializationEnum;
 import portochat.common.network.handler.BufferHandler;
 
 /**
@@ -37,7 +36,6 @@ public class User {
     private long lastSeen;
     private SecretKey secretKey = null;
     private PublicKey clientPublicKey = null;
-    private InitializationEnum initEnum = null;
     private List<BufferHandler> handlers = null;
     
     /**
@@ -115,14 +113,6 @@ public class User {
 
     public void setLastSeen(long lastSeen) {
         this.lastSeen = lastSeen;
-    }
-
-    public InitializationEnum getInitEnum() {
-        return initEnum;
-    }
-
-    public void setInitEnum(InitializationEnum initEnum) {
-        this.initEnum = initEnum;
     }
 
     public void clearHandlers() {

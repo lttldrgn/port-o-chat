@@ -79,7 +79,6 @@ public class ConnectionHandler {
         serverUser.setHost(host);
 
         // TODO cleanup old handlers on reconnect?
-//        serverUser.addHandler(new HandshakeHandler());
         serverUser.addHandler(new ChatHandler());
         isClientSocket = true;
         clientSocket = new Socket(host, port);
