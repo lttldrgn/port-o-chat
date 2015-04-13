@@ -44,6 +44,7 @@ import portochat.common.protocol.ServerKeyAccepted;
 import portochat.common.protocol.ServerSharedKey;
 import portochat.common.protocol.SetPublicKey;
 import portochat.common.protocol.UserDoesNotExist;
+import portochat.common.protocol.request.ChannelListRequest;
 import portochat.common.protocol.request.ChannelUserListRequest;
 import portochat.common.protocol.request.UserListRequest;
 
@@ -157,8 +158,8 @@ public class ServerConnection {
     }
     
     public void requestListOfChannels() {
-        ChannelList channelList = new ChannelList();
-        socket.writeData(channelList);
+        ChannelListRequest request = new ChannelListRequest();
+        socket.writeData(request);
     }
     
     public void requestUsersInChannel(String channel) {

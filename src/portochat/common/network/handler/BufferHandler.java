@@ -19,6 +19,7 @@ package portochat.common.network.handler;
 import java.net.Socket;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import portochat.common.network.ConnectionHandler.NetData;
 import portochat.common.protocol.DefaultData;
 
 /**
@@ -47,8 +48,8 @@ public abstract class BufferHandler {
      * Constructor
      */
     public BufferHandler() {
-        listenerDataList = new CopyOnWriteArrayList<DefaultData>();
-        socketDataList = new CopyOnWriteArrayList<DefaultData>();
+        listenerDataList = new CopyOnWriteArrayList<>();
+        socketDataList = new CopyOnWriteArrayList<>();
     }
     
     /**
@@ -69,7 +70,7 @@ public abstract class BufferHandler {
      * @param length The readable length of the buffer
      * @return the byte array that should be sent to the socket
      */
-    public abstract byte[] processOutgoing (Socket socket, byte buffer[], int length);
+    public abstract byte[] processOutgoing (NetData netData);
     
     /**
      * @return true if this handler consumes the message.

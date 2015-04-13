@@ -13,7 +13,10 @@ import java.io.DataOutputStream;
  * @author Brandon
  */
 public class ServerKeyAccepted extends DefaultData {
-
+    public ServerKeyAccepted() {
+        canBeEncrypted = false;
+    }
+    
     @Override
     public int writeBody(DataOutputStream dos) {
         return dos.size();

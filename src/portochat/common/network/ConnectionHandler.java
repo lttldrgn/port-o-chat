@@ -16,11 +16,10 @@
  */
 package portochat.common.network;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.net.SocketException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -34,7 +33,6 @@ import portochat.common.network.event.NetEvent;
 import portochat.common.network.event.NetListener;
 import portochat.common.network.handler.BufferHandler;
 import portochat.common.network.handler.ChatHandler;
-import portochat.common.network.handler.HandshakeHandler;
 import portochat.server.UserDatabase;
 
 /**
@@ -129,6 +127,7 @@ public class ConnectionHandler {
         netData.socket = socket;
         defaultData.populate();
         netData.data = defaultData.toByteArray();
+        netData.canBeEncrypted = defaultData.canBeEncrypted();
         writeQueue.offer(netData);
     }
     
@@ -233,8 +232,8 @@ public class ConnectionHandler {
      */
     private class IncomingThread extends Thread {
 
-        private Socket incomingSocket = null;
-        private BufferedInputStream bis = null;
+        private final Socket incomingSocket;
+        private DataInputStream inputStream;
         private User user = null;
 
         public IncomingThread(Socket incomingSocket) {
@@ -243,62 +242,76 @@ public class ConnectionHandler {
             this.incomingSocket = incomingSocket;
             user = userDatabase.getUserOfSocket(incomingSocket);
             try {
-                bis = new BufferedInputStream(incomingSocket.getInputStream());
+                inputStream = new DataInputStream(incomingSocket.getInputStream());
             } catch (IOException ex) {
                 logger.log(Level.SEVERE, "Error getting inputstream", ex);
             }
         }
 
+        /**
+         * Read a single message from the stream
+         * @param bis
+         * @return 
+         */
+        private byte[] readMessage() {
+            byte buffer[];
+            try {
+                int length = inputStream.readUnsignedShort();
+                int bytesRead = 0;
+                buffer = new byte[length];
+                while (bytesRead < length) {
+                    bytesRead += inputStream.read(buffer);
+                }
+                if (bytesRead > length) {
+                    logger.log(Level.WARNING, "Read too much data");
+                }
+            } catch (IOException ex) {
+                logger.log(Level.SEVERE, "Error reading stream", ex);
+                buffer = null;
+            }
+            return buffer;
+        }
+        
         @Override
         public void run() {
 
-            byte[] buffer = new byte[8192];
+            byte[] buffer;
 
-            int length;
-            try {
-                while ((length = bis.read(buffer)) != -1) {
+            while ((buffer = readMessage()) != null) {
 
-                    //TODO how to handle chunk data?
-                    for (BufferHandler handler : getHandlers(incomingSocket)) {
+                for (BufferHandler handler : getHandlers(incomingSocket)) {
 
-                        // If finished go to next, remove on outgoing
-                        if (handler.isFinished()) {
-                            continue;
-                        }
+                    // If finished go to next, remove on outgoing
+                    if (handler.isFinished()) {
+                        continue;
+                    }
 
-                        handler.processIncoming(incomingSocket, buffer, length);
+                    handler.processIncoming(incomingSocket, buffer, buffer.length);
 
-                        // Retrieve any data that needs to be sent to listeners
-                        List<DefaultData> listenerDataList = handler.getListenerData();
-                        if (listenerDataList != null
-                                && listenerDataList.size() > 0) {
-                            for (DefaultData defaultData : listenerDataList) {
-                                fireIncomingMessage(incomingSocket, defaultData);
-                            }
-                        }
-
-                        // Retrieve any data that needs to be sent to the socket
-                        List<DefaultData> socketDataList = handler.getSocketData();
-                        if (socketDataList != null
-                                && socketDataList.size() > 0) {
-                            for (DefaultData defaultData : socketDataList) {
-
-                                writeData(incomingSocket, defaultData);
-                            }
-                        }
-
-                        // If this handler consumes the message, stop iterating
-                        if (handler.isMessageConsumed()) {
-                            break;
+                    // Retrieve any data that needs to be sent to listeners
+                    List<DefaultData> listenerDataList = handler.getListenerData();
+                    if (listenerDataList != null
+                            && listenerDataList.size() > 0) {
+                        for (DefaultData defaultData : listenerDataList) {
+                            fireIncomingMessage(incomingSocket, defaultData);
                         }
                     }
+
+                    // Retrieve any data that needs to be sent to the socket
+                    List<DefaultData> socketDataList = handler.getSocketData();
+                    if (socketDataList != null
+                            && socketDataList.size() > 0) {
+                        for (DefaultData defaultData : socketDataList) {
+
+                            writeData(incomingSocket, defaultData);
+                        }
+                    }
+
+                    // If this handler consumes the message, stop iterating
+                    if (handler.isMessageConsumed()) {
+                        break;
+                    }
                 }
-            } catch (SocketException ex) {
-                reportError(user, Level.INFO,
-                        "Socket disconnected", ex);
-            } catch (IOException ex) {
-                reportError(user, Level.INFO,
-                        "IOException when reading", ex);
             }
 
             try {
@@ -363,18 +376,17 @@ public class ConnectionHandler {
                             continue;
                         }
 
-                        data = handler.processOutgoing(
-                                netData.socket,
-                                netData.data, netData.data.length);
+                        data = handler.processOutgoing(netData);
 
                         if (data != null) {
                             try {
-                                BufferedOutputStream bos =
-                                        new BufferedOutputStream(netData.socket.getOutputStream());
+                                DataOutputStream dos = new DataOutputStream(
+                                        netData.socket.getOutputStream());
                                 logger.log(Level.FINEST, "{0} is writing:{1}",
                                         new Object[]{handler, Util.byteArrayToHexString(data)});
-                                bos.write(data);
-                                bos.flush();
+                                dos.writeShort(data.length);
+                                dos.write(data);
+                                dos.flush();
                             } catch (IOException ex) {
                                 if (isClientSocket) {
                                     processingOutbound = false;
@@ -437,10 +449,11 @@ public class ConnectionHandler {
     /*
      * Used to bundle up the socket and data byte array
      */
-    private class NetData {
+    public class NetData {
 
-        Socket socket = null;
-        byte[] data = null;
+        public Socket socket = null;
+        public byte[] data = null;
+        public boolean canBeEncrypted;
         
         @Override
         public String toString() {

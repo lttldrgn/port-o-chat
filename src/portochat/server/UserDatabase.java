@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.crypto.SecretKey;
 import portochat.common.User;
 import portochat.common.network.handler.BufferHandler;
 
@@ -272,5 +273,19 @@ public class UserDatabase {
     
     public boolean isSocketEncrypted(Socket socket) {
         return socketEncryptionMap.get(socket);
+    }
+    
+    /**
+     * Get the secret key associated with the socket object
+     * @param socket
+     * @return Key of the socket/user or null if not found
+     */
+    public SecretKey getSecretKey(Socket socket) {
+        SecretKey key = null;
+        User user = getUserOfSocket(socket);
+        if (user != null) {
+            key = user.getSecretKey();
+        }
+        return key;
     }
 }

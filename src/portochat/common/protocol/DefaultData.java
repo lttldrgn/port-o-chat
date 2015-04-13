@@ -32,8 +32,13 @@ import java.util.logging.Logger;
 public abstract class DefaultData {
 
     private static final Logger logger = Logger.getLogger(DefaultData.class.getName());
+    public static int HEADER_LENGTH = 1 + 4 + 8; // message type + body length + time
     protected long time = 0;
     protected int length = 0;
+    /**
+     * Indicates if the data can be encrypted. Defaults to true.
+     */
+    protected boolean canBeEncrypted = true;
     
     /**
      * Public constructor for the default data class
@@ -49,7 +54,7 @@ public abstract class DefaultData {
     public void parse(DataInputStream dis) {
 
         try {
-            dis.skipBytes(1); // header
+            dis.skipBytes(1); // message type
             length = dis.readInt();
             time = dis.readLong();
         } catch (IOException ex) {
@@ -62,12 +67,12 @@ public abstract class DefaultData {
      * 
      * @param dos The data output stream
      */
-    public int writeHeader(DataOutputStream dos, Class clazz) {
+    private int writeHeader(DataOutputStream dos, Class clazz) {
 
         try {
             dos.writeByte(ProtocolHandler.getInstance().getHeader(clazz));
-            length += 1 + 4 + 8; //byte, int, long
-            dos.writeInt(length);
+            int totalLength = length + HEADER_LENGTH;
+            dos.writeInt(totalLength);
             dos.writeLong(time);
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "Unable to write header", ex);
@@ -147,28 +152,7 @@ public abstract class DefaultData {
     public void setLength(int length) {
         this.length = length;
     }
-
-    /**
-     * This method is used to return a log string of the data contained
-     * in this object.
-     */
-    public String toLogString() {
-        StringBuilder sb = new StringBuilder();
-
-        sb.append(getObjectName());
-        sb.append("\n");
-        sb.append("Length: ");
-        sb.append(length);
-        sb.append("\n");
-        sb.append("Time: ");
-        sb.append(time);
-
-        return sb.toString();
-    }
     
-    /**
-     * Overridden toString method
-     */    
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -189,5 +173,13 @@ public abstract class DefaultData {
      */
     public String getObjectName() {
         return "DefaultData";
+    }
+    
+    /**
+     * Retrieve if this data can be encrypted
+     * @return True if data allows encryption
+     */
+    public boolean canBeEncrypted() {
+        return canBeEncrypted;
     }
 }

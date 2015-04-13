@@ -17,12 +17,12 @@
 package portochat.common.network.handler;
 
 import java.net.Socket;
-import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.crypto.SecretKey;
 import portochat.common.User;
 import portochat.common.encryption.EncryptionManager;
+import portochat.common.network.ConnectionHandler.NetData;
 import portochat.common.protocol.ProtocolHandler;
 import portochat.server.UserDatabase;
 
@@ -36,9 +36,8 @@ public class ChatHandler extends BufferHandler {
 
     private static final Logger logger =
             Logger.getLogger(BufferHandler.class.getName());
-    private ProtocolHandler protocolHandler = null;
-    private EncryptionManager encryptionManager = null;
-    private Boolean encrypted = null;
+    private final ProtocolHandler protocolHandler;
+    private final EncryptionManager encryptionManager;
     
     public ChatHandler() {
         super();
@@ -53,45 +52,56 @@ public class ChatHandler extends BufferHandler {
         boolean error = false;
 
         logger.log(Level.FINEST, "ChatHandler.processOutgoing");
-        
-        byte[] parseBuffer = Arrays.copyOf(buffer, length);
-        if (isStreamEncrypted(socket)) {
+        int newLength = length-1;
+        byte[] parseBuffer = new byte[newLength];
+        System.arraycopy(buffer, 1, parseBuffer, 0, newLength);
+        if (buffer[0] == 1 && isEncryptionEnabled(socket)) {
             parseBuffer = encryptionManager.decrypt(getSecretKey(socket), parseBuffer);
-            length = parseBuffer.length;
+            newLength = parseBuffer.length;
         }
-        listenerDataList = protocolHandler.processData(parseBuffer, length);
+        listenerDataList = protocolHandler.processData(parseBuffer, newLength);
         
         return (!error);
     }
     
     @Override
-    public byte[] processOutgoing(Socket socket, byte[] buffer, int length) {
+    public byte[] processOutgoing(NetData data) {
         logger.log(Level.FINEST, "ChatHandler.processOutgoing");
+        Socket socket = data.socket;
+        byte[] buffer = data.data;
 
-        byte[] parseBuffer = Arrays.copyOf(buffer, length);
-        if (isStreamEncrypted(socket)) {
-            parseBuffer = encryptionManager.encrypt(getSecretKey(socket), parseBuffer);
+        // create an output buffer with the first byte indicating encryption
+        byte[] outputBuffer;
+        
+        if (data.canBeEncrypted && isEncryptionEnabled(socket)) {
+            byte encrypted[] = encryptionManager.encrypt(getSecretKey(socket), buffer);
+            outputBuffer = new byte[encrypted.length + 1];
+            outputBuffer[0] = 1; // encryption
+            System.arraycopy(encrypted, 0, outputBuffer, 1, encrypted.length);
+        } else {
+            // use original unmodified buffer
+            outputBuffer = new byte[buffer.length+1];
+            outputBuffer[0] = 0; // no encryption
+            System.arraycopy(buffer, 0, outputBuffer, 1, buffer.length);
         }
         
-        return parseBuffer;
+        return outputBuffer;
     }
     
-    private boolean isStreamEncrypted(Socket socket) {
+    private boolean isEncryptionEnabled(Socket socket) {
         
-        if (encrypted == null) {
-            if (serverHandler) {
-                User user = UserDatabase.getInstance().getUserOfSocket(socket);
-                encrypted = (user.getSecretKey() != null);
-            } else {
-                encrypted = (encryptionManager.getServerSecretKey() != null);
-            }
+        boolean encrypted;
+        if (serverHandler) {
+            encrypted = UserDatabase.getInstance().isSocketEncrypted(socket);
+        } else {
+            encrypted = (encryptionManager.getServerSecretKey() != null);
         }
         
         return encrypted;
     }
     
     private SecretKey getSecretKey(Socket socket) {
-        SecretKey secretKey = null;
+        SecretKey secretKey;
     
         if (serverHandler) {
             User user = UserDatabase.getInstance().getUserOfSocket(socket);

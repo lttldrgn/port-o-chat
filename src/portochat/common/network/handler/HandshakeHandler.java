@@ -25,6 +25,7 @@ import javax.crypto.SecretKey;
 import portochat.common.User;
 import portochat.common.Util;
 import portochat.common.encryption.EncryptionManager;
+import portochat.common.network.ConnectionHandler.NetData;
 import portochat.common.protocol.DefaultData;
 import portochat.common.protocol.Initialization;
 import portochat.common.protocol.InitializationEnum;
@@ -88,9 +89,9 @@ public class HandshakeHandler extends BufferHandler {
     }
 
     @Override
-    public byte[] processOutgoing(Socket socket, byte[] buffer, int length) {
+    public byte[] processOutgoing(NetData data) {
         logger.log(Level.FINEST, "HandshakeHandler.processOutgoing");
-        return Arrays.copyOf(buffer, length);
+        return Arrays.copyOf(data.data, data.data.length);
     }
 
     private void handleInitializationHandshake(Socket socket, Initialization init) {
