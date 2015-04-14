@@ -609,8 +609,6 @@ public class Client extends JFrame implements ActionListener,
                     if (error != null) {
                         statusPane.showMessage(error, null);
                         JOptionPane.showMessageDialog(Client.this, messages.getString("Client.msg.CouldNotConnectSeeStatusPaneForReason"));
-                    } else {
-                        connection.sendUsername(username);
                     }
                 } catch (InterruptedException | ExecutionException ex) {
                     logger.log(Level.SEVERE, "Error getting connection result", ex);
@@ -733,7 +731,6 @@ public class Client extends JFrame implements ActionListener,
             connection.sendPing();
             connected = true;
             myUserName = username;
-            connection.sendUserPublicKey();
             connection.sendUserListRequest();
             connection.requestListOfChannels();
             SwingUtilities.invokeLater(new Runnable() {

@@ -381,8 +381,10 @@ public class ConnectionHandler {
                             try {
                                 DataOutputStream dos = new DataOutputStream(
                                         netData.socket.getOutputStream());
-                                logger.log(Level.FINEST, "{0} is writing:{1}",
-                                        new Object[]{handler, Util.byteArrayToHexString(data)});
+                                if (logger.isLoggable(Level.FINEST)) {
+                                    logger.log(Level.FINEST, "{0} is writing:{1}",
+                                            new Object[]{handler, Util.byteArrayToHexString(data)});
+                                }
                                 dos.writeShort(data.length);
                                 dos.write(data);
                                 dos.flush();

@@ -21,18 +21,25 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.InvalidParameterSpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.KeyGenerator;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -104,10 +111,11 @@ public class EncryptionManager {
      * @return The encrypted byte array (can be null if an error occurred)
      */
     public byte[] encrypt(SecretKey secretKey, byte[] data) {
-        EncryptedData encryptedData = null;
-
-        logger.log(Level.FINEST, "\nencrypt(data) ->" + "\ndata:{0}",
-                Util.byteArrayToHexString(data));
+        byte[] ivCipherData = null;
+        if (logger.isLoggable(Level.FINEST)) {
+            logger.log(Level.FINEST, "\nencrypt(data) ->" + "\ndata:{0}",
+                    Util.byteArrayToHexString(data));
+        }
 
         try {
             Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
@@ -122,19 +130,23 @@ public class EncryptionManager {
             // Combine
             byte[] ivBytes = iv.getIV();
 
-            encryptedData = new EncryptedData();
+            EncryptedData encryptedData = new EncryptedData();
             encryptedData.setIvBytes(ivBytes);
             encryptedData.setEncryptedByteArray(encryptedByteArray);
-        } catch (Exception ex) {
+            ivCipherData = encryptedData.getByteArray();
+            if (logger.isLoggable(Level.FINEST)) {
+                logger.log(Level.FINEST, "encryptedData[{0}]:{1}", 
+                    new Object[]{
+                        encryptedData.getByteArray().length,
+                        Util.byteArrayToHexString(encryptedData.getByteArray())});
+                
+            }
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | 
+                IllegalBlockSizeException | BadPaddingException | InvalidParameterSpecException ex) {
             logger.log(Level.SEVERE, "Unable to encrypt message!", ex);
         }
 
-        logger.log(Level.FINEST, "encryptedData[{0}]:{1}", 
-                new Object[]{
-                    encryptedData.getByteArray().length,
-                    Util.byteArrayToHexString(encryptedData.getByteArray())});
-
-        return encryptedData.getByteArray();
+        return ivCipherData;
     }
 
     /**
@@ -147,11 +159,14 @@ public class EncryptionManager {
     public byte[] decrypt(SecretKey secretKey, byte[] encryptedBytes) {
         byte[] data = new byte[0];
 
-        logger.log(Level.FINEST,"\ndecrypt(encryptedData) ->"
-                + "\nencryptedData:[{0}]:{1}", 
-                new Object[]{
-                    encryptedBytes.length,
-                    Util.byteArrayToHexString(encryptedBytes)});
+        if (logger.isLoggable(Level.FINEST)) {
+            logger.log(Level.FINEST,"\ndecrypt(encryptedData) ->"
+                    + "\nencryptedData:[{0}]:{1}", 
+                    new Object[]{
+                        encryptedBytes.length,
+                        Util.byteArrayToHexString(encryptedBytes)});
+        }
+        
         try {
             int remainingBytes = encryptedBytes.length;
             while (remainingBytes > 0) {
@@ -172,11 +187,14 @@ public class EncryptionManager {
                         cipher.doFinal(encryptedData.getEncodedData()));                
             }
             
-        } catch (Exception ex) {
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | 
+                InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException ex) {
             logger.log(Level.SEVERE, "Unable to decrypt data", ex);
         }
 
-        logger.log(Level.FINEST, "data:{0}", Util.byteArrayToHexString(data));
+        if (logger.isLoggable(Level.FINEST)) {
+            logger.log(Level.FINEST, "data:{0}", Util.byteArrayToHexString(data));
+        }
 
         return data;
     }
@@ -267,7 +285,7 @@ public class EncryptionManager {
                     new X509EncodedKeySpec(encodedClientPublicKey);
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
             publicKey = keyFactory.generatePublic(publicKeySpec);
-        } catch (Exception ex) {
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException ex) {
             logger.log(Level.SEVERE, "Unable to generate client's public key "
                     + "from the encoded byte array!", ex);
         }
@@ -317,7 +335,8 @@ public class EncryptionManager {
             cipher.init(Cipher.ENCRYPT_MODE, clientPublicKey);
             encodedEncryptedSecretKey =
                     cipher.doFinal(serverSecretKey.getEncoded());
-        } catch (Exception ex) {
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | 
+                IllegalBlockSizeException | BadPaddingException ex) {
             logger.log(Level.SEVERE, "Unable to encrypt secret key with "
                     + "public key!", ex);
         }
@@ -341,14 +360,20 @@ public class EncryptionManager {
         try {
             Cipher privateCipher = Cipher.getInstance("RSA");
             privateCipher.init(Cipher.DECRYPT_MODE, getClientPrivateKey());
-            logger.log(Level.FINEST, "encodedEncryptedSecretKey: {0}",
-                    Util.byteArrayToHexString(encodedEncryptedSecretKey));
+            if (logger.isLoggable(Level.FINEST)) {
+                logger.log(Level.FINEST, "encodedEncryptedSecretKey: {0}",
+                        Util.byteArrayToHexString(encodedEncryptedSecretKey));
+            }
+            
             byte[] encodedSecretKey =
                     privateCipher.doFinal(encodedEncryptedSecretKey);
-            logger.log(Level.FINEST, "encodedSecretKey: {0}", 
-                    Util.byteArrayToHexString(encodedSecretKey));
+            if (logger.isLoggable(Level.FINEST)) {
+                logger.log(Level.FINEST, "encodedSecretKey: {0}", 
+                        Util.byteArrayToHexString(encodedSecretKey));
+            }
             secretKey = new SecretKeySpec(encodedSecretKey, "AES");
-        } catch (Exception ex) {
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException | 
+                IllegalBlockSizeException | BadPaddingException ex) {
             logger.log(Level.SEVERE, "Unable to decode secret key with "
                     + "private key!", ex);
         }

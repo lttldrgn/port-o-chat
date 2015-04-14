@@ -323,8 +323,10 @@ public class Server {
                 SetPublicKey pubKey = (SetPublicKey) defaultData;
                 user.setSecretKey(encryptionManager.generateServerSecretKey());
                 user.setClientPublicKey(encryptionManager.getClientPublicKey(pubKey.getEncodedPublicKey()));
-                logger.log(Level.FINEST, "public: {0}",
-                        Util.byteArrayToHexString(user.getClientPublicKey().getEncoded()));
+                if (logger.isLoggable(Level.FINEST)) {
+                    logger.log(Level.FINEST, "public: {0}",
+                            Util.byteArrayToHexString(user.getClientPublicKey().getEncoded()));
+                }
 
                 // Encode the private key using the client's public key
                 byte[] encodedEncryptedSecretKey =

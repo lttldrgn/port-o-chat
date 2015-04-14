@@ -73,6 +73,7 @@ public class ServerConnection {
         if (successful) {
             clientHandler = new ClientHandler();
             socket.addListener(clientHandler);
+            sendUserPublicKey();
         }
         return successful;
     }
@@ -244,7 +245,7 @@ public class ServerConnection {
                 encryptionManager.setServerSecretKey(serverSecretKey);
                 ServerKeyAccepted accepted = new ServerKeyAccepted();
                 socket.writeData(accepted);
-                // sendUsername(ServerConnection.this.username);
+                sendUsername(ServerConnection.this.username);
             } else {
                 logger.log(Level.WARNING, "{0}{1}", new Object[]{messages.getString("ServerConnection.msg.UnknownMessage"), defaultData});
             }
