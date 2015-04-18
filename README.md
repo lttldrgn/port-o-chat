@@ -17,3 +17,6 @@ Because we could, and we were bored? It started as an experiment to see if we co
 * Required: JDK 1.7 or higher
 * Required: Ant 1.8 or higher
 * Optional: Netbeans 8 IDE
+
+## Runtime Requirements
+* JRE 1.7 or higher
