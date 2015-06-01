@@ -117,7 +117,12 @@ public class ProtocolHandler {
                     DefaultData defaultData = (DefaultData)cons.newInstance();
                     defaultData.parse(dis);
                     defaultDataList.add(defaultData);
-                    index += defaultData.getLength();
+                    int dataLength = defaultData.getLength();
+                    index += dataLength;
+                    if (dataLength <= 0) {
+                        logger.log(Level.SEVERE, "Invalid data length: {0}", dataLength);
+                        break;
+                    }
                 }
                 catch (InstantiationException | IllegalAccessException | 
                         IllegalArgumentException | InvocationTargetException | 

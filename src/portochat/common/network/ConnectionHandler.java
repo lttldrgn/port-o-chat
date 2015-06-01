@@ -258,7 +258,7 @@ public class ConnectionHandler {
                 int length = inputStream.readUnsignedShort();
                 int bytesRead = 0;
                 buffer = new byte[length];
-                while (bytesRead < length) {
+                while (bytesRead != -1 && bytesRead < length) {
                     bytesRead += inputStream.read(buffer);
                 }
                 if (bytesRead > length) {
