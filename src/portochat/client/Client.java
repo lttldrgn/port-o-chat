@@ -114,7 +114,7 @@ public class Client extends JFrame implements ActionListener,
     private boolean connected = false;
     
     // previous state
-    private String username = messages.getString("Client.defaultvalue.User");
+    private volatile String username = messages.getString("Client.defaultvalue.User");
     private String server = "localhost";
     private int serverPort = ClientSettings.DEFAULT_SERVER_PORT;
     
@@ -586,8 +586,8 @@ public class Client extends JFrame implements ActionListener,
             protected String doInBackground() throws Exception {
                 String error = null;
                 try {
-                    connection.connectToServer(server, serverPort);
                     connection.setUsername(username);
+                    connection.connectToServer(server, serverPort);
                 } catch (UnknownHostException e) {
                     error = messages.getString("Client.msg.ConnectionFailedBecauseOfUnknownServerNamePleaseCheckTheServerName");
                 } catch (ConnectException e) {

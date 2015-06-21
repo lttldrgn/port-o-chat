@@ -27,6 +27,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import portochat.common.User;
 import portochat.common.Util;
+import portochat.common.encryption.EncryptionManager;
 import portochat.common.protocol.DefaultData;
 import portochat.common.protocol.UserConnectionStatus;
 import portochat.common.network.event.NetEvent;
@@ -337,6 +338,8 @@ public class ConnectionHandler {
                     user.setHost(incomingSocket.getInetAddress().getHostName());
                 }
                 userConnection.setUser(user);
+            } else {
+                EncryptionManager.getInstance().setServerSecretKey(null);
             }
             userConnection.setConnected(false);
             userConnection.populate();

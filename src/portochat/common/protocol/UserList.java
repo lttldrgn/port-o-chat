@@ -57,9 +57,8 @@ public class UserList extends DefaultData {
                 channel = dis.readUTF();
             }
             int numUsers = dis.readInt();
-            if (numUsers > 0) {
-                userList = new ArrayList<>();
-            }
+            userList = new ArrayList<>(numUsers);
+            
             for (int i = 0; i < numUsers; i++) {
                 userList.add(new User(dis));
             }
@@ -77,17 +76,7 @@ public class UserList extends DefaultData {
     public int writeBody(DataOutputStream dos) {
 
         try {
-            // The server fills this out, from the client this will be null.
-            if (userList == null) {
-                if (channel != null) {
-                    // Requesting users from channel
-                    dos.writeBoolean(true);
-                    dos.writeUTF(channel);
-                } else {
-                    // Requseting users from server
-                    dos.writeBoolean(false);
-                }
-            } else if (channel != null) {
+            if (channel != null) {
                 dos.writeBoolean(true);
                 dos.writeUTF(channel);
             } else {

@@ -65,9 +65,7 @@ public abstract class BufferHandler {
     /**
      * This method processes the outgoing buffer.
      * 
-     * @param socket The socket the buffer is sending to
-     * @param buffer The buffer to process
-     * @param length The readable length of the buffer
+     * @param netData Original packet data
      * @return the byte array that should be sent to the socket
      */
     public abstract byte[] processOutgoing (NetData netData);
