@@ -29,7 +29,7 @@ public class ClientLauncher {
                Client client = new Client();
                client.init();
                client.setVisible(true);
-               client.checkVersion();
+//               client.checkVersion();
             } 
         });
     }

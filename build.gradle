@@ -1,0 +1,44 @@
+apply plugin: 'application'
+version = '1.0'
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+mainClassName = "portochat.client.ClientLauncher"
+
+task fullJar(type: Jar) {
+	manifest {
+        attributes 'Implementation-Title': 'Gradle Jar File',
+            'Implementation-Version': version,
+            'Main-Class': mainClassName
+    }
+    baseName = 'Port-O-Chat'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } 
+    } {
+//        exclude ""
+    }
+    with jar
+}
+
+task deploy(type: Copy, dependsOn:'jar') {
+    from 'src/logging.properties'
+    from 'scripts'
+    from 'build/libs/'
+    into 'build/deploy/'
+}
+
+task debug(type: JavaExec) {
+    debug = true
+    classpath = sourceSets.main.runtimeClasspath
+    main = mainClassName
+}
+
+task runServer(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'portochat.server.ServerLauncher'
+}
+
+task debugServer(type: JavaExec) {
+    debug = true
+    classpath = sourceSets.main.runtimeClasspath
+    main = 'portochat.server.ServerLauncher'
+}

@@ -46,8 +46,8 @@ public class AboutDialog extends JDialog implements ActionListener {
     private static final String aboutPortochat = "Port-O-Chat is licensed under " +
             "<a href=\"http://www.gnu.org/licenses/gpl-3.0.html\">GPL3</a>.<br> " +
             "<br>The source and latest version of Port-O-Chat can be found at:<br>" +
-            "<a href=\"http://code.google.com/p/port-o-chat\">" + 
-            "http://code.google.com/p/port-o-chat</a>";
+            "<a href=\"https://github.com/lttldrgn/port-o-chat\">" + 
+            "https://github.com/lttldrgn/port-o-chat</a>";
     
     private ResourceBundle messages = ResourceBundle.getBundle("portochat/resource/MessagesBundle", java.util.Locale.getDefault());
     private final JButton close = new JButton("Close");
@@ -62,7 +62,7 @@ public class AboutDialog extends JDialog implements ActionListener {
         textPane.setText(getAboutText());
         textPane.setEditable(false);
         content.add(textPane, BorderLayout.CENTER);
-        content.add(checkUpdate, BorderLayout.SOUTH);
+//        content.add(checkUpdate, BorderLayout.SOUTH);
         getContentPane().add(content, BorderLayout.CENTER);
         getContentPane().add(close, BorderLayout.SOUTH);
         close.addActionListener(this);
