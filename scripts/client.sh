@@ -1,2 +1,2 @@
 #!/bin/sh
-java -Djava.util.logging.config.file=logging.properties -jar PortOChat.jar
+java -Djava.util.logging.config.file=logging.properties -cp port-o-chat-1.0.jar com.lttldrgn.portochat.client.ClientLauncher

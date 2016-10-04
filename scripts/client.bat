@@ -1,1 +1,1 @@
-javaw -Djava.util.logging.config.file=logging.properties -cp PortOChat.jar portochat.client.ClientLauncher
+javaw -Djava.util.logging.config.file=logging.properties -cp  port-o-chat-1.0.jar com.lttldrgn.portochat.client.ClientLauncher
