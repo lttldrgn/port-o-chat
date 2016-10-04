@@ -3,7 +3,7 @@ version = '1.0'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-mainClassName = "portochat.client.ClientLauncher"
+mainClassName = "com.lttldrgn.portochat.client.ClientLauncher"
 
 task fullJar(type: Jar) {
 	manifest {
@@ -19,7 +19,7 @@ task fullJar(type: Jar) {
     with jar
 }
 
-task deploy(type: Copy, dependsOn:'jar') {
+task deploy(type: Copy, dependsOn:'build') {
     from 'src/logging.properties'
     from 'scripts'
     from 'build/libs/'
@@ -34,11 +34,11 @@ task debug(type: JavaExec) {
 
 task runServer(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'portochat.server.ServerLauncher'
+    main = 'com.lttldrgn.portochat.server.ServerLauncher'
 }
 
 task debugServer(type: JavaExec) {
     debug = true
     classpath = sourceSets.main.runtimeClasspath
-    main = 'portochat.server.ServerLauncher'
+    main = 'com.lttldrgn.portochat.server.ServerLauncher'
 }
