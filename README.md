@@ -14,9 +14,8 @@ Our goal is to have an easy to use and stable software so please open a ticket i
 Because we could, and we were bored? It started as an experiment to see if we could write a working chat client over the course of a week at nights after work. We still use it and work on it when we have a chance. 
 
 ## Build Requirements
-* Required: JDK 1.7 or higher
-* Required: Ant 1.8 or higher
+* Required: JDK 1.8
 * Optional: Netbeans 8 IDE
 
 ## Runtime Requirements
-* JRE 1.7 or higher
+* JRE 1.8 or higher
