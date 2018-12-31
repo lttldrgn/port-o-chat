@@ -85,6 +85,7 @@ public abstract class DefaultData {
      * Writes the body data to the data output stream
      * 
      * @param dos The data output stream
+     * @return Size of the date in the stream in bytes
      */
     public abstract int writeBody(DataOutputStream dos);
 

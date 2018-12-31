@@ -16,12 +16,10 @@
  */
 package com.lttldrgn.portochat.client;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import com.lttldrgn.portochat.common.encryption.EncryptionManager;
+import com.lttldrgn.portochat.common.network.ConnectionHandler;
+import com.lttldrgn.portochat.common.network.event.NetEvent;
+import com.lttldrgn.portochat.common.network.event.NetListener;
 import com.lttldrgn.portochat.common.protocol.ChannelJoinPart;
 import com.lttldrgn.portochat.common.protocol.ChannelList;
 import com.lttldrgn.portochat.common.protocol.ChannelStatus;
@@ -29,22 +27,23 @@ import com.lttldrgn.portochat.common.protocol.ChatMessage;
 import com.lttldrgn.portochat.common.protocol.DefaultData;
 import com.lttldrgn.portochat.common.protocol.Ping;
 import com.lttldrgn.portochat.common.protocol.Pong;
-import com.lttldrgn.portochat.common.protocol.ServerMessage;
-import com.lttldrgn.portochat.common.protocol.UserConnectionStatus;
-import com.lttldrgn.portochat.common.protocol.request.SetUsernameRequest;
-import com.lttldrgn.portochat.common.protocol.UserList;
-import com.lttldrgn.portochat.common.network.ConnectionHandler;
-import com.lttldrgn.portochat.common.network.event.NetEvent;
-import com.lttldrgn.portochat.common.network.event.NetListener;
-import java.util.ResourceBundle;
-import javax.crypto.SecretKey;
+import com.lttldrgn.portochat.common.protocol.ProtoMessage;
+import com.lttldrgn.portochat.common.protocol.ProtoUtil;
 import com.lttldrgn.portochat.common.protocol.ServerKeyAccepted;
+import com.lttldrgn.portochat.common.protocol.ServerMessage;
 import com.lttldrgn.portochat.common.protocol.ServerSharedKey;
 import com.lttldrgn.portochat.common.protocol.SetPublicKey;
+import com.lttldrgn.portochat.common.protocol.UserConnectionStatus;
 import com.lttldrgn.portochat.common.protocol.UserDoesNotExist;
-import com.lttldrgn.portochat.common.protocol.request.ChannelListRequest;
-import com.lttldrgn.portochat.common.protocol.request.ChannelUserListRequest;
-import com.lttldrgn.portochat.common.protocol.request.UserListRequest;
+import com.lttldrgn.portochat.common.protocol.UserList;
+import com.lttldrgn.portochat.proto.Portochat;
+import java.io.IOException;
+import java.util.List;
+import java.util.ResourceBundle;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.crypto.SecretKey;
 
 /**
  * Handles all the client interaction with the server
@@ -102,9 +101,9 @@ public class ServerConnection {
     }
     
     public void sendUsername(String newUsername) {
-        SetUsernameRequest request = new SetUsernameRequest();
-        request.setUser(newUsername);
-        socket.writeData(request);
+        Portochat.PortoChatMessage request = ProtoUtil.createSetUserNameRequest(newUsername);
+        ProtoMessage message = new ProtoMessage(request);
+        socket.writeData(message);
     }
     
     public void sendPing() {
@@ -127,8 +126,9 @@ public class ServerConnection {
     }
     
     public void sendUserListRequest() {
-        UserListRequest request = new UserListRequest();
-        socket.writeData(request);
+        Portochat.PortoChatMessage message = ProtoUtil.createUserListRequest();
+        ProtoMessage protoMessage = new ProtoMessage(message);
+        socket.writeData(protoMessage);
     }
     
     public void joinChannel(String channel) {
@@ -146,13 +146,15 @@ public class ServerConnection {
     }
     
     public void requestListOfChannels() {
-        ChannelListRequest request = new ChannelListRequest();
-        socket.writeData(request);
+        Portochat.PortoChatMessage message = ProtoUtil.createChannelListRequest();
+        ProtoMessage protoMessage = new ProtoMessage(message);
+        socket.writeData(protoMessage);
     }
     
     public void requestUsersInChannel(String channel) {
-        ChannelUserListRequest request = new ChannelUserListRequest(channel);
-        socket.writeData(request);        
+        Portochat.PortoChatMessage message = ProtoUtil.createChannelUserListRequest(channel);
+        ProtoMessage protoMessage = new ProtoMessage(message);
+        socket.writeData(protoMessage);
     }
 
     public void addDataListener(ServerDataListener listener) {

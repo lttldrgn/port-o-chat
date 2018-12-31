@@ -66,10 +66,7 @@ public class ProtocolHandler {
      */
     private void initialize() {
         protocolClassMap = new HashMap<>();
-        protocolClassMap.put((byte)0, "com.lttldrgn.portochat.common.protocol.request.UserListRequest");
-        protocolClassMap.put((byte)1, "com.lttldrgn.portochat.common.protocol.request.ChannelListRequest");
-        protocolClassMap.put((byte)2, "com.lttldrgn.portochat.common.protocol.request.ChannelUserListRequest");
-        protocolClassMap.put((byte)3, "com.lttldrgn.portochat.common.protocol.request.SetUsernameRequest");
+        protocolClassMap.put((byte)0, "com.lttldrgn.portochat.common.protocol.ProtoMessage");
         protocolClassMap.put((byte)4, "com.lttldrgn.portochat.common.protocol.ServerMessage");
         protocolClassMap.put((byte)5, "com.lttldrgn.portochat.common.protocol.Ping");
         protocolClassMap.put((byte)6, "com.lttldrgn.portochat.common.protocol.Pong");

@@ -5,6 +5,12 @@ targetCompatibility = 1.8
 
 mainClassName = "com.lttldrgn.portochat.client.ClientLauncher"
 
+repositories {
+    mavenCentral()
+}
+dependencies {
+    compile 'com.google.protobuf:protobuf-java:3.5.1'
+}
 task fullJar(type: Jar) {
 	manifest {
         attributes 'Implementation-Title': 'Gradle Jar File',
@@ -41,4 +47,10 @@ task debugServer(type: JavaExec) {
     debug = true
     classpath = sourceSets.main.runtimeClasspath
     main = 'com.lttldrgn.portochat.server.ServerLauncher'
+}
+
+allprojects {
+  tasks.withType(JavaCompile) {
+    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+  }
 }

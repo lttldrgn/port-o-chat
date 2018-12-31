@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package portochat;
+
+option java_package = "com.lttldrgn.portochat.proto";
+
+message PortoChatMessage {
+    oneof ApplicationMessage {
+        Request request = 1;
+    }
+}
+
+message Request {
+    enum RequestType {
+        ChannelList = 0;
+        ChannelUserList = 1;
+        SetUserName = 2;
+        UserList = 3;
+    }
+    string requestId = 1;
+    RequestType requestType = 2;
+    string requestData = 3;
+}

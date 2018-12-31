@@ -37,17 +37,15 @@ import com.lttldrgn.portochat.common.protocol.Pong;
 import com.lttldrgn.portochat.common.protocol.ServerMessage;
 import com.lttldrgn.portochat.common.protocol.ServerMessageEnum;
 import com.lttldrgn.portochat.common.protocol.UserConnectionStatus;
-import com.lttldrgn.portochat.common.protocol.request.SetUsernameRequest;
 import com.lttldrgn.portochat.common.protocol.UserList;
 import com.lttldrgn.portochat.common.network.event.NetEvent;
 import com.lttldrgn.portochat.common.network.event.NetListener;
+import com.lttldrgn.portochat.common.protocol.ProtoMessage;
 import com.lttldrgn.portochat.common.protocol.ServerKeyAccepted;
 import com.lttldrgn.portochat.common.protocol.ServerSharedKey;
 import com.lttldrgn.portochat.common.protocol.SetPublicKey;
 import com.lttldrgn.portochat.common.protocol.UserDoesNotExist;
-import com.lttldrgn.portochat.common.protocol.request.ChannelListRequest;
-import com.lttldrgn.portochat.common.protocol.request.ChannelUserListRequest;
-import com.lttldrgn.portochat.common.protocol.request.UserListRequest;
+import com.lttldrgn.portochat.proto.Portochat.Request;
 import com.lttldrgn.portochat.server.network.ServerConnectionHandler;
 
 /**
@@ -152,50 +150,7 @@ public class Server {
 
             User user = userDatabase.getUserOfSocket(socket);
 
-            if (defaultData instanceof SetUsernameRequest) {
-                // Set user info
-                SetUsernameRequest request = (SetUsernameRequest) defaultData;
-                String oldUserName = user.getName();
-                boolean rename = (oldUserName != null);
-                boolean success;
-
-                if (!rename) {
-                    // First time setting a name
-                    success = userDatabase.addUser(request.getName(), socket);
-                } else {
-                    // Rename
-                    success = userDatabase.renameUser(user, request.getName());
-
-                    // Log
-                    logger.log(Level.INFO, "Renamed of {0} to {1} was {2}",
-                            new Object[]{oldUserName, request.getName(),
-                                success ? "successful!" : "unsuccessful!"});
-                }
-
-                ServerMessage serverMessage = new ServerMessage();
-                if (success) {
-                    user.setLastSeen(System.currentTimeMillis());
-                    if (!rename) {
-                        // Notify other users of connection
-                        UserConnectionStatus userConnection = new UserConnectionStatus();
-                        userConnection.setUser(user);
-                        userConnection.setConnected(true);
-
-                        ArrayList<Socket> userSocketList =
-                                (ArrayList<Socket>) userDatabase.getSocketList();
-                        sendToAllSockets(userSocketList, userConnection);
-                    } else {
-                        // update channel database
-                        channelDatabase.renameUser(oldUserName, request.getName());
-                    }
-                    serverMessage.setMessageEnum(ServerMessageEnum.USERNAME_SET);
-                    serverMessage.setAdditionalMessage(request.getName());
-                } else {
-                    serverMessage.setMessageEnum(ServerMessageEnum.ERROR_USERNAME_IN_USE);
-                    serverMessage.setAdditionalMessage(request.getName());
-                }
-                connection.writeData(socket, serverMessage);
-            } else if (defaultData instanceof Ping) {
+            if (defaultData instanceof Ping) {
                 // Send a pong
                 Pong pong = new Pong();
                 pong.setTimestamp(((Ping) defaultData).getTimestamp());
@@ -235,17 +190,6 @@ public class Server {
                         connection.writeData(socket, userDoesNotExist);
                     }
                 }
-            } else if (defaultData instanceof UserListRequest) {
-                UserList userList = new UserList();
-                userList.setUserList(userDatabase.getUserList());
-                connection.writeData(socket, userList);
-            } else if (defaultData instanceof ChannelUserListRequest) {
-                ChannelUserListRequest request = (ChannelUserListRequest)defaultData; 
-                UserList channelUserList = new UserList();
-                String channel = request.getChannelName();
-                channelUserList.setChannel(channel);
-                channelUserList.setUserList(channelDatabase.getUsersInChannel(channel));
-                connection.writeData(socket, channelUserList);
             } else if (defaultData instanceof UserConnectionStatus) {
                 UserConnectionStatus userConnection = ((UserConnectionStatus) defaultData);
 
@@ -274,10 +218,12 @@ public class Server {
 
                 // Log the connection
                 logger.info(userConnection.toString());
-            } else if (defaultData instanceof ChannelListRequest) {
-                ChannelList channelList = new ChannelList();
-                channelList.setChannelList(channelDatabase.getListOfChannels());
-                connection.writeData(socket, channelList);
+            } else if (defaultData instanceof ProtoMessage) {
+                ProtoMessage protoMessage = (ProtoMessage) defaultData;
+                Request request = protoMessage.getMessage().getRequest();
+                if (request != null) {
+                    handleRequest(user, request, socket);
+                }
             } else if (defaultData instanceof ChannelJoinPart) {
                 ChannelJoinPart channelJoinPart = ((ChannelJoinPart) defaultData);
 
@@ -341,6 +287,77 @@ public class Server {
                 logger.log(Level.WARNING, "Unhandled message: {0}", defaultData);
             }
         }
+    }
+
+    private void handleRequest(User user, Request request, Socket socket) {
+        switch (request.getRequestType()) {
+            case ChannelList:
+                ChannelList channelList = new ChannelList();
+                channelList.setChannelList(channelDatabase.getListOfChannels());
+                connection.writeData(socket, channelList);
+                break;
+            case ChannelUserList:
+                UserList channelUserList = new UserList();
+                String channel = request.getRequestData();
+                channelUserList.setChannel(channel);
+                channelUserList.setUserList(channelDatabase.getUsersInChannel(channel));
+                connection.writeData(socket, channelUserList);
+                break;
+            case SetUserName:
+                handleSetUserNameRequest(user, request.getRequestData(), socket);
+                break;
+            case UserList:
+                UserList userList = new UserList();
+                userList.setUserList(userDatabase.getUserList());
+                connection.writeData(socket, userList);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void handleSetUserNameRequest(User user, String newName, Socket socket) {
+        // Set user info
+        String oldUserName = user.getName();
+        boolean rename = (oldUserName != null);
+        boolean success;
+
+        if (!rename) {
+            // First time setting a name
+            success = userDatabase.addUser(newName, socket);
+        } else {
+            // Rename
+            success = userDatabase.renameUser(user, newName);
+
+            // Log
+            logger.log(Level.INFO, "Renamed of {0} to {1} was {2}",
+                    new Object[]{oldUserName, newName,
+                        success ? "successful!" : "unsuccessful!"});
+        }
+
+        ServerMessage serverMessage = new ServerMessage();
+        if (success) {
+            user.setLastSeen(System.currentTimeMillis());
+            if (!rename) {
+                // Notify other users of connection
+                UserConnectionStatus userConnection = new UserConnectionStatus();
+                userConnection.setUser(user);
+                userConnection.setConnected(true);
+
+                ArrayList<Socket> userSocketList
+                        = (ArrayList<Socket>) userDatabase.getSocketList();
+                sendToAllSockets(userSocketList, userConnection);
+            } else {
+                // update channel database
+                channelDatabase.renameUser(oldUserName, newName);
+            }
+            serverMessage.setMessageEnum(ServerMessageEnum.USERNAME_SET);
+            serverMessage.setAdditionalMessage(newName);
+        } else {
+            serverMessage.setMessageEnum(ServerMessageEnum.ERROR_USERNAME_IN_USE);
+            serverMessage.setAdditionalMessage(newName);
+        }
+        connection.writeData(socket, serverMessage);
     }
 
     private void sendToAllSockets(List<Socket> userSocketList, DefaultData data) {
