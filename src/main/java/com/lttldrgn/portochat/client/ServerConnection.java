@@ -132,10 +132,9 @@ public class ServerConnection {
     }
     
     public void joinChannel(String channel) {
-        ChannelJoinPart channelJoinPart = new ChannelJoinPart();
-        channelJoinPart.setChannel(channel);
-        channelJoinPart.setJoined(true);
-        socket.writeData(channelJoinPart);
+        Portochat.PortoChatMessage request = ProtoUtil.createChannelJoinRequest(channel);
+        ProtoMessage protoMessage = new ProtoMessage(request);
+        socket.writeData(protoMessage);
     }
     
     public void partChannel(String channel) {

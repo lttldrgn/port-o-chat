@@ -60,11 +60,6 @@ public class ChannelJoinPart extends DefaultData {
         }
     }
 
-    /**
-     * Writes the data to the data output stream
-     * 
-     * @param dos The data output stream
-     */
     @Override
     public int writeBody(DataOutputStream dos) {
         try {
@@ -127,9 +122,6 @@ public class ChannelJoinPart extends DefaultData {
         this.joined = joined;
     }
 
-     /**
-     * Overridden toString method
-     */
     @Override
     public String toString() {
 
@@ -142,9 +134,6 @@ public class ChannelJoinPart extends DefaultData {
         return sb.toString();
     }
 
-    /**
-     * the object name
-     */
     @Override
     public String getObjectName() {
         return "ChannelJoinPart";

@@ -5,8 +5,9 @@ package portochat;
 option java_package = "com.lttldrgn.portochat.proto";
 
 message PortoChatMessage {
+    string originatorId = 1;
     oneof ApplicationMessage {
-        Request request = 1;
+        Request request = 2;
     }
 }
 
@@ -14,10 +15,18 @@ message Request {
     enum RequestType {
         ChannelList = 0;
         ChannelUserList = 1;
-        SetUserName = 2;
-        UserList = 3;
+        ChannelJoin = 2;
+        SetUserName = 3;
+        UserList = 4;
     }
     string requestId = 1;
     RequestType requestType = 2;
-    string requestData = 3;
+    oneof RequestData {
+        StringData stringRequestData = 3;
+
+    }
+}
+
+message StringData {
+    string value = 1;
 }

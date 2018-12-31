@@ -230,19 +230,7 @@ public class Server {
                 // Fill out the user
                 channelJoinPart.setUser(user);
                 
-                if (channelJoinPart.hasJoined()) {
-                    // joining
-                    if (!channelDatabase.channelExists(
-                            channelJoinPart.getChannel())) {
-                        // Creating channel, notify all users
-                        notifyChannelStatusChange(channelJoinPart.getChannel(), true);
-                    }
-                    channelDatabase.addUserToChannel(
-                            channelJoinPart.getChannel(),
-                            channelJoinPart.getUser());
-
-
-                } else {
+                if (!channelJoinPart.hasJoined()) {
                     // leaving
                     channelDatabase.removeUserFromChannel(
                             channelJoinPart.getChannel(),
@@ -255,13 +243,8 @@ public class Server {
                     }
                 }
 
-                // Notify users in that channel
-                ArrayList<Socket> userSocketList =
-                        (ArrayList<Socket>) channelDatabase.getSocketsOfUsersInChannel(
-                        channelJoinPart.getChannel(),
-                        channelJoinPart.getUser());
-
-                sendToAllSockets(userSocketList, channelJoinPart);
+                // Notify users in the channel
+                sendToChannelUsers(channelJoinPart.getChannel(), channelJoinPart.getUser(), channelJoinPart);
 
                 // Log the join/part
                 logger.info(channelJoinPart.toString());
@@ -291,6 +274,9 @@ public class Server {
 
     private void handleRequest(User user, Request request, Socket socket) {
         switch (request.getRequestType()) {
+            case ChannelJoin:
+                handleChannelJoinRequest(user, request);
+                break;
             case ChannelList:
                 ChannelList channelList = new ChannelList();
                 channelList.setChannelList(channelDatabase.getListOfChannels());
@@ -298,13 +284,13 @@ public class Server {
                 break;
             case ChannelUserList:
                 UserList channelUserList = new UserList();
-                String channel = request.getRequestData();
+                String channel = request.getStringRequestData().getValue();
                 channelUserList.setChannel(channel);
                 channelUserList.setUserList(channelDatabase.getUsersInChannel(channel));
                 connection.writeData(socket, channelUserList);
                 break;
             case SetUserName:
-                handleSetUserNameRequest(user, request.getRequestData(), socket);
+                handleSetUserNameRequest(user, request.getStringRequestData().getValue(), socket);
                 break;
             case UserList:
                 UserList userList = new UserList();
@@ -358,6 +344,31 @@ public class Server {
             serverMessage.setAdditionalMessage(newName);
         }
         connection.writeData(socket, serverMessage);
+    }
+
+    private void sendToChannelUsers(String channel, User filterUser, DefaultData data) {
+        // Notify users in channel
+        ArrayList<Socket> userSocketList =
+                (ArrayList<Socket>) channelDatabase.getSocketsOfUsersInChannel(
+                channel,
+                filterUser);
+        sendToAllSockets(userSocketList, data);
+    }
+
+    private void handleChannelJoinRequest(User user, Request request) {
+        String channel = request.getStringRequestData().getValue();
+        if (!channelDatabase.channelExists(channel)) {
+            // Creating channel, notify all users
+            notifyChannelStatusChange(channel, true);
+        }
+        channelDatabase.addUserToChannel(channel, user);
+
+        // notify all apps
+        ChannelJoinPart join = new ChannelJoinPart();
+        join.setChannel(channel);
+        join.setJoined(true);
+        join.setUser(user);
+        sendToChannelUsers(channel, user, join);
     }
 
     private void sendToAllSockets(List<Socket> userSocketList, DefaultData data) {

@@ -36,7 +36,7 @@ public class ProtoUtil {
         Portochat.PortoChatMessage.Builder appMessage = Portochat.PortoChatMessage.newBuilder();
         Portochat.Request.Builder request = Portochat.Request.newBuilder();
         request.setRequestType(Portochat.Request.RequestType.ChannelUserList);
-        request.setRequestData(channelName);
+        request.getStringRequestDataBuilder().setValue(channelName);
         appMessage.setRequest(request);
         return appMessage.build();
     }
@@ -54,7 +54,17 @@ public class ProtoUtil {
         Portochat.Request.Builder request = Portochat.Request.newBuilder();
         request.setRequestId(UUID.randomUUID().toString());
         request.setRequestType(Portochat.Request.RequestType.SetUserName);
-        request.setRequestData(username);
+        request.getStringRequestDataBuilder().setValue(username);
+        appMessage.setRequest(request);
+        return appMessage.build();
+    }
+
+    public static Portochat.PortoChatMessage createChannelJoinRequest(String channel) {
+        Portochat.PortoChatMessage.Builder appMessage = Portochat.PortoChatMessage.newBuilder();
+        Portochat.Request.Builder request = Portochat.Request.newBuilder();
+        request.setRequestId(UUID.randomUUID().toString());
+        request.setRequestType(Portochat.Request.RequestType.ChannelJoin);
+        request.getStringRequestDataBuilder().setValue(channel);
         appMessage.setRequest(request);
         return appMessage.build();
     }

@@ -43,8 +43,8 @@ public class ChannelDatabase {
      * Private constructor
      */
     private ChannelDatabase() {
-        channelMap = new ConcurrentHashMap<String, ArrayList<User>>();
-        userChannelMap = new ConcurrentHashMap<User, ArrayList<String>>();
+        channelMap = new ConcurrentHashMap<>();
+        userChannelMap = new ConcurrentHashMap<>();
         userDatabase = UserDatabase.getInstance();
     }
 
@@ -70,7 +70,7 @@ public class ChannelDatabase {
         ArrayList<User> userList = channelMap.get(channel);
         if (userList == null) {
             // New channel
-            userList = new ArrayList<User>();
+            userList = new ArrayList<>();
             channelMap.put(channel, userList);
         }
         userList.add(user);
@@ -78,7 +78,7 @@ public class ChannelDatabase {
         ArrayList<String> userChannelList = userChannelMap.get(user);
         if (userChannelList == null) {
             // First joined channel
-            userChannelList = new ArrayList<String>();
+            userChannelList = new ArrayList<>();
             userChannelMap.put(user, userChannelList);
         }
         userChannelList.add(channel);
@@ -195,11 +195,11 @@ public class ChannelDatabase {
      * 
      * @param user
      * 
-     * @return a List<String> containing the user's channels
+     * @return a List containing the user's channels
      */
     public List<String> getUserChannels(User user) {
         List<String> channelList = userChannelMap.get(user);
-        List<String> returnList = new ArrayList<String>();
+        List<String> returnList = new ArrayList<>();
         if (channelList != null) {
             returnList.addAll(channelList);
         }
@@ -235,17 +235,17 @@ public class ChannelDatabase {
      * 
      * @param channel
      * 
-     * @return a List<String> containing the users in the channel
+     * @return a List containing the users in the channel
      */
     public List<User> getUsersInChannel(String channel) {
         return channelMap.get(channel);
     }
     
     /**
-     * @return a List<String> containing all the channels
+     * @return a List containing all the channels
      */
     public List<String> getListOfChannels() {
-        return new ArrayList<String>(channelMap.keySet());
+        return new ArrayList<>(channelMap.keySet());
     }
 
     /**
@@ -255,35 +255,33 @@ public class ChannelDatabase {
      * @param filterUser Used to filter out a user you don't want in the list
      *        (e.g. the client)
      * 
-     * @return a List<Socket> containing all the user's sockets
+     * @return a List containing all the user's sockets
      */
     public List<Socket> getSocketsOfUsersInChannel(String channel, User filterUser) {
         ArrayList<Socket> userSocketList = null;
         ArrayList<User> userList = channelMap.get(channel);
         if (userList != null) {
-            ArrayList<User> copyOfUserList = new ArrayList<User>(channelMap.get(channel));
-            if (copyOfUserList != null) {
-                if (filterUser != null) {
-                    // Remove the sender's name
-                    Iterator iter = copyOfUserList.iterator();
-                    while (iter.hasNext()) {
-                        if (((User) iter.next()).equals(filterUser)) {
-                            iter.remove();
-                            break;
-                        }
+            ArrayList<User> copyOfUserList = new ArrayList<>(userList);
+
+            if (filterUser != null) {
+                // Remove the sender's name
+                Iterator iter = copyOfUserList.iterator();
+                while (iter.hasNext()) {
+                    if (((User) iter.next()).equals(filterUser)) {
+                        iter.remove();
+                        break;
                     }
                 }
-
-                // List of sockets for each user in the channel
-                userSocketList =
-                        (ArrayList<Socket>) userDatabase.getSocketListByUsers(copyOfUserList);
-
-            } else {
-                // Shouldn't happen
-                logger.log(Level.SEVERE,
-                        "{0} was unable to send message to {1} beacuse it doesn't exist!",
-                        new Object[]{filterUser, channel});
             }
+
+            // List of sockets for each user in the channel
+            userSocketList =
+                    (ArrayList<Socket>) userDatabase.getSocketListByUsers(copyOfUserList);
+        } else {
+            // Shouldn't happen
+            logger.log(Level.SEVERE,
+                    "User '{0}' was unable to send message to channel named {1} beacuse it doesn't exist!",
+                    new Object[]{filterUser, channel});
         }
         return userSocketList;
     }
