@@ -68,4 +68,13 @@ public class ProtoUtil {
         appMessage.setRequest(request);
         return appMessage.build();
     }
+
+    public static Portochat.PortoChatMessage createChannelPartNotification(String channel) {
+        Portochat.PortoChatMessage.Builder appMessage = Portochat.PortoChatMessage.newBuilder();
+        Portochat.Notification.Builder notification = Portochat.Notification.newBuilder();
+        notification.setType(Portochat.Notification.NotificationType.ChannelPart);
+        notification.getStringDataBuilder().setValue(channel);
+        appMessage.setNotification(notification);
+        return appMessage.build();
+    }
 }

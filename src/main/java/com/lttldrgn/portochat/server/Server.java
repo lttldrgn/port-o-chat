@@ -45,6 +45,7 @@ import com.lttldrgn.portochat.common.protocol.ServerKeyAccepted;
 import com.lttldrgn.portochat.common.protocol.ServerSharedKey;
 import com.lttldrgn.portochat.common.protocol.SetPublicKey;
 import com.lttldrgn.portochat.common.protocol.UserDoesNotExist;
+import com.lttldrgn.portochat.proto.Portochat.Notification;
 import com.lttldrgn.portochat.proto.Portochat.Request;
 import com.lttldrgn.portochat.server.network.ServerConnectionHandler;
 
@@ -220,10 +221,23 @@ public class Server {
                 logger.info(userConnection.toString());
             } else if (defaultData instanceof ProtoMessage) {
                 ProtoMessage protoMessage = (ProtoMessage) defaultData;
-                Request request = protoMessage.getMessage().getRequest();
-                if (request != null) {
-                    handleRequest(user, request, socket);
+                switch (protoMessage.getMessage().getApplicationMessageCase()) {
+                    case NOTIFICATION:
+                        Notification notification = protoMessage.getMessage().getNotification();
+                        if (notification != null) {
+                            handleNotification(user, notification, socket);
+                        }
+                        break;
+                    case REQUEST:
+                        Request request = protoMessage.getMessage().getRequest();
+                        if (request != null) {
+                            handleRequest(user, request, socket);
+                        }
+                        break;
+                    default:
+                        logger.log(Level.INFO, "Message type not supported: {0}", protoMessage.getMessage().getApplicationMessageCase());
                 }
+                
             } else if (defaultData instanceof ChannelJoinPart) {
                 ChannelJoinPart channelJoinPart = ((ChannelJoinPart) defaultData);
 
@@ -298,6 +312,7 @@ public class Server {
                 connection.writeData(socket, userList);
                 break;
             default:
+                logger.log(Level.INFO, "Unhandled request type: {0}", request.getRequestType());
                 break;
         }
     }
@@ -367,6 +382,24 @@ public class Server {
         ChannelJoinPart join = new ChannelJoinPart();
         join.setChannel(channel);
         join.setJoined(true);
+        join.setUser(user);
+        sendToChannelUsers(channel, user, join);
+    }
+
+    private void handleNotification(User user, Notification notification, Socket socket) {
+        switch (notification.getType()) {
+            case ChannelPart:
+                handleChannelPartNoticiation(user, notification.getStringData().getValue());
+                break;
+            default:
+                logger.log(Level.INFO, "Unsupported notification type: {0}", notification.getType());
+        }
+    }
+
+    private void handleChannelPartNoticiation(User user, String channel) {
+        ChannelJoinPart join = new ChannelJoinPart();
+        join.setChannel(channel);
+        join.setJoined(false);
         join.setUser(user);
         sendToChannelUsers(channel, user, join);
     }

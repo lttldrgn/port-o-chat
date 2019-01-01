@@ -41,6 +41,19 @@ public final class Portochat {
      */
     com.lttldrgn.portochat.proto.Portochat.RequestOrBuilder getRequestOrBuilder();
 
+    /**
+     * <code>.portochat.Notification notification = 3;</code>
+     */
+    boolean hasNotification();
+    /**
+     * <code>.portochat.Notification notification = 3;</code>
+     */
+    com.lttldrgn.portochat.proto.Portochat.Notification getNotification();
+    /**
+     * <code>.portochat.Notification notification = 3;</code>
+     */
+    com.lttldrgn.portochat.proto.Portochat.NotificationOrBuilder getNotificationOrBuilder();
+
     public com.lttldrgn.portochat.proto.Portochat.PortoChatMessage.ApplicationMessageCase getApplicationMessageCase();
   }
   /**
@@ -103,6 +116,20 @@ public final class Portochat {
               applicationMessageCase_ = 2;
               break;
             }
+            case 26: {
+              com.lttldrgn.portochat.proto.Portochat.Notification.Builder subBuilder = null;
+              if (applicationMessageCase_ == 3) {
+                subBuilder = ((com.lttldrgn.portochat.proto.Portochat.Notification) applicationMessage_).toBuilder();
+              }
+              applicationMessage_ =
+                  input.readMessage(com.lttldrgn.portochat.proto.Portochat.Notification.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom((com.lttldrgn.portochat.proto.Portochat.Notification) applicationMessage_);
+                applicationMessage_ = subBuilder.buildPartial();
+              }
+              applicationMessageCase_ = 3;
+              break;
+            }
             default: {
               if (!parseUnknownFieldProto3(
                   input, unknownFields, extensionRegistry, tag)) {
@@ -140,6 +167,7 @@ public final class Portochat {
     public enum ApplicationMessageCase
         implements com.google.protobuf.Internal.EnumLite {
       REQUEST(2),
+      NOTIFICATION(3),
       APPLICATIONMESSAGE_NOT_SET(0);
       private final int value;
       private ApplicationMessageCase(int value) {
@@ -156,6 +184,7 @@ public final class Portochat {
       public static ApplicationMessageCase forNumber(int value) {
         switch (value) {
           case 2: return REQUEST;
+          case 3: return NOTIFICATION;
           case 0: return APPLICATIONMESSAGE_NOT_SET;
           default: return null;
         }
@@ -231,6 +260,32 @@ public final class Portochat {
       return com.lttldrgn.portochat.proto.Portochat.Request.getDefaultInstance();
     }
 
+    public static final int NOTIFICATION_FIELD_NUMBER = 3;
+    /**
+     * <code>.portochat.Notification notification = 3;</code>
+     */
+    public boolean hasNotification() {
+      return applicationMessageCase_ == 3;
+    }
+    /**
+     * <code>.portochat.Notification notification = 3;</code>
+     */
+    public com.lttldrgn.portochat.proto.Portochat.Notification getNotification() {
+      if (applicationMessageCase_ == 3) {
+         return (com.lttldrgn.portochat.proto.Portochat.Notification) applicationMessage_;
+      }
+      return com.lttldrgn.portochat.proto.Portochat.Notification.getDefaultInstance();
+    }
+    /**
+     * <code>.portochat.Notification notification = 3;</code>
+     */
+    public com.lttldrgn.portochat.proto.Portochat.NotificationOrBuilder getNotificationOrBuilder() {
+      if (applicationMessageCase_ == 3) {
+         return (com.lttldrgn.portochat.proto.Portochat.Notification) applicationMessage_;
+      }
+      return com.lttldrgn.portochat.proto.Portochat.Notification.getDefaultInstance();
+    }
+
     private byte memoizedIsInitialized = -1;
     @java.lang.Override
     public final boolean isInitialized() {
@@ -251,6 +306,9 @@ public final class Portochat {
       if (applicationMessageCase_ == 2) {
         output.writeMessage(2, (com.lttldrgn.portochat.proto.Portochat.Request) applicationMessage_);
       }
+      if (applicationMessageCase_ == 3) {
+        output.writeMessage(3, (com.lttldrgn.portochat.proto.Portochat.Notification) applicationMessage_);
+      }
       unknownFields.writeTo(output);
     }
 
@@ -266,6 +324,10 @@ public final class Portochat {
       if (applicationMessageCase_ == 2) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(2, (com.lttldrgn.portochat.proto.Portochat.Request) applicationMessage_);
+      }
+      if (applicationMessageCase_ == 3) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(3, (com.lttldrgn.portochat.proto.Portochat.Notification) applicationMessage_);
       }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
@@ -293,6 +355,10 @@ public final class Portochat {
           result = result && getRequest()
               .equals(other.getRequest());
           break;
+        case 3:
+          result = result && getNotification()
+              .equals(other.getNotification());
+          break;
         case 0:
         default:
       }
@@ -313,6 +379,10 @@ public final class Portochat {
         case 2:
           hash = (37 * hash) + REQUEST_FIELD_NUMBER;
           hash = (53 * hash) + getRequest().hashCode();
+          break;
+        case 3:
+          hash = (37 * hash) + NOTIFICATION_FIELD_NUMBER;
+          hash = (53 * hash) + getNotification().hashCode();
           break;
         case 0:
         default:
@@ -488,6 +558,13 @@ public final class Portochat {
             result.applicationMessage_ = requestBuilder_.build();
           }
         }
+        if (applicationMessageCase_ == 3) {
+          if (notificationBuilder_ == null) {
+            result.applicationMessage_ = applicationMessage_;
+          } else {
+            result.applicationMessage_ = notificationBuilder_.build();
+          }
+        }
         result.applicationMessageCase_ = applicationMessageCase_;
         onBuilt();
         return result;
@@ -544,6 +621,10 @@ public final class Portochat {
         switch (other.getApplicationMessageCase()) {
           case REQUEST: {
             mergeRequest(other.getRequest());
+            break;
+          }
+          case NOTIFICATION: {
+            mergeNotification(other.getNotification());
             break;
           }
           case APPLICATIONMESSAGE_NOT_SET: {
@@ -797,6 +878,142 @@ public final class Portochat {
         applicationMessageCase_ = 2;
         onChanged();;
         return requestBuilder_;
+      }
+
+      private com.google.protobuf.SingleFieldBuilderV3<
+          com.lttldrgn.portochat.proto.Portochat.Notification, com.lttldrgn.portochat.proto.Portochat.Notification.Builder, com.lttldrgn.portochat.proto.Portochat.NotificationOrBuilder> notificationBuilder_;
+      /**
+       * <code>.portochat.Notification notification = 3;</code>
+       */
+      public boolean hasNotification() {
+        return applicationMessageCase_ == 3;
+      }
+      /**
+       * <code>.portochat.Notification notification = 3;</code>
+       */
+      public com.lttldrgn.portochat.proto.Portochat.Notification getNotification() {
+        if (notificationBuilder_ == null) {
+          if (applicationMessageCase_ == 3) {
+            return (com.lttldrgn.portochat.proto.Portochat.Notification) applicationMessage_;
+          }
+          return com.lttldrgn.portochat.proto.Portochat.Notification.getDefaultInstance();
+        } else {
+          if (applicationMessageCase_ == 3) {
+            return notificationBuilder_.getMessage();
+          }
+          return com.lttldrgn.portochat.proto.Portochat.Notification.getDefaultInstance();
+        }
+      }
+      /**
+       * <code>.portochat.Notification notification = 3;</code>
+       */
+      public Builder setNotification(com.lttldrgn.portochat.proto.Portochat.Notification value) {
+        if (notificationBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          applicationMessage_ = value;
+          onChanged();
+        } else {
+          notificationBuilder_.setMessage(value);
+        }
+        applicationMessageCase_ = 3;
+        return this;
+      }
+      /**
+       * <code>.portochat.Notification notification = 3;</code>
+       */
+      public Builder setNotification(
+          com.lttldrgn.portochat.proto.Portochat.Notification.Builder builderForValue) {
+        if (notificationBuilder_ == null) {
+          applicationMessage_ = builderForValue.build();
+          onChanged();
+        } else {
+          notificationBuilder_.setMessage(builderForValue.build());
+        }
+        applicationMessageCase_ = 3;
+        return this;
+      }
+      /**
+       * <code>.portochat.Notification notification = 3;</code>
+       */
+      public Builder mergeNotification(com.lttldrgn.portochat.proto.Portochat.Notification value) {
+        if (notificationBuilder_ == null) {
+          if (applicationMessageCase_ == 3 &&
+              applicationMessage_ != com.lttldrgn.portochat.proto.Portochat.Notification.getDefaultInstance()) {
+            applicationMessage_ = com.lttldrgn.portochat.proto.Portochat.Notification.newBuilder((com.lttldrgn.portochat.proto.Portochat.Notification) applicationMessage_)
+                .mergeFrom(value).buildPartial();
+          } else {
+            applicationMessage_ = value;
+          }
+          onChanged();
+        } else {
+          if (applicationMessageCase_ == 3) {
+            notificationBuilder_.mergeFrom(value);
+          }
+          notificationBuilder_.setMessage(value);
+        }
+        applicationMessageCase_ = 3;
+        return this;
+      }
+      /**
+       * <code>.portochat.Notification notification = 3;</code>
+       */
+      public Builder clearNotification() {
+        if (notificationBuilder_ == null) {
+          if (applicationMessageCase_ == 3) {
+            applicationMessageCase_ = 0;
+            applicationMessage_ = null;
+            onChanged();
+          }
+        } else {
+          if (applicationMessageCase_ == 3) {
+            applicationMessageCase_ = 0;
+            applicationMessage_ = null;
+          }
+          notificationBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>.portochat.Notification notification = 3;</code>
+       */
+      public com.lttldrgn.portochat.proto.Portochat.Notification.Builder getNotificationBuilder() {
+        return getNotificationFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.portochat.Notification notification = 3;</code>
+       */
+      public com.lttldrgn.portochat.proto.Portochat.NotificationOrBuilder getNotificationOrBuilder() {
+        if ((applicationMessageCase_ == 3) && (notificationBuilder_ != null)) {
+          return notificationBuilder_.getMessageOrBuilder();
+        } else {
+          if (applicationMessageCase_ == 3) {
+            return (com.lttldrgn.portochat.proto.Portochat.Notification) applicationMessage_;
+          }
+          return com.lttldrgn.portochat.proto.Portochat.Notification.getDefaultInstance();
+        }
+      }
+      /**
+       * <code>.portochat.Notification notification = 3;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          com.lttldrgn.portochat.proto.Portochat.Notification, com.lttldrgn.portochat.proto.Portochat.Notification.Builder, com.lttldrgn.portochat.proto.Portochat.NotificationOrBuilder> 
+          getNotificationFieldBuilder() {
+        if (notificationBuilder_ == null) {
+          if (!(applicationMessageCase_ == 3)) {
+            applicationMessage_ = com.lttldrgn.portochat.proto.Portochat.Notification.getDefaultInstance();
+          }
+          notificationBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              com.lttldrgn.portochat.proto.Portochat.Notification, com.lttldrgn.portochat.proto.Portochat.Notification.Builder, com.lttldrgn.portochat.proto.Portochat.NotificationOrBuilder>(
+                  (com.lttldrgn.portochat.proto.Portochat.Notification) applicationMessage_,
+                  getParentForChildren(),
+                  isClean());
+          applicationMessage_ = null;
+        }
+        applicationMessageCase_ = 3;
+        onChanged();;
+        return notificationBuilder_;
       }
       @java.lang.Override
       public final Builder setUnknownFields(
@@ -2457,6 +2674,889 @@ public final class Portochat {
 
   }
 
+  public interface NotificationOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:portochat.Notification)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>.portochat.Notification.NotificationType type = 1;</code>
+     */
+    int getTypeValue();
+    /**
+     * <code>.portochat.Notification.NotificationType type = 1;</code>
+     */
+    com.lttldrgn.portochat.proto.Portochat.Notification.NotificationType getType();
+
+    /**
+     * <code>.portochat.StringData stringData = 2;</code>
+     */
+    boolean hasStringData();
+    /**
+     * <code>.portochat.StringData stringData = 2;</code>
+     */
+    com.lttldrgn.portochat.proto.Portochat.StringData getStringData();
+    /**
+     * <code>.portochat.StringData stringData = 2;</code>
+     */
+    com.lttldrgn.portochat.proto.Portochat.StringDataOrBuilder getStringDataOrBuilder();
+
+    public com.lttldrgn.portochat.proto.Portochat.Notification.NotificationDataCase getNotificationDataCase();
+  }
+  /**
+   * Protobuf type {@code portochat.Notification}
+   */
+  public  static final class Notification extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:portochat.Notification)
+      NotificationOrBuilder {
+  private static final long serialVersionUID = 0L;
+    // Use Notification.newBuilder() to construct.
+    private Notification(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private Notification() {
+      type_ = 0;
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return this.unknownFields;
+    }
+    private Notification(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      int mutable_bitField0_ = 0;
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            case 8: {
+              int rawValue = input.readEnum();
+
+              type_ = rawValue;
+              break;
+            }
+            case 18: {
+              com.lttldrgn.portochat.proto.Portochat.StringData.Builder subBuilder = null;
+              if (notificationDataCase_ == 2) {
+                subBuilder = ((com.lttldrgn.portochat.proto.Portochat.StringData) notificationData_).toBuilder();
+              }
+              notificationData_ =
+                  input.readMessage(com.lttldrgn.portochat.proto.Portochat.StringData.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom((com.lttldrgn.portochat.proto.Portochat.StringData) notificationData_);
+                notificationData_ = subBuilder.buildPartial();
+              }
+              notificationDataCase_ = 2;
+              break;
+            }
+            default: {
+              if (!parseUnknownFieldProto3(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        this.unknownFields = unknownFields.build();
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return com.lttldrgn.portochat.proto.Portochat.internal_static_portochat_Notification_descriptor;
+    }
+
+    @java.lang.Override
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return com.lttldrgn.portochat.proto.Portochat.internal_static_portochat_Notification_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              com.lttldrgn.portochat.proto.Portochat.Notification.class, com.lttldrgn.portochat.proto.Portochat.Notification.Builder.class);
+    }
+
+    /**
+     * Protobuf enum {@code portochat.Notification.NotificationType}
+     */
+    public enum NotificationType
+        implements com.google.protobuf.ProtocolMessageEnum {
+      /**
+       * <code>ChannelPart = 0;</code>
+       */
+      ChannelPart(0),
+      UNRECOGNIZED(-1),
+      ;
+
+      /**
+       * <code>ChannelPart = 0;</code>
+       */
+      public static final int ChannelPart_VALUE = 0;
+
+
+      public final int getNumber() {
+        if (this == UNRECOGNIZED) {
+          throw new java.lang.IllegalArgumentException(
+              "Can't get the number of an unknown enum value.");
+        }
+        return value;
+      }
+
+      /**
+       * @deprecated Use {@link #forNumber(int)} instead.
+       */
+      @java.lang.Deprecated
+      public static NotificationType valueOf(int value) {
+        return forNumber(value);
+      }
+
+      public static NotificationType forNumber(int value) {
+        switch (value) {
+          case 0: return ChannelPart;
+          default: return null;
+        }
+      }
+
+      public static com.google.protobuf.Internal.EnumLiteMap<NotificationType>
+          internalGetValueMap() {
+        return internalValueMap;
+      }
+      private static final com.google.protobuf.Internal.EnumLiteMap<
+          NotificationType> internalValueMap =
+            new com.google.protobuf.Internal.EnumLiteMap<NotificationType>() {
+              public NotificationType findValueByNumber(int number) {
+                return NotificationType.forNumber(number);
+              }
+            };
+
+      public final com.google.protobuf.Descriptors.EnumValueDescriptor
+          getValueDescriptor() {
+        return getDescriptor().getValues().get(ordinal());
+      }
+      public final com.google.protobuf.Descriptors.EnumDescriptor
+          getDescriptorForType() {
+        return getDescriptor();
+      }
+      public static final com.google.protobuf.Descriptors.EnumDescriptor
+          getDescriptor() {
+        return com.lttldrgn.portochat.proto.Portochat.Notification.getDescriptor().getEnumTypes().get(0);
+      }
+
+      private static final NotificationType[] VALUES = values();
+
+      public static NotificationType valueOf(
+          com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+        if (desc.getType() != getDescriptor()) {
+          throw new java.lang.IllegalArgumentException(
+            "EnumValueDescriptor is not for this type.");
+        }
+        if (desc.getIndex() == -1) {
+          return UNRECOGNIZED;
+        }
+        return VALUES[desc.getIndex()];
+      }
+
+      private final int value;
+
+      private NotificationType(int value) {
+        this.value = value;
+      }
+
+      // @@protoc_insertion_point(enum_scope:portochat.Notification.NotificationType)
+    }
+
+    private int notificationDataCase_ = 0;
+    private java.lang.Object notificationData_;
+    public enum NotificationDataCase
+        implements com.google.protobuf.Internal.EnumLite {
+      STRINGDATA(2),
+      NOTIFICATIONDATA_NOT_SET(0);
+      private final int value;
+      private NotificationDataCase(int value) {
+        this.value = value;
+      }
+      /**
+       * @deprecated Use {@link #forNumber(int)} instead.
+       */
+      @java.lang.Deprecated
+      public static NotificationDataCase valueOf(int value) {
+        return forNumber(value);
+      }
+
+      public static NotificationDataCase forNumber(int value) {
+        switch (value) {
+          case 2: return STRINGDATA;
+          case 0: return NOTIFICATIONDATA_NOT_SET;
+          default: return null;
+        }
+      }
+      public int getNumber() {
+        return this.value;
+      }
+    };
+
+    public NotificationDataCase
+    getNotificationDataCase() {
+      return NotificationDataCase.forNumber(
+          notificationDataCase_);
+    }
+
+    public static final int TYPE_FIELD_NUMBER = 1;
+    private int type_;
+    /**
+     * <code>.portochat.Notification.NotificationType type = 1;</code>
+     */
+    public int getTypeValue() {
+      return type_;
+    }
+    /**
+     * <code>.portochat.Notification.NotificationType type = 1;</code>
+     */
+    public com.lttldrgn.portochat.proto.Portochat.Notification.NotificationType getType() {
+      @SuppressWarnings("deprecation")
+      com.lttldrgn.portochat.proto.Portochat.Notification.NotificationType result = com.lttldrgn.portochat.proto.Portochat.Notification.NotificationType.valueOf(type_);
+      return result == null ? com.lttldrgn.portochat.proto.Portochat.Notification.NotificationType.UNRECOGNIZED : result;
+    }
+
+    public static final int STRINGDATA_FIELD_NUMBER = 2;
+    /**
+     * <code>.portochat.StringData stringData = 2;</code>
+     */
+    public boolean hasStringData() {
+      return notificationDataCase_ == 2;
+    }
+    /**
+     * <code>.portochat.StringData stringData = 2;</code>
+     */
+    public com.lttldrgn.portochat.proto.Portochat.StringData getStringData() {
+      if (notificationDataCase_ == 2) {
+         return (com.lttldrgn.portochat.proto.Portochat.StringData) notificationData_;
+      }
+      return com.lttldrgn.portochat.proto.Portochat.StringData.getDefaultInstance();
+    }
+    /**
+     * <code>.portochat.StringData stringData = 2;</code>
+     */
+    public com.lttldrgn.portochat.proto.Portochat.StringDataOrBuilder getStringDataOrBuilder() {
+      if (notificationDataCase_ == 2) {
+         return (com.lttldrgn.portochat.proto.Portochat.StringData) notificationData_;
+      }
+      return com.lttldrgn.portochat.proto.Portochat.StringData.getDefaultInstance();
+    }
+
+    private byte memoizedIsInitialized = -1;
+    @java.lang.Override
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    @java.lang.Override
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (type_ != com.lttldrgn.portochat.proto.Portochat.Notification.NotificationType.ChannelPart.getNumber()) {
+        output.writeEnum(1, type_);
+      }
+      if (notificationDataCase_ == 2) {
+        output.writeMessage(2, (com.lttldrgn.portochat.proto.Portochat.StringData) notificationData_);
+      }
+      unknownFields.writeTo(output);
+    }
+
+    @java.lang.Override
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (type_ != com.lttldrgn.portochat.proto.Portochat.Notification.NotificationType.ChannelPart.getNumber()) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeEnumSize(1, type_);
+      }
+      if (notificationDataCase_ == 2) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(2, (com.lttldrgn.portochat.proto.Portochat.StringData) notificationData_);
+      }
+      size += unknownFields.getSerializedSize();
+      memoizedSize = size;
+      return size;
+    }
+
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof com.lttldrgn.portochat.proto.Portochat.Notification)) {
+        return super.equals(obj);
+      }
+      com.lttldrgn.portochat.proto.Portochat.Notification other = (com.lttldrgn.portochat.proto.Portochat.Notification) obj;
+
+      boolean result = true;
+      result = result && type_ == other.type_;
+      result = result && getNotificationDataCase().equals(
+          other.getNotificationDataCase());
+      if (!result) return false;
+      switch (notificationDataCase_) {
+        case 2:
+          result = result && getStringData()
+              .equals(other.getStringData());
+          break;
+        case 0:
+        default:
+      }
+      result = result && unknownFields.equals(other.unknownFields);
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptor().hashCode();
+      hash = (37 * hash) + TYPE_FIELD_NUMBER;
+      hash = (53 * hash) + type_;
+      switch (notificationDataCase_) {
+        case 2:
+          hash = (37 * hash) + STRINGDATA_FIELD_NUMBER;
+          hash = (53 * hash) + getStringData().hashCode();
+          break;
+        case 0:
+        default:
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static com.lttldrgn.portochat.proto.Portochat.Notification parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lttldrgn.portochat.proto.Portochat.Notification parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lttldrgn.portochat.proto.Portochat.Notification parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lttldrgn.portochat.proto.Portochat.Notification parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lttldrgn.portochat.proto.Portochat.Notification parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static com.lttldrgn.portochat.proto.Portochat.Notification parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static com.lttldrgn.portochat.proto.Portochat.Notification parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.lttldrgn.portochat.proto.Portochat.Notification parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.lttldrgn.portochat.proto.Portochat.Notification parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static com.lttldrgn.portochat.proto.Portochat.Notification parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static com.lttldrgn.portochat.proto.Portochat.Notification parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static com.lttldrgn.portochat.proto.Portochat.Notification parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    @java.lang.Override
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(com.lttldrgn.portochat.proto.Portochat.Notification prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    @java.lang.Override
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code portochat.Notification}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:portochat.Notification)
+        com.lttldrgn.portochat.proto.Portochat.NotificationOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return com.lttldrgn.portochat.proto.Portochat.internal_static_portochat_Notification_descriptor;
+      }
+
+      @java.lang.Override
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return com.lttldrgn.portochat.proto.Portochat.internal_static_portochat_Notification_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                com.lttldrgn.portochat.proto.Portochat.Notification.class, com.lttldrgn.portochat.proto.Portochat.Notification.Builder.class);
+      }
+
+      // Construct using com.lttldrgn.portochat.proto.Portochat.Notification.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      @java.lang.Override
+      public Builder clear() {
+        super.clear();
+        type_ = 0;
+
+        notificationDataCase_ = 0;
+        notificationData_ = null;
+        return this;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return com.lttldrgn.portochat.proto.Portochat.internal_static_portochat_Notification_descriptor;
+      }
+
+      @java.lang.Override
+      public com.lttldrgn.portochat.proto.Portochat.Notification getDefaultInstanceForType() {
+        return com.lttldrgn.portochat.proto.Portochat.Notification.getDefaultInstance();
+      }
+
+      @java.lang.Override
+      public com.lttldrgn.portochat.proto.Portochat.Notification build() {
+        com.lttldrgn.portochat.proto.Portochat.Notification result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      @java.lang.Override
+      public com.lttldrgn.portochat.proto.Portochat.Notification buildPartial() {
+        com.lttldrgn.portochat.proto.Portochat.Notification result = new com.lttldrgn.portochat.proto.Portochat.Notification(this);
+        result.type_ = type_;
+        if (notificationDataCase_ == 2) {
+          if (stringDataBuilder_ == null) {
+            result.notificationData_ = notificationData_;
+          } else {
+            result.notificationData_ = stringDataBuilder_.build();
+          }
+        }
+        result.notificationDataCase_ = notificationDataCase_;
+        onBuilt();
+        return result;
+      }
+
+      @java.lang.Override
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      @java.lang.Override
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      @java.lang.Override
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      @java.lang.Override
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      @java.lang.Override
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, java.lang.Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      @java.lang.Override
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          java.lang.Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      @java.lang.Override
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof com.lttldrgn.portochat.proto.Portochat.Notification) {
+          return mergeFrom((com.lttldrgn.portochat.proto.Portochat.Notification)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(com.lttldrgn.portochat.proto.Portochat.Notification other) {
+        if (other == com.lttldrgn.portochat.proto.Portochat.Notification.getDefaultInstance()) return this;
+        if (other.type_ != 0) {
+          setTypeValue(other.getTypeValue());
+        }
+        switch (other.getNotificationDataCase()) {
+          case STRINGDATA: {
+            mergeStringData(other.getStringData());
+            break;
+          }
+          case NOTIFICATIONDATA_NOT_SET: {
+            break;
+          }
+        }
+        this.mergeUnknownFields(other.unknownFields);
+        onChanged();
+        return this;
+      }
+
+      @java.lang.Override
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      @java.lang.Override
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        com.lttldrgn.portochat.proto.Portochat.Notification parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (com.lttldrgn.portochat.proto.Portochat.Notification) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+      private int notificationDataCase_ = 0;
+      private java.lang.Object notificationData_;
+      public NotificationDataCase
+          getNotificationDataCase() {
+        return NotificationDataCase.forNumber(
+            notificationDataCase_);
+      }
+
+      public Builder clearNotificationData() {
+        notificationDataCase_ = 0;
+        notificationData_ = null;
+        onChanged();
+        return this;
+      }
+
+
+      private int type_ = 0;
+      /**
+       * <code>.portochat.Notification.NotificationType type = 1;</code>
+       */
+      public int getTypeValue() {
+        return type_;
+      }
+      /**
+       * <code>.portochat.Notification.NotificationType type = 1;</code>
+       */
+      public Builder setTypeValue(int value) {
+        type_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.portochat.Notification.NotificationType type = 1;</code>
+       */
+      public com.lttldrgn.portochat.proto.Portochat.Notification.NotificationType getType() {
+        @SuppressWarnings("deprecation")
+        com.lttldrgn.portochat.proto.Portochat.Notification.NotificationType result = com.lttldrgn.portochat.proto.Portochat.Notification.NotificationType.valueOf(type_);
+        return result == null ? com.lttldrgn.portochat.proto.Portochat.Notification.NotificationType.UNRECOGNIZED : result;
+      }
+      /**
+       * <code>.portochat.Notification.NotificationType type = 1;</code>
+       */
+      public Builder setType(com.lttldrgn.portochat.proto.Portochat.Notification.NotificationType value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        
+        type_ = value.getNumber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>.portochat.Notification.NotificationType type = 1;</code>
+       */
+      public Builder clearType() {
+        
+        type_ = 0;
+        onChanged();
+        return this;
+      }
+
+      private com.google.protobuf.SingleFieldBuilderV3<
+          com.lttldrgn.portochat.proto.Portochat.StringData, com.lttldrgn.portochat.proto.Portochat.StringData.Builder, com.lttldrgn.portochat.proto.Portochat.StringDataOrBuilder> stringDataBuilder_;
+      /**
+       * <code>.portochat.StringData stringData = 2;</code>
+       */
+      public boolean hasStringData() {
+        return notificationDataCase_ == 2;
+      }
+      /**
+       * <code>.portochat.StringData stringData = 2;</code>
+       */
+      public com.lttldrgn.portochat.proto.Portochat.StringData getStringData() {
+        if (stringDataBuilder_ == null) {
+          if (notificationDataCase_ == 2) {
+            return (com.lttldrgn.portochat.proto.Portochat.StringData) notificationData_;
+          }
+          return com.lttldrgn.portochat.proto.Portochat.StringData.getDefaultInstance();
+        } else {
+          if (notificationDataCase_ == 2) {
+            return stringDataBuilder_.getMessage();
+          }
+          return com.lttldrgn.portochat.proto.Portochat.StringData.getDefaultInstance();
+        }
+      }
+      /**
+       * <code>.portochat.StringData stringData = 2;</code>
+       */
+      public Builder setStringData(com.lttldrgn.portochat.proto.Portochat.StringData value) {
+        if (stringDataBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          notificationData_ = value;
+          onChanged();
+        } else {
+          stringDataBuilder_.setMessage(value);
+        }
+        notificationDataCase_ = 2;
+        return this;
+      }
+      /**
+       * <code>.portochat.StringData stringData = 2;</code>
+       */
+      public Builder setStringData(
+          com.lttldrgn.portochat.proto.Portochat.StringData.Builder builderForValue) {
+        if (stringDataBuilder_ == null) {
+          notificationData_ = builderForValue.build();
+          onChanged();
+        } else {
+          stringDataBuilder_.setMessage(builderForValue.build());
+        }
+        notificationDataCase_ = 2;
+        return this;
+      }
+      /**
+       * <code>.portochat.StringData stringData = 2;</code>
+       */
+      public Builder mergeStringData(com.lttldrgn.portochat.proto.Portochat.StringData value) {
+        if (stringDataBuilder_ == null) {
+          if (notificationDataCase_ == 2 &&
+              notificationData_ != com.lttldrgn.portochat.proto.Portochat.StringData.getDefaultInstance()) {
+            notificationData_ = com.lttldrgn.portochat.proto.Portochat.StringData.newBuilder((com.lttldrgn.portochat.proto.Portochat.StringData) notificationData_)
+                .mergeFrom(value).buildPartial();
+          } else {
+            notificationData_ = value;
+          }
+          onChanged();
+        } else {
+          if (notificationDataCase_ == 2) {
+            stringDataBuilder_.mergeFrom(value);
+          }
+          stringDataBuilder_.setMessage(value);
+        }
+        notificationDataCase_ = 2;
+        return this;
+      }
+      /**
+       * <code>.portochat.StringData stringData = 2;</code>
+       */
+      public Builder clearStringData() {
+        if (stringDataBuilder_ == null) {
+          if (notificationDataCase_ == 2) {
+            notificationDataCase_ = 0;
+            notificationData_ = null;
+            onChanged();
+          }
+        } else {
+          if (notificationDataCase_ == 2) {
+            notificationDataCase_ = 0;
+            notificationData_ = null;
+          }
+          stringDataBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>.portochat.StringData stringData = 2;</code>
+       */
+      public com.lttldrgn.portochat.proto.Portochat.StringData.Builder getStringDataBuilder() {
+        return getStringDataFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>.portochat.StringData stringData = 2;</code>
+       */
+      public com.lttldrgn.portochat.proto.Portochat.StringDataOrBuilder getStringDataOrBuilder() {
+        if ((notificationDataCase_ == 2) && (stringDataBuilder_ != null)) {
+          return stringDataBuilder_.getMessageOrBuilder();
+        } else {
+          if (notificationDataCase_ == 2) {
+            return (com.lttldrgn.portochat.proto.Portochat.StringData) notificationData_;
+          }
+          return com.lttldrgn.portochat.proto.Portochat.StringData.getDefaultInstance();
+        }
+      }
+      /**
+       * <code>.portochat.StringData stringData = 2;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          com.lttldrgn.portochat.proto.Portochat.StringData, com.lttldrgn.portochat.proto.Portochat.StringData.Builder, com.lttldrgn.portochat.proto.Portochat.StringDataOrBuilder> 
+          getStringDataFieldBuilder() {
+        if (stringDataBuilder_ == null) {
+          if (!(notificationDataCase_ == 2)) {
+            notificationData_ = com.lttldrgn.portochat.proto.Portochat.StringData.getDefaultInstance();
+          }
+          stringDataBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              com.lttldrgn.portochat.proto.Portochat.StringData, com.lttldrgn.portochat.proto.Portochat.StringData.Builder, com.lttldrgn.portochat.proto.Portochat.StringDataOrBuilder>(
+                  (com.lttldrgn.portochat.proto.Portochat.StringData) notificationData_,
+                  getParentForChildren(),
+                  isClean());
+          notificationData_ = null;
+        }
+        notificationDataCase_ = 2;
+        onChanged();;
+        return stringDataBuilder_;
+      }
+      @java.lang.Override
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.setUnknownFieldsProto3(unknownFields);
+      }
+
+      @java.lang.Override
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return super.mergeUnknownFields(unknownFields);
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:portochat.Notification)
+    }
+
+    // @@protoc_insertion_point(class_scope:portochat.Notification)
+    private static final com.lttldrgn.portochat.proto.Portochat.Notification DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new com.lttldrgn.portochat.proto.Portochat.Notification();
+    }
+
+    public static com.lttldrgn.portochat.proto.Portochat.Notification getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<Notification>
+        PARSER = new com.google.protobuf.AbstractParser<Notification>() {
+      @java.lang.Override
+      public Notification parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return new Notification(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<Notification> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<Notification> getParserForType() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.lttldrgn.portochat.proto.Portochat.Notification getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_portochat_PortoChatMessage_descriptor;
   private static final 
@@ -2472,6 +3572,11 @@ public final class Portochat {
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_portochat_StringData_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_portochat_Notification_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_portochat_Notification_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -2481,18 +3586,23 @@ public final class Portochat {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\017portochat.proto\022\tportochat\"e\n\020PortoCha" +
-      "tMessage\022\024\n\014originatorId\030\001 \001(\t\022%\n\007reques" +
-      "t\030\002 \001(\0132\022.portochat.RequestH\000B\024\n\022Applica" +
-      "tionMessage\"\371\001\n\007Request\022\021\n\trequestId\030\001 \001" +
-      "(\t\0223\n\013requestType\030\002 \001(\0162\036.portochat.Requ" +
-      "est.RequestType\0222\n\021stringRequestData\030\003 \001" +
-      "(\0132\025.portochat.StringDataH\000\"c\n\013RequestTy" +
-      "pe\022\017\n\013ChannelList\020\000\022\023\n\017ChannelUserList\020\001" +
-      "\022\017\n\013ChannelJoin\020\002\022\017\n\013SetUserName\020\003\022\014\n\010Us" +
-      "erList\020\004B\r\n\013RequestData\"\033\n\nStringData\022\r\n" +
-      "\005value\030\001 \001(\tB\036\n\034com.lttldrgn.portochat.p" +
-      "rotob\006proto3"
+      "\n\017portochat.proto\022\tportochat\"\226\001\n\020PortoCh" +
+      "atMessage\022\024\n\014originatorId\030\001 \001(\t\022%\n\007reque" +
+      "st\030\002 \001(\0132\022.portochat.RequestH\000\022/\n\014notifi" +
+      "cation\030\003 \001(\0132\027.portochat.NotificationH\000B" +
+      "\024\n\022ApplicationMessage\"\371\001\n\007Request\022\021\n\treq" +
+      "uestId\030\001 \001(\t\0223\n\013requestType\030\002 \001(\0162\036.port" +
+      "ochat.Request.RequestType\0222\n\021stringReque" +
+      "stData\030\003 \001(\0132\025.portochat.StringDataH\000\"c\n" +
+      "\013RequestType\022\017\n\013ChannelList\020\000\022\023\n\017Channel" +
+      "UserList\020\001\022\017\n\013ChannelJoin\020\002\022\017\n\013SetUserNa" +
+      "me\020\003\022\014\n\010UserList\020\004B\r\n\013RequestData\"\033\n\nStr" +
+      "ingData\022\r\n\005value\030\001 \001(\t\"\254\001\n\014Notification\022" +
+      "6\n\004type\030\001 \001(\0162(.portochat.Notification.N" +
+      "otificationType\022+\n\nstringData\030\002 \001(\0132\025.po" +
+      "rtochat.StringDataH\000\"#\n\020NotificationType" +
+      "\022\017\n\013ChannelPart\020\000B\022\n\020NotificationDataB\036\n" +
+      "\034com.lttldrgn.portochat.protob\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -2511,7 +3621,7 @@ public final class Portochat {
     internal_static_portochat_PortoChatMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_portochat_PortoChatMessage_descriptor,
-        new java.lang.String[] { "OriginatorId", "Request", "ApplicationMessage", });
+        new java.lang.String[] { "OriginatorId", "Request", "Notification", "ApplicationMessage", });
     internal_static_portochat_Request_descriptor =
       getDescriptor().getMessageTypes().get(1);
     internal_static_portochat_Request_fieldAccessorTable = new
@@ -2524,6 +3634,12 @@ public final class Portochat {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_portochat_StringData_descriptor,
         new java.lang.String[] { "Value", });
+    internal_static_portochat_Notification_descriptor =
+      getDescriptor().getMessageTypes().get(3);
+    internal_static_portochat_Notification_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_portochat_Notification_descriptor,
+        new java.lang.String[] { "Type", "StringData", "NotificationData", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)

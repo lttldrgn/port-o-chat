@@ -8,6 +8,7 @@ message PortoChatMessage {
     string originatorId = 1;
     oneof ApplicationMessage {
         Request request = 2;
+        Notification notification = 3;
     }
 }
 
@@ -29,4 +30,14 @@ message Request {
 
 message StringData {
     string value = 1;
+}
+
+message Notification {
+    enum NotificationType {
+        ChannelPart = 0;
+    }
+    NotificationType type = 1;
+    oneof NotificationData {
+        StringData stringData = 2;
+    }
 }
