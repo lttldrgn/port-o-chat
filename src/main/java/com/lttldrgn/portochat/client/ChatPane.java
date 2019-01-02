@@ -69,8 +69,8 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
     private static final Logger logger =
             Logger.getLogger(ChatPane.class.getName());
     private final ResourceBundle messages = ResourceBundle.getBundle("portochat/resource/MessagesBundle", java.util.Locale.getDefault());
-    private DefaultListModel participantListModel = null;
-    private JList participantList = null;
+    private DefaultListModel<String> participantListModel = null;
+    private JList<String> participantList = null;
     private JPopupMenu viewPaneRightClickMenu;
     private final JTextPane viewPane = new JTextPane();
     private final JTextArea textEntry = new JTextArea();
@@ -114,8 +114,8 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
         viewPane.setEditable(false);
 
         if (isChannel) {
-            participantListModel = new DefaultListModel();
-            participantList = new JList(participantListModel);
+            participantListModel = new DefaultListModel<>();
+            participantList = new JList<>(participantListModel);
 
             c.gridx = 1;
             c.weightx = 0.2;

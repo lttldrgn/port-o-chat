@@ -238,30 +238,6 @@ public class Server {
                         logger.log(Level.INFO, "Message type not supported: {0}", protoMessage.getMessage().getApplicationMessageCase());
                 }
                 
-            } else if (defaultData instanceof ChannelJoinPart) {
-                ChannelJoinPart channelJoinPart = ((ChannelJoinPart) defaultData);
-
-                // Fill out the user
-                channelJoinPart.setUser(user);
-                
-                if (!channelJoinPart.hasJoined()) {
-                    // leaving
-                    channelDatabase.removeUserFromChannel(
-                            channelJoinPart.getChannel(),
-                            channelJoinPart.getUser());
-
-                    if (!channelDatabase.channelExists(
-                            channelJoinPart.getChannel())) {
-                        // Removing channel, notify all users
-                        notifyChannelStatusChange(channelJoinPart.getChannel(), false);
-                    }
-                }
-
-                // Notify users in the channel
-                sendToChannelUsers(channelJoinPart.getChannel(), channelJoinPart.getUser(), channelJoinPart);
-
-                // Log the join/part
-                logger.info(channelJoinPart.toString());
             } else if (defaultData instanceof SetPublicKey) {
                 SetPublicKey pubKey = (SetPublicKey) defaultData;
                 user.setSecretKey(encryptionManager.generateServerSecretKey());
@@ -397,6 +373,14 @@ public class Server {
     }
 
     private void handleChannelPartNoticiation(User user, String channel) {
+
+        channelDatabase.removeUserFromChannel(channel, user);
+
+        if (!channelDatabase.channelExists(channel)) {
+            // Channel was removed when user left so notify all users
+            notifyChannelStatusChange(channel, false);
+        }
+
         ChannelJoinPart join = new ChannelJoinPart();
         join.setChannel(channel);
         join.setJoined(false);

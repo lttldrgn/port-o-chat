@@ -96,11 +96,11 @@ public class Client extends JFrame implements ActionListener,
     private static final String SHOW_ABOUT_DIALOG = "SHOW_ABOUT_DIALOG";
     private final HashMap<String, ChatPane> chatPaneMap = new HashMap<>();
     private final HashMap<String, ChatPane> channelPaneMap = new HashMap<>();
-    private final DefaultListModel contactListModel = new DefaultListModel();
-    private final DefaultListModel channelListModel = new DefaultListModel();
+    private final DefaultListModel<String> contactListModel = new DefaultListModel<>();
+    private final DefaultListModel<String> channelListModel = new DefaultListModel<>();
     private JDialog chatContainerDialog = null;
-    private final JList contactList = new JList(contactListModel);
-    private final JList channelList = new JList(channelListModel);
+    private final JList<String> contactList = new JList<>(contactListModel);
+    private final JList<String> channelList = new JList<>(channelListModel);
     private final JMenuItem connectMenu = new JMenuItem(messages.getString("Client.menu.Connect"));
     private final JMenuItem createChannelMenu = new JMenuItem(messages.getString("Client.menu.CreateChannel"));
     private final JMenuItem disconnect = new JMenuItem(messages.getString("Client.menu.Disconnect"));

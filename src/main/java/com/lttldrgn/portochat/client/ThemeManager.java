@@ -11,7 +11,6 @@ import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeListener;
@@ -47,12 +46,12 @@ public class ThemeManager extends JDialog implements ActionListener {
     private PropertyChangeSupport pcs = new PropertyChangeSupport(this);
     private ChatPane chatPane = null;
     private final String values[] = {TOP_PANE_BACKGROUND, TOP_PANE_FOREGROUND};
-    private JComboBox themeChooser = new JComboBox();
-    private JComboBox componentChooser = new JComboBox(values);
-    private JButton ok = new JButton(messages.getString("ThemeManager.button.OK"));
-    private JButton apply = new JButton(messages.getString("ThemeManager.button.Apply"));
-    private JButton cancel = new JButton(messages.getString("ThemeManager.button.Cancel"));
-    private HashMap<String, String> lookAndFeelMap = new HashMap<String, String>();
+    private final JComboBox<String> themeChooser = new JComboBox<>();
+    private final JComboBox<String> componentChooser = new JComboBox<>(values);
+    private final JButton ok = new JButton(messages.getString("ThemeManager.button.OK"));
+    private final JButton apply = new JButton(messages.getString("ThemeManager.button.Apply"));
+    private final JButton cancel = new JButton(messages.getString("ThemeManager.button.Cancel"));
+    private final HashMap<String, String> lookAndFeelMap = new HashMap<>();
     private Component topLevelComponent;
     private LookAndFeel currentLAF;
     
@@ -91,13 +90,8 @@ public class ThemeManager extends JDialog implements ActionListener {
         chatPane.setBorder(border);
         
         add(chatPane, BorderLayout.CENTER);
-        themeChooser.addItemListener(new ItemListener() {
-
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                setLookAndFeel(ThemeManager.this);
-            }
-            
+        themeChooser.addItemListener((ItemEvent e) -> {
+            setLookAndFeel(ThemeManager.this);
         });
         
         JPanel bottom = new JPanel();

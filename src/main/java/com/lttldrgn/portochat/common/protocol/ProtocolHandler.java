@@ -104,8 +104,8 @@ public class ProtocolHandler {
             String protocolClassString = protocolClassMap.get(data[index]);
             if (protocolClassString != null) {
                 try {
-                    Class protocolClass = Class.forName(protocolClassString);
-                    Constructor cons = protocolClass.getConstructor();
+                    Class<?> protocolClass = Class.forName(protocolClassString);
+                    Constructor<?> cons = protocolClass.getConstructor();
                     byte[] chunk;
                     chunk = Arrays.copyOfRange(data, index, data.length);
                     DataInputStream dis = new DataInputStream(

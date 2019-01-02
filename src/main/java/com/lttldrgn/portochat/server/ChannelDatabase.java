@@ -35,7 +35,9 @@ public class ChannelDatabase {
 
     private static final Logger logger = Logger.getLogger(ChannelDatabase.class.getName());
     private static ChannelDatabase instance = null;
+    /** Map of Channel names to list of users */
     private Map<String, ArrayList<User>> channelMap = null;
+    /** Map of User to Channels they are in */
     private Map<User, ArrayList<String>> userChannelMap = null;   
     private UserDatabase userDatabase = null;
 
@@ -67,20 +69,14 @@ public class ChannelDatabase {
      * @param user
      */
     public void addUserToChannel(String channel, User user) {
-        ArrayList<User> userList = channelMap.get(channel);
-        if (userList == null) {
-            // New channel
-            userList = new ArrayList<>();
-            channelMap.put(channel, userList);
-        }
+        ArrayList<User> userList = channelMap.computeIfAbsent(channel, k -> {
+            return new ArrayList<>();
+        });
         userList.add(user);
         
-        ArrayList<String> userChannelList = userChannelMap.get(user);
-        if (userChannelList == null) {
-            // First joined channel
-            userChannelList = new ArrayList<>();
-            userChannelMap.put(user, userChannelList);
-        }
+        ArrayList<String> userChannelList = userChannelMap.computeIfAbsent(user, k -> {
+            return new ArrayList<>();
+        });
         userChannelList.add(channel);
     }
 
@@ -93,13 +89,7 @@ public class ChannelDatabase {
     public void removeUserFromChannel(String channel, User user) {
         ArrayList<User> userList = channelMap.get(channel);
         if (userList != null) {
-            Iterator iter = userList.iterator();
-            while (iter.hasNext()) {
-                if (((User) iter.next()).equals(user)) {
-                    iter.remove();
-                    break;
-                }
-            }
+            userList.remove(user);
 
             if (userList.isEmpty()) {
                 // Remove from map
@@ -110,16 +100,11 @@ public class ChannelDatabase {
             logger.log(Level.SEVERE, "Unable to remove {0} from {1}'s user list",
                     new Object[]{user, channel});
         }
-        
+
+        // clean up user-channel associations
         ArrayList<String> userChannelList = userChannelMap.get(user);
         if (userChannelList != null) {
-            Iterator iter = userChannelList.iterator();
-            while (iter.hasNext()) {
-                if (((String) iter.next()).equals(channel)) {
-                    iter.remove();
-                    break;
-                }
-            }
+            userChannelList.remove(channel);
             
             if (userChannelList.isEmpty()) {
                 // Remove from map
@@ -130,7 +115,6 @@ public class ChannelDatabase {
             logger.log(Level.SEVERE, "Unable to remove {0} from {1}'s channel list",
                     new Object[]{channel, user});
         }
-        
     }
 
     /**
@@ -227,7 +211,7 @@ public class ChannelDatabase {
      * @return true if the channel exists
      */
     public boolean channelExists(String channel) {
-        return (channelMap.get(channel) != null);
+        return channelMap.containsKey(channel);
     }
     
     /**
