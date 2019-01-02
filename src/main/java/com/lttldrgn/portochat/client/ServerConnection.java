@@ -20,7 +20,6 @@ import com.lttldrgn.portochat.common.encryption.EncryptionManager;
 import com.lttldrgn.portochat.common.network.ConnectionHandler;
 import com.lttldrgn.portochat.common.network.event.NetEvent;
 import com.lttldrgn.portochat.common.network.event.NetListener;
-import com.lttldrgn.portochat.common.protocol.ChannelJoinPart;
 import com.lttldrgn.portochat.common.protocol.ChannelList;
 import com.lttldrgn.portochat.common.protocol.ChannelStatus;
 import com.lttldrgn.portochat.common.protocol.ChatMessage;
@@ -37,6 +36,9 @@ import com.lttldrgn.portochat.common.protocol.UserConnectionStatus;
 import com.lttldrgn.portochat.common.protocol.UserDoesNotExist;
 import com.lttldrgn.portochat.common.protocol.UserList;
 import com.lttldrgn.portochat.proto.Portochat;
+import com.lttldrgn.portochat.proto.Portochat.ChannelJoin;
+import com.lttldrgn.portochat.proto.Portochat.ChannelPart;
+import com.lttldrgn.portochat.proto.Portochat.Notification;
 import java.io.IOException;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -138,7 +140,7 @@ public class ServerConnection {
     }
     
     public void partChannel(String channel) {
-        Portochat.PortoChatMessage notification = ProtoUtil.createChannelPartNotification(channel);
+        Portochat.PortoChatMessage notification = ProtoUtil.createChannelPartNotification(channel, username);
         ProtoMessage protoMessage = new ProtoMessage(notification);
         socket.writeData(protoMessage);
     }
@@ -217,11 +219,12 @@ public class ServerConnection {
                 for (ServerDataListener listener : listeners) {
                     listener.channelListReceived(channels);
                 }
-            } else if (defaultData instanceof ChannelJoinPart) {
-                ChannelJoinPart joinPart = (ChannelJoinPart) defaultData;
-                for (ServerDataListener listener : listeners) {
-                    listener.receiveChannelJoinPart(joinPart.getUser(),
-                            joinPart.getChannel(), joinPart.hasJoined());
+            } else if (defaultData instanceof ProtoMessage) {
+                ProtoMessage protoMessage = (ProtoMessage) defaultData;
+                switch (protoMessage.getMessage().getApplicationMessageCase()) {
+                    case NOTIFICATION:
+                        handleNotification(protoMessage.getMessage().getNotification());
+                        break;
                 }
             } else if (defaultData instanceof ChannelStatus) {
                 ChannelStatus status = (ChannelStatus) defaultData;
@@ -248,6 +251,25 @@ public class ServerConnection {
                 sendUsername(ServerConnection.this.username);
             } else {
                 logger.log(Level.WARNING, "{0}{1}", new Object[]{messages.getString("ServerConnection.msg.UnknownMessage"), defaultData});
+            }
+        }
+
+        private void handleNotification(Notification notification) {
+            switch (notification.getNotificationDataCase()) {
+                case CHANNELJOIN:
+                    ChannelJoin join = notification.getChannelJoin();
+                    handleChannelJoinPart(join.getUserId(), join.getChannel(), true);
+                    break;
+                case CHANNELPART:
+                    ChannelPart part = notification.getChannelPart();
+                    handleChannelJoinPart(part.getUserId(), part.getChannel(), false);
+                    break;
+            }
+        }
+
+        private void handleChannelJoinPart(String userId, String channel, boolean joined) {
+            for (ServerDataListener listener : listeners) {
+                listener.receiveChannelJoinPart(userId, channel, joined);
             }
         }
     }

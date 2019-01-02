@@ -60,11 +60,11 @@ public interface ServerDataListener {
     
     /**
      * This method is called when a channel join/part event occurs
-     * @param user User joining or parting
+     * @param userId ID of the User joining or parting
      * @param channel Channel that is being joined/parted
      * @param join If true this is a join, otherwise a part event
      */
-    public void receiveChannelJoinPart(User user, String channel,
+    public void receiveChannelJoinPart(String userId, String channel,
             boolean join);
     
     /**

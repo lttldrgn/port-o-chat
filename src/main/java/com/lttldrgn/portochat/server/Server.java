@@ -27,7 +27,6 @@ import java.util.logging.Logger;
 import com.lttldrgn.portochat.common.User;
 import com.lttldrgn.portochat.common.Util;
 import com.lttldrgn.portochat.common.encryption.EncryptionManager;
-import com.lttldrgn.portochat.common.protocol.ChannelJoinPart;
 import com.lttldrgn.portochat.common.protocol.ChannelList;
 import com.lttldrgn.portochat.common.protocol.ChannelStatus;
 import com.lttldrgn.portochat.common.protocol.ChatMessage;
@@ -41,10 +40,13 @@ import com.lttldrgn.portochat.common.protocol.UserList;
 import com.lttldrgn.portochat.common.network.event.NetEvent;
 import com.lttldrgn.portochat.common.network.event.NetListener;
 import com.lttldrgn.portochat.common.protocol.ProtoMessage;
+import com.lttldrgn.portochat.common.protocol.ProtoUtil;
 import com.lttldrgn.portochat.common.protocol.ServerKeyAccepted;
 import com.lttldrgn.portochat.common.protocol.ServerSharedKey;
 import com.lttldrgn.portochat.common.protocol.SetPublicKey;
 import com.lttldrgn.portochat.common.protocol.UserDoesNotExist;
+import com.lttldrgn.portochat.proto.Portochat;
+import com.lttldrgn.portochat.proto.Portochat.ChannelPart;
 import com.lttldrgn.portochat.proto.Portochat.Notification;
 import com.lttldrgn.portochat.proto.Portochat.Request;
 import com.lttldrgn.portochat.server.network.ServerConnectionHandler;
@@ -355,37 +357,35 @@ public class Server {
         channelDatabase.addUserToChannel(channel, user);
 
         // notify all apps
-        ChannelJoinPart join = new ChannelJoinPart();
-        join.setChannel(channel);
-        join.setJoined(true);
-        join.setUser(user);
-        sendToChannelUsers(channel, user, join);
+        Portochat.PortoChatMessage join = ProtoUtil.createChannelJoinNotification(channel, user.getName());
+        ProtoMessage protoMessage = new ProtoMessage(join);
+        sendToChannelUsers(channel, user, protoMessage);
     }
 
     private void handleNotification(User user, Notification notification, Socket socket) {
-        switch (notification.getType()) {
-            case ChannelPart:
-                handleChannelPartNoticiation(user, notification.getStringData().getValue());
+        switch (notification.getNotificationDataCase()) {
+            case CHANNELPART:
+                handleChannelPartNoticiation(user, notification.getChannelPart());
                 break;
             default:
-                logger.log(Level.INFO, "Unsupported notification type: {0}", notification.getType());
+                logger.log(Level.INFO, "Unsupported notification type: {0}", notification.getNotificationDataCase());
         }
     }
 
-    private void handleChannelPartNoticiation(User user, String channel) {
-
+    private void handleChannelPartNoticiation(User user, ChannelPart channelPart) {
+        String channel = channelPart.getChannel();
         channelDatabase.removeUserFromChannel(channel, user);
 
         if (!channelDatabase.channelExists(channel)) {
-            // Channel was removed when user left so notify all users
+            // Channel was removed when user left so notify all users of removal
             notifyChannelStatusChange(channel, false);
+        } else {
+            // notify users in channel of part event
+            Portochat.PortoChatMessage newPart =
+                    ProtoUtil.createChannelPartNotification(channel, channelPart.getUserId());
+            ProtoMessage protoMessage = new ProtoMessage(newPart);
+            sendToChannelUsers(channel, user, protoMessage);
         }
-
-        ChannelJoinPart join = new ChannelJoinPart();
-        join.setChannel(channel);
-        join.setJoined(false);
-        join.setUser(user);
-        sendToChannelUsers(channel, user, join);
     }
 
     private void sendToAllSockets(List<Socket> userSocketList, DefaultData data) {

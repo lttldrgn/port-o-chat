@@ -17,6 +17,8 @@
 package com.lttldrgn.portochat.common.protocol;
 
 import com.lttldrgn.portochat.proto.Portochat;
+import com.lttldrgn.portochat.proto.Portochat.ChannelJoin;
+import com.lttldrgn.portochat.proto.Portochat.ChannelPart;
 import java.util.UUID;
 
 /**
@@ -69,11 +71,22 @@ public class ProtoUtil {
         return appMessage.build();
     }
 
-    public static Portochat.PortoChatMessage createChannelPartNotification(String channel) {
+    public static Portochat.PortoChatMessage createChannelJoinNotification(String channel, String userId) {
         Portochat.PortoChatMessage.Builder appMessage = Portochat.PortoChatMessage.newBuilder();
         Portochat.Notification.Builder notification = Portochat.Notification.newBuilder();
-        notification.setType(Portochat.Notification.NotificationType.ChannelPart);
-        notification.getStringDataBuilder().setValue(channel);
+        ChannelJoin.Builder channelJoin = notification.getChannelJoinBuilder();
+        channelJoin.setChannel(channel);
+        channelJoin.setUserId(userId);
+        appMessage.setNotification(notification);
+        return appMessage.build();
+    }
+
+    public static Portochat.PortoChatMessage createChannelPartNotification(String channel, String userId) {
+        Portochat.PortoChatMessage.Builder appMessage = Portochat.PortoChatMessage.newBuilder();
+        Portochat.Notification.Builder notification = Portochat.Notification.newBuilder();
+        ChannelPart.Builder channelJoinPart = notification.getChannelPartBuilder();
+        channelJoinPart.setChannel(channel);
+        channelJoinPart.setUserId(userId);
         appMessage.setNotification(notification);
         return appMessage.build();
     }

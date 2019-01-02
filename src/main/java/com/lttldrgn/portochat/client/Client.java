@@ -94,6 +94,7 @@ public class Client extends JFrame implements ActionListener,
     private static final String COMBINED_VIEW = "COMBINED_VIEW";
     private static final String SPLIT_VIEW = "SPLIT_VIEW";
     private static final String SHOW_ABOUT_DIALOG = "SHOW_ABOUT_DIALOG";
+    private final HashMap<String, User> userIdMap = new HashMap<>();
     private final HashMap<String, ChatPane> chatPaneMap = new HashMap<>();
     private final HashMap<String, ChatPane> channelPaneMap = new HashMap<>();
     private final DefaultListModel<String> contactListModel = new DefaultListModel<>();
@@ -766,11 +767,10 @@ public class Client extends JFrame implements ActionListener,
     }
 
     private void addUser(final User user) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                if (!contactListModel.contains(user.getName()))
-                    contactListModel.addElement(user.getName());
+        SwingUtilities.invokeLater(() -> {
+            userIdMap.putIfAbsent(user.getName(), user);
+            if (!contactListModel.contains(user.getName())) {
+                contactListModel.addElement(user.getName());
             }
         });
     }
@@ -783,9 +783,10 @@ public class Client extends JFrame implements ActionListener,
                     disconnectFromServer();
                     return;
                 }
-                
-                if (contactListModel.contains(user.getName()))
+                userIdMap.remove(user.getName());
+                if (contactListModel.contains(user.getName())) {
                     contactListModel.removeElement(user.getName());
+                }
                 
                 //Remove from channel lists as well
                 Set<String> channelPaneList = channelPaneMap.keySet();
@@ -965,8 +966,9 @@ public class Client extends JFrame implements ActionListener,
     }
 
     @Override
-    public void receiveChannelJoinPart(User user, String channel,
+    public void receiveChannelJoinPart(String userId, String channel,
         boolean join) {
+        User user = userIdMap.get(userId);
         ChatPane pane = channelPaneMap.get(channel);
         if (pane != null) {
             pane.userJoinedEvent(user, join);
