@@ -27,7 +27,6 @@ import java.util.logging.Logger;
 import com.lttldrgn.portochat.common.User;
 import com.lttldrgn.portochat.common.Util;
 import com.lttldrgn.portochat.common.encryption.EncryptionManager;
-import com.lttldrgn.portochat.common.protocol.ChannelList;
 import com.lttldrgn.portochat.common.protocol.ChannelStatus;
 import com.lttldrgn.portochat.common.protocol.ChatMessage;
 import com.lttldrgn.portochat.common.protocol.DefaultData;
@@ -48,6 +47,7 @@ import com.lttldrgn.portochat.common.protocol.UserDoesNotExist;
 import com.lttldrgn.portochat.proto.Portochat;
 import com.lttldrgn.portochat.proto.Portochat.ChannelPart;
 import com.lttldrgn.portochat.proto.Portochat.Notification;
+import com.lttldrgn.portochat.proto.Portochat.PortoChatMessage;
 import com.lttldrgn.portochat.proto.Portochat.Request;
 import com.lttldrgn.portochat.server.network.ServerConnectionHandler;
 
@@ -270,9 +270,9 @@ public class Server {
                 handleChannelJoinRequest(user, request);
                 break;
             case ChannelList:
-                ChannelList channelList = new ChannelList();
-                channelList.setChannelList(channelDatabase.getListOfChannels());
-                connection.writeData(socket, channelList);
+                PortoChatMessage channelList = ProtoUtil.createChannelList(channelDatabase.getListOfChannels());
+                ProtoMessage protoMessage = new ProtoMessage(channelList);
+                connection.writeData(socket, protoMessage);
                 break;
             case ChannelUserList:
                 UserList channelUserList = new UserList();

@@ -16,9 +16,13 @@
  */
 package com.lttldrgn.portochat.common.protocol;
 
-import com.lttldrgn.portochat.proto.Portochat;
 import com.lttldrgn.portochat.proto.Portochat.ChannelJoin;
+import com.lttldrgn.portochat.proto.Portochat.ChannelList;
 import com.lttldrgn.portochat.proto.Portochat.ChannelPart;
+import com.lttldrgn.portochat.proto.Portochat.Notification;
+import com.lttldrgn.portochat.proto.Portochat.PortoChatMessage;
+import com.lttldrgn.portochat.proto.Portochat.Request;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -26,54 +30,62 @@ import java.util.UUID;
  * @author Brandon
  */
 public class ProtoUtil {
-    public static Portochat.PortoChatMessage createChannelListRequest() {
-        Portochat.PortoChatMessage.Builder appMessage = Portochat.PortoChatMessage.newBuilder();
-        Portochat.Request.Builder request = Portochat.Request.newBuilder();
-        request.setRequestType(Portochat.Request.RequestType.ChannelList);
+    public static PortoChatMessage createChannelListRequest() {
+        PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
+        Request.Builder request = Request.newBuilder();
+        request.setRequestType(Request.RequestType.ChannelList);
         appMessage.setRequest(request);
         return appMessage.build();
     }
 
-    public static Portochat.PortoChatMessage createChannelUserListRequest(String channelName) {
-        Portochat.PortoChatMessage.Builder appMessage = Portochat.PortoChatMessage.newBuilder();
-        Portochat.Request.Builder request = Portochat.Request.newBuilder();
-        request.setRequestType(Portochat.Request.RequestType.ChannelUserList);
+    public static PortoChatMessage createChannelList(List<String> channels) {
+        PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
+        ChannelList.Builder channelBuilder = ChannelList.newBuilder();
+        channelBuilder.getChannelsBuilder().addAllValues(channels);
+        appMessage.setChannelList(channelBuilder);
+        return appMessage.build();
+    }
+
+    public static PortoChatMessage createChannelUserListRequest(String channelName) {
+        PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
+        Request.Builder request = Request.newBuilder();
+        request.setRequestType(Request.RequestType.ChannelUserList);
         request.getStringRequestDataBuilder().setValue(channelName);
         appMessage.setRequest(request);
         return appMessage.build();
     }
 
-    public static Portochat.PortoChatMessage createUserListRequest() {
-        Portochat.PortoChatMessage.Builder appMessage = Portochat.PortoChatMessage.newBuilder();
-        Portochat.Request.Builder request = Portochat.Request.newBuilder();
-        request.setRequestType(Portochat.Request.RequestType.UserList);
+    public static PortoChatMessage createUserListRequest() {
+        PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
+        Request.Builder request = Request.newBuilder();
+        request.setRequestType(Request.RequestType.UserList);
         appMessage.setRequest(request);
         return appMessage.build();
     }
 
-    public static Portochat.PortoChatMessage createSetUserNameRequest(String username) {
-        Portochat.PortoChatMessage.Builder appMessage = Portochat.PortoChatMessage.newBuilder();
-        Portochat.Request.Builder request = Portochat.Request.newBuilder();
+    public static PortoChatMessage createSetUserNameRequest(String username) {
+        PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
+        Request.Builder request = Request.newBuilder();
         request.setRequestId(UUID.randomUUID().toString());
-        request.setRequestType(Portochat.Request.RequestType.SetUserName);
+        request.setRequestType(Request.RequestType.SetUserName);
         request.getStringRequestDataBuilder().setValue(username);
         appMessage.setRequest(request);
         return appMessage.build();
     }
 
-    public static Portochat.PortoChatMessage createChannelJoinRequest(String channel) {
-        Portochat.PortoChatMessage.Builder appMessage = Portochat.PortoChatMessage.newBuilder();
-        Portochat.Request.Builder request = Portochat.Request.newBuilder();
+    public static PortoChatMessage createChannelJoinRequest(String channel) {
+        PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
+        Request.Builder request = Request.newBuilder();
         request.setRequestId(UUID.randomUUID().toString());
-        request.setRequestType(Portochat.Request.RequestType.ChannelJoin);
+        request.setRequestType(Request.RequestType.ChannelJoin);
         request.getStringRequestDataBuilder().setValue(channel);
         appMessage.setRequest(request);
         return appMessage.build();
     }
 
-    public static Portochat.PortoChatMessage createChannelJoinNotification(String channel, String userId) {
-        Portochat.PortoChatMessage.Builder appMessage = Portochat.PortoChatMessage.newBuilder();
-        Portochat.Notification.Builder notification = Portochat.Notification.newBuilder();
+    public static PortoChatMessage createChannelJoinNotification(String channel, String userId) {
+        PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
+        Notification.Builder notification = Notification.newBuilder();
         ChannelJoin.Builder channelJoin = notification.getChannelJoinBuilder();
         channelJoin.setChannel(channel);
         channelJoin.setUserId(userId);
@@ -81,9 +93,9 @@ public class ProtoUtil {
         return appMessage.build();
     }
 
-    public static Portochat.PortoChatMessage createChannelPartNotification(String channel, String userId) {
-        Portochat.PortoChatMessage.Builder appMessage = Portochat.PortoChatMessage.newBuilder();
-        Portochat.Notification.Builder notification = Portochat.Notification.newBuilder();
+    public static PortoChatMessage createChannelPartNotification(String channel, String userId) {
+        PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
+        Notification.Builder notification = Notification.newBuilder();
         ChannelPart.Builder channelJoinPart = notification.getChannelPartBuilder();
         channelJoinPart.setChannel(channel);
         channelJoinPart.setUserId(userId);

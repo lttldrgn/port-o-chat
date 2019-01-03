@@ -20,7 +20,6 @@ import com.lttldrgn.portochat.common.encryption.EncryptionManager;
 import com.lttldrgn.portochat.common.network.ConnectionHandler;
 import com.lttldrgn.portochat.common.network.event.NetEvent;
 import com.lttldrgn.portochat.common.network.event.NetListener;
-import com.lttldrgn.portochat.common.protocol.ChannelList;
 import com.lttldrgn.portochat.common.protocol.ChannelStatus;
 import com.lttldrgn.portochat.common.protocol.ChatMessage;
 import com.lttldrgn.portochat.common.protocol.DefaultData;
@@ -37,8 +36,10 @@ import com.lttldrgn.portochat.common.protocol.UserDoesNotExist;
 import com.lttldrgn.portochat.common.protocol.UserList;
 import com.lttldrgn.portochat.proto.Portochat;
 import com.lttldrgn.portochat.proto.Portochat.ChannelJoin;
+import com.lttldrgn.portochat.proto.Portochat.ChannelList;
 import com.lttldrgn.portochat.proto.Portochat.ChannelPart;
 import com.lttldrgn.portochat.proto.Portochat.Notification;
+import com.lttldrgn.portochat.proto.Portochat.StringList;
 import java.io.IOException;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -212,16 +213,12 @@ public class ServerConnection {
                 for (ServerDataListener listener : listeners) {
                     listener.userConnectionEvent(user.getUser(), user.isConnected());
                 }
-            } else if (defaultData instanceof ChannelList) {
-                // Received a channel list
-                ChannelList channelList = (ChannelList) defaultData;
-                List<String> channels = channelList.getChannelList();
-                for (ServerDataListener listener : listeners) {
-                    listener.channelListReceived(channels);
-                }
             } else if (defaultData instanceof ProtoMessage) {
                 ProtoMessage protoMessage = (ProtoMessage) defaultData;
                 switch (protoMessage.getMessage().getApplicationMessageCase()) {
+                    case CHANNELLIST:
+                        handleChannelList(protoMessage.getMessage().getChannelList());
+                        break;
                     case NOTIFICATION:
                         handleNotification(protoMessage.getMessage().getNotification());
                         break;
@@ -254,6 +251,14 @@ public class ServerConnection {
             }
         }
 
+        private void handleChannelList(ChannelList channelList) {
+            // Received a channel list
+            StringList stringList = channelList.getChannels();
+            List<String> channels = stringList.getValuesList();
+            for (ServerDataListener listener : listeners) {
+                listener.channelListReceived(channels);
+            }
+        }
         private void handleNotification(Notification notification) {
             switch (notification.getNotificationDataCase()) {
                 case CHANNELJOIN:

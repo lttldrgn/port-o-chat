@@ -4,6 +4,14 @@ package portochat;
 
 option java_package = "com.lttldrgn.portochat.proto";
 
+message StringData {
+    string value = 1;
+}
+
+message StringList {
+    repeated string values = 1;
+}
+
 message User {
     string id = 1;
     string name = 2;
@@ -12,8 +20,9 @@ message User {
 message PortoChatMessage {
     string originatorId = 1;
     oneof ApplicationMessage {
-        Request request = 2;
+        ChannelList channelList = 2;
         Notification notification = 3;
+        Request request = 4;
     }
 }
 
@@ -33,10 +42,6 @@ message Request {
     }
 }
 
-message StringData {
-    string value = 1;
-}
-
 message Notification {
     oneof NotificationData {
         ChannelJoin channelJoin = 1;
@@ -51,4 +56,8 @@ message ChannelJoin {
 message ChannelPart {
     string channel = 1;
     string userId = 2;
+}
+
+message ChannelList {
+    StringList channels = 1;
 }
