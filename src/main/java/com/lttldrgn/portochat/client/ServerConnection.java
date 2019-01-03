@@ -20,7 +20,6 @@ import com.lttldrgn.portochat.common.encryption.EncryptionManager;
 import com.lttldrgn.portochat.common.network.ConnectionHandler;
 import com.lttldrgn.portochat.common.network.event.NetEvent;
 import com.lttldrgn.portochat.common.network.event.NetListener;
-import com.lttldrgn.portochat.common.protocol.ChannelStatus;
 import com.lttldrgn.portochat.common.protocol.ChatMessage;
 import com.lttldrgn.portochat.common.protocol.DefaultData;
 import com.lttldrgn.portochat.common.protocol.Ping;
@@ -223,12 +222,6 @@ public class ServerConnection {
                         handleNotification(protoMessage.getMessage().getNotification());
                         break;
                 }
-            } else if (defaultData instanceof ChannelStatus) {
-                ChannelStatus status = (ChannelStatus) defaultData;
-                for (ServerDataListener listener : listeners) {
-                    listener.channelStatusReceived(status.getChannel(), 
-                            status.isCreated());
-                }
             } else if (defaultData instanceof Ping) { 
                 Pong pong = new Pong();
                 pong.setTimestamp(((Ping) defaultData).getTimestamp());
@@ -268,6 +261,14 @@ public class ServerConnection {
                 case CHANNELPART:
                     ChannelPart part = notification.getChannelPart();
                     handleChannelJoinPart(part.getUserId(), part.getChannel(), false);
+                    break;
+                case CHANNELADDED:
+                    String channelAdded = notification.getChannelAdded().getChannel();
+                    listeners.forEach((listener) -> listener.channelStatusReceived(channelAdded, true));
+                    break;
+                case CHANNELREMOVED:
+                    String channelRemoved = notification.getChannelRemoved().getChannel();
+                    listeners.forEach((listener) -> listener.channelStatusReceived(channelRemoved, false));
                     break;
             }
         }

@@ -46,6 +46,8 @@ message Notification {
     oneof NotificationData {
         ChannelJoin channelJoin = 1;
         ChannelPart channelPart = 2;
+        ChannelAdded channelAdded = 3;
+        ChannelRemoved channelRemoved = 4;
     }
 }
 
@@ -57,7 +59,12 @@ message ChannelPart {
     string channel = 1;
     string userId = 2;
 }
-
+message ChannelAdded {
+    string channel = 1;
+}
+message ChannelRemoved {
+    string channel = 1;
+}
 message ChannelList {
     StringList channels = 1;
 }

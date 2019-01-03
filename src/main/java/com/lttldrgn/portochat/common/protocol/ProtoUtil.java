@@ -102,4 +102,18 @@ public class ProtoUtil {
         appMessage.setNotification(notification);
         return appMessage.build();
     }
+
+    public static PortoChatMessage createChannelAddedNotification(String channel) {
+        PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
+        Notification.Builder notification = appMessage.getNotificationBuilder();
+        notification.getChannelAddedBuilder().setChannel(channel);
+        return appMessage.build();
+    }
+
+    public static PortoChatMessage createChannelRemovedNotification(String channel) {
+        PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
+        Notification.Builder notification = appMessage.getNotificationBuilder();
+        notification.getChannelRemovedBuilder().setChannel(channel);
+        return appMessage.build();
+    }
 }

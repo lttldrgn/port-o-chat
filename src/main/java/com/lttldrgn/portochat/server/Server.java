@@ -27,7 +27,6 @@ import java.util.logging.Logger;
 import com.lttldrgn.portochat.common.User;
 import com.lttldrgn.portochat.common.Util;
 import com.lttldrgn.portochat.common.encryption.EncryptionManager;
-import com.lttldrgn.portochat.common.protocol.ChannelStatus;
 import com.lttldrgn.portochat.common.protocol.ChatMessage;
 import com.lttldrgn.portochat.common.protocol.DefaultData;
 import com.lttldrgn.portochat.common.protocol.Ping;
@@ -365,14 +364,14 @@ public class Server {
     private void handleNotification(User user, Notification notification, Socket socket) {
         switch (notification.getNotificationDataCase()) {
             case CHANNELPART:
-                handleChannelPartNoticiation(user, notification.getChannelPart());
+                handleChannelPartNotification(user, notification.getChannelPart());
                 break;
             default:
                 logger.log(Level.INFO, "Unsupported notification type: {0}", notification.getNotificationDataCase());
         }
     }
 
-    private void handleChannelPartNoticiation(User user, ChannelPart channelPart) {
+    private void handleChannelPartNotification(User user, ChannelPart channelPart) {
         String channel = channelPart.getChannel();
         channelDatabase.removeUserFromChannel(channel, user);
 
@@ -403,14 +402,17 @@ public class Server {
      * @param created true if created, false if deleted
      */
     private void notifyChannelStatusChange(String channel, boolean created) {
-        ChannelStatus channelStatus = new ChannelStatus();
-        channelStatus.setChannel(channel);
-        channelStatus.setCreated(created);
-
+        PortoChatMessage message;
+        if (created) {
+            message = ProtoUtil.createChannelAddedNotification(channel);
+        } else {
+            message = ProtoUtil.createChannelRemovedNotification(channel);
+        }
+        ProtoMessage protoMessage = new ProtoMessage(message);
         ArrayList<Socket> userSocketList =
                 (ArrayList<Socket>) userDatabase.getSocketList();
 
-        sendToAllSockets(userSocketList, channelStatus);
+        sendToAllSockets(userSocketList, protoMessage);
     }
     
     private void pingAllClients() {
