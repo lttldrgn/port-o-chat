@@ -887,7 +887,7 @@ public class Client extends JFrame implements ActionListener,
     @Override
     public void userListReceived(final List<User> users, String channel) {
     
-        if (channel == null) {
+        if (channel == null || channel.isEmpty()) {
             // this is a server list
             for (User user: users) {
                 addUser(user);

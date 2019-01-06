@@ -12,7 +12,7 @@ message StringList {
     repeated string values = 1;
 }
 
-message User {
+message UserData {
     string id = 1;
     string name = 2;
     string host = 3;
@@ -23,6 +23,7 @@ message PortoChatMessage {
         ChannelList channelList = 2;
         Notification notification = 3;
         Request request = 4;
+        UserList userList = 5;
     }
 }
 
@@ -48,6 +49,7 @@ message Notification {
         ChannelPart channelPart = 2;
         ChannelAdded channelAdded = 3;
         ChannelRemoved channelRemoved = 4;
+        UserConnectionStatus userConnectionStatus = 5;
     }
 }
 
@@ -67,4 +69,13 @@ message ChannelRemoved {
 }
 message ChannelList {
     StringList channels = 1;
+}
+message UserList {
+    repeated UserData users = 1;
+    string channel = 2;
+}
+
+message UserConnectionStatus {
+    UserData user = 1;
+    bool connected = 2;
 }

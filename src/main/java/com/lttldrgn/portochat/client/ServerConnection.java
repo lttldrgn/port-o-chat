@@ -16,6 +16,7 @@
  */
 package com.lttldrgn.portochat.client;
 
+import com.lttldrgn.portochat.common.User;
 import com.lttldrgn.portochat.common.encryption.EncryptionManager;
 import com.lttldrgn.portochat.common.network.ConnectionHandler;
 import com.lttldrgn.portochat.common.network.event.NetEvent;
@@ -30,15 +31,14 @@ import com.lttldrgn.portochat.common.protocol.ServerKeyAccepted;
 import com.lttldrgn.portochat.common.protocol.ServerMessage;
 import com.lttldrgn.portochat.common.protocol.ServerSharedKey;
 import com.lttldrgn.portochat.common.protocol.SetPublicKey;
-import com.lttldrgn.portochat.common.protocol.UserConnectionStatus;
 import com.lttldrgn.portochat.common.protocol.UserDoesNotExist;
-import com.lttldrgn.portochat.common.protocol.UserList;
 import com.lttldrgn.portochat.proto.Portochat;
 import com.lttldrgn.portochat.proto.Portochat.ChannelJoin;
 import com.lttldrgn.portochat.proto.Portochat.ChannelList;
 import com.lttldrgn.portochat.proto.Portochat.ChannelPart;
 import com.lttldrgn.portochat.proto.Portochat.Notification;
 import com.lttldrgn.portochat.proto.Portochat.StringList;
+import com.lttldrgn.portochat.proto.Portochat.UserList;
 import java.io.IOException;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -200,18 +200,6 @@ public class ServerConnection {
                     listener.receiveChatMessage(message.getFromUser(),
                             message.isAction(), message.getMessage(), channel);
                 }
-            } else if (defaultData instanceof UserList) {
-                UserList userList = (UserList) defaultData;
-                String channel = userList.getChannel();
-                for (ServerDataListener listener : listeners) {
-                    listener.userListReceived(userList.getUserList(), channel);
-                }
-            } else if (defaultData instanceof UserConnectionStatus) {
-                // if user is null it's the server disconnecting
-                UserConnectionStatus user = (UserConnectionStatus) defaultData;
-                for (ServerDataListener listener : listeners) {
-                    listener.userConnectionEvent(user.getUser(), user.isConnected());
-                }
             } else if (defaultData instanceof ProtoMessage) {
                 ProtoMessage protoMessage = (ProtoMessage) defaultData;
                 switch (protoMessage.getMessage().getApplicationMessageCase()) {
@@ -221,6 +209,13 @@ public class ServerConnection {
                     case NOTIFICATION:
                         handleNotification(protoMessage.getMessage().getNotification());
                         break;
+                    case USERLIST:
+                        UserList userList = protoMessage.getMessage().getUserList();
+                        List<User> users = ProtoUtil.getUserList(userList);
+                        String channel = userList.getChannel();
+                        for (ServerDataListener listener : listeners) {
+                            listener.userListReceived(users, channel);
+                        }
                 }
             } else if (defaultData instanceof Ping) { 
                 Pong pong = new Pong();
@@ -269,6 +264,11 @@ public class ServerConnection {
                 case CHANNELREMOVED:
                     String channelRemoved = notification.getChannelRemoved().getChannel();
                     listeners.forEach((listener) -> listener.channelStatusReceived(channelRemoved, false));
+                    break;
+                case USERCONNECTIONSTATUS:
+                    User user = ProtoUtil.convertToUser(notification.getUserConnectionStatus().getUser());
+                    boolean conenected = notification.getUserConnectionStatus().getConnected();
+                    listeners.forEach((listener) -> listener.userConnectionEvent(user, conenected));
                     break;
             }
         }

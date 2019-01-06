@@ -30,7 +30,7 @@ import com.lttldrgn.portochat.common.network.handler.BufferHandler;
  * @author Mike
  */
 public class User {
-
+    private String id;
     private String name = null;
     private String host = null;
     private long lastSeen;
@@ -57,6 +57,14 @@ public class User {
             name = dis.readUTF();
             host = dis.readUTF();
         }
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     /**

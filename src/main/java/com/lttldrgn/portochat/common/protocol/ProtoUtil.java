@@ -16,12 +16,17 @@
  */
 package com.lttldrgn.portochat.common.protocol;
 
+import com.lttldrgn.portochat.common.User;
 import com.lttldrgn.portochat.proto.Portochat.ChannelJoin;
 import com.lttldrgn.portochat.proto.Portochat.ChannelList;
 import com.lttldrgn.portochat.proto.Portochat.ChannelPart;
 import com.lttldrgn.portochat.proto.Portochat.Notification;
 import com.lttldrgn.portochat.proto.Portochat.PortoChatMessage;
 import com.lttldrgn.portochat.proto.Portochat.Request;
+import com.lttldrgn.portochat.proto.Portochat.UserConnectionStatus;
+import com.lttldrgn.portochat.proto.Portochat.UserData;
+import com.lttldrgn.portochat.proto.Portochat.UserList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -114,6 +119,53 @@ public class ProtoUtil {
         PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
         Notification.Builder notification = appMessage.getNotificationBuilder();
         notification.getChannelRemovedBuilder().setChannel(channel);
+        return appMessage.build();
+    }
+
+    public static PortoChatMessage createUserList(List<User> users, String channel) {
+        PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
+        UserList.Builder userList = appMessage.getUserListBuilder();
+        for (User user : users) {
+            userList.addUsers(convertToUserData(user));
+        }
+        if (channel != null) {
+            userList.setChannel(channel);
+        }
+        return appMessage.build();
+    }
+
+    private static UserData convertToUserData(User user) {
+        UserData.Builder userData = UserData.newBuilder();
+        userData.setId(user.getName());
+        userData.setName(user.getName());
+        userData.setHost(user.getHost());
+        return userData.build();
+    }
+
+    public static User convertToUser(UserData userData) {
+        User user = new User();
+        user.setId(userData.getId());
+        user.setName(userData.getName());
+        user.setHost(userData.getHost());
+        return user;
+    }
+
+    public static List<User> getUserList(UserList userList) {
+        ArrayList<User> users = new ArrayList<>();
+        for (UserData data : userList.getUsersList()) {
+            User user = convertToUser(data);
+            users.add(user);
+        }
+        return users;
+    }
+
+    public static PortoChatMessage createUserConnectionStatus(User user, boolean connected) {
+        PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
+        UserConnectionStatus.Builder status = appMessage.getNotificationBuilder().getUserConnectionStatusBuilder();
+        if (user != null) {
+            status.setUser(convertToUserData(user));
+        }
+        status.setConnected(connected);
         return appMessage.build();
     }
 }

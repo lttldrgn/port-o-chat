@@ -33,8 +33,6 @@ import com.lttldrgn.portochat.common.protocol.Ping;
 import com.lttldrgn.portochat.common.protocol.Pong;
 import com.lttldrgn.portochat.common.protocol.ServerMessage;
 import com.lttldrgn.portochat.common.protocol.ServerMessageEnum;
-import com.lttldrgn.portochat.common.protocol.UserConnectionStatus;
-import com.lttldrgn.portochat.common.protocol.UserList;
 import com.lttldrgn.portochat.common.network.event.NetEvent;
 import com.lttldrgn.portochat.common.network.event.NetListener;
 import com.lttldrgn.portochat.common.protocol.ProtoMessage;
@@ -48,6 +46,7 @@ import com.lttldrgn.portochat.proto.Portochat.ChannelPart;
 import com.lttldrgn.portochat.proto.Portochat.Notification;
 import com.lttldrgn.portochat.proto.Portochat.PortoChatMessage;
 import com.lttldrgn.portochat.proto.Portochat.Request;
+import com.lttldrgn.portochat.proto.Portochat.UserConnectionStatus;
 import com.lttldrgn.portochat.server.network.ServerConnectionHandler;
 
 /**
@@ -192,34 +191,6 @@ public class Server {
                         connection.writeData(socket, userDoesNotExist);
                     }
                 }
-            } else if (defaultData instanceof UserConnectionStatus) {
-                UserConnectionStatus userConnection = ((UserConnectionStatus) defaultData);
-
-                // Shouldn't have connects here anyways
-                if (!userConnection.isConnected()) {
-                    boolean success =
-                            userDatabase.removeUser(userConnection.getUser());
-
-                    ArrayList<String> userChannelList =
-                            (ArrayList<String>) channelDatabase.getUserChannels(
-                            userConnection.getUser());
-
-                    channelDatabase.removeUserFromAllChannels(userConnection.getUser());
-
-                    for (String channel : userChannelList) {
-                        if (!channelDatabase.channelExists(channel)) {
-                            notifyChannelStatusChange(channel, false);
-                        }
-                    }
-                }
-
-                // Send to all other clients
-                ArrayList<Socket> userSocketList =
-                        (ArrayList<Socket>) userDatabase.getSocketList();
-                sendToAllSockets(userSocketList, userConnection);
-
-                // Log the connection
-                logger.info(userConnection.toString());
             } else if (defaultData instanceof ProtoMessage) {
                 ProtoMessage protoMessage = (ProtoMessage) defaultData;
                 switch (protoMessage.getMessage().getApplicationMessageCase()) {
@@ -269,24 +240,29 @@ public class Server {
                 handleChannelJoinRequest(user, request);
                 break;
             case ChannelList:
+            {
                 PortoChatMessage channelList = ProtoUtil.createChannelList(channelDatabase.getListOfChannels());
                 ProtoMessage protoMessage = new ProtoMessage(channelList);
                 connection.writeData(socket, protoMessage);
+            }
                 break;
             case ChannelUserList:
-                UserList channelUserList = new UserList();
+            {
                 String channel = request.getStringRequestData().getValue();
-                channelUserList.setChannel(channel);
-                channelUserList.setUserList(channelDatabase.getUsersInChannel(channel));
-                connection.writeData(socket, channelUserList);
+                PortoChatMessage channelUserList = ProtoUtil.createUserList(channelDatabase.getUsersInChannel(channel), channel);
+                ProtoMessage protoMessage = new ProtoMessage(channelUserList);
+                connection.writeData(socket, protoMessage);
+            }
                 break;
             case SetUserName:
                 handleSetUserNameRequest(user, request.getStringRequestData().getValue(), socket);
                 break;
             case UserList:
-                UserList userList = new UserList();
-                userList.setUserList(userDatabase.getUserList());
-                connection.writeData(socket, userList);
+            {
+                PortoChatMessage userList = ProtoUtil.createUserList(userDatabase.getUserList(), null);
+                ProtoMessage protoMessage = new ProtoMessage(userList);
+                connection.writeData(socket, protoMessage);
+            }
                 break;
             default:
                 logger.log(Level.INFO, "Unhandled request type: {0}", request.getRequestType());
@@ -318,9 +294,7 @@ public class Server {
             user.setLastSeen(System.currentTimeMillis());
             if (!rename) {
                 // Notify other users of connection
-                UserConnectionStatus userConnection = new UserConnectionStatus();
-                userConnection.setUser(user);
-                userConnection.setConnected(true);
+                ProtoMessage userConnection = new ProtoMessage(ProtoUtil.createUserConnectionStatus(user, true));
 
                 ArrayList<Socket> userSocketList
                         = (ArrayList<Socket>) userDatabase.getSocketList();
@@ -366,6 +340,9 @@ public class Server {
             case CHANNELPART:
                 handleChannelPartNotification(user, notification.getChannelPart());
                 break;
+            case USERCONNECTIONSTATUS:
+                handleUserConnectionStatus(notification.getUserConnectionStatus());
+                break;
             default:
                 logger.log(Level.INFO, "Unsupported notification type: {0}", notification.getNotificationDataCase());
         }
@@ -385,6 +362,34 @@ public class Server {
             ProtoMessage protoMessage = new ProtoMessage(newPart);
             sendToChannelUsers(channel, user, protoMessage);
         }
+    }
+
+    private void handleUserConnectionStatus(UserConnectionStatus userConnection) {
+        User user = ProtoUtil.convertToUser(userConnection.getUser());
+        // Should be only getting disconnects here, but check anyway
+        if (!userConnection.getConnected()) {
+            boolean success = userDatabase.removeUser(user);
+
+            ArrayList<String> userChannelList =
+                    (ArrayList<String>) channelDatabase.getUserChannels(user);
+
+            channelDatabase.removeUserFromAllChannels(user);
+
+            for (String channel : userChannelList) {
+                if (!channelDatabase.channelExists(channel)) {
+                    notifyChannelStatusChange(channel, false);
+                }
+            }
+        }
+
+        ProtoMessage connectStatus = new ProtoMessage(ProtoUtil.createUserConnectionStatus(user, false));
+        // Send to all other clients
+        ArrayList<Socket> userSocketList =
+                (ArrayList<Socket>) userDatabase.getSocketList();
+        sendToAllSockets(userSocketList, connectStatus);
+
+        // Log the connection
+        logger.info(userConnection.toString());
     }
 
     private void sendToAllSockets(List<Socket> userSocketList, DefaultData data) {
