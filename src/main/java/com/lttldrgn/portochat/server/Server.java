@@ -29,8 +29,6 @@ import com.lttldrgn.portochat.common.Util;
 import com.lttldrgn.portochat.common.encryption.EncryptionManager;
 import com.lttldrgn.portochat.common.protocol.ChatMessage;
 import com.lttldrgn.portochat.common.protocol.DefaultData;
-import com.lttldrgn.portochat.common.protocol.Ping;
-import com.lttldrgn.portochat.common.protocol.Pong;
 import com.lttldrgn.portochat.common.protocol.ServerMessage;
 import com.lttldrgn.portochat.common.protocol.ServerMessageEnum;
 import com.lttldrgn.portochat.common.network.event.NetEvent;
@@ -151,15 +149,7 @@ public class Server {
 
             User user = userDatabase.getUserOfSocket(socket);
 
-            if (defaultData instanceof Ping) {
-                // Send a pong
-                Pong pong = new Pong();
-                pong.setTimestamp(((Ping) defaultData).getTimestamp());
-                connection.writeData(socket, pong);
-            } else if (defaultData instanceof Pong) {
-                logger.log(Level.INFO, "Updating {0} last seen", user);
-                user.setLastSeen(System.currentTimeMillis());
-            } else if (defaultData instanceof ChatMessage) {
+            if (defaultData instanceof ChatMessage) {
                 ChatMessage chatMessage = ((ChatMessage) defaultData);
 
                 // Fill out who sent it
@@ -192,23 +182,7 @@ public class Server {
                     }
                 }
             } else if (defaultData instanceof ProtoMessage) {
-                ProtoMessage protoMessage = (ProtoMessage) defaultData;
-                switch (protoMessage.getMessage().getApplicationMessageCase()) {
-                    case NOTIFICATION:
-                        Notification notification = protoMessage.getMessage().getNotification();
-                        if (notification != null) {
-                            handleNotification(user, notification, socket);
-                        }
-                        break;
-                    case REQUEST:
-                        Request request = protoMessage.getMessage().getRequest();
-                        if (request != null) {
-                            handleRequest(user, request, socket);
-                        }
-                        break;
-                    default:
-                        logger.log(Level.INFO, "Message type not supported: {0}", protoMessage.getMessage().getApplicationMessageCase());
-                }
+                handleProtoMessage((ProtoMessage)defaultData, user, socket);
                 
             } else if (defaultData instanceof SetPublicKey) {
                 SetPublicKey pubKey = (SetPublicKey) defaultData;
@@ -234,6 +208,34 @@ public class Server {
         }
     }
 
+    private void handleProtoMessage(ProtoMessage protoMessage, User user, Socket socket) {
+        switch (protoMessage.getMessage().getApplicationMessageCase()) {
+            case NOTIFICATION:
+                Notification notification = protoMessage.getMessage().getNotification();
+                if (notification != null) {
+                    handleNotification(user, notification, socket);
+                }
+                break;
+            case REQUEST:
+                Request request = protoMessage.getMessage().getRequest();
+                if (request != null) {
+                    handleRequest(user, request, socket);
+                }
+                break;
+            case PING:
+                // Send a pong
+                long time = protoMessage.getMessage().getPing().getTimestamp();
+                ProtoMessage pongMessage = new ProtoMessage(ProtoUtil.createPong(time));
+                connection.writeData(socket, pongMessage);
+                break;
+            case PONG:
+                logger.log(Level.INFO, "Updating {0} last seen", user);
+                user.setLastSeen(System.currentTimeMillis());
+                break;
+            default:
+                logger.log(Level.INFO, "Message type not supported: {0}", protoMessage.getMessage().getApplicationMessageCase());
+        }
+    }
     private void handleRequest(User user, Request request, Socket socket) {
         switch (request.getRequestType()) {
             case ChannelJoin:
@@ -421,11 +423,12 @@ public class Server {
     }
     
     private void pingAllClients() {
-        Ping ping = new Ping();
+        // send a message to all clients to see if they are alive
+        ProtoMessage pingMessage = new ProtoMessage(ProtoUtil.createPing(0));
         ArrayList<Socket> userSocketList =
                 (ArrayList<Socket>) userDatabase.getSocketList();
 
-        sendToAllSockets(userSocketList, ping);
+        sendToAllSockets(userSocketList, pingMessage);
     }
     
     private final long CLIENT_TIMEOUT = 3 * 60 * 1000;

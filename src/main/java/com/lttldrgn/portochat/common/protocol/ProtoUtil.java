@@ -21,6 +21,8 @@ import com.lttldrgn.portochat.proto.Portochat.ChannelJoin;
 import com.lttldrgn.portochat.proto.Portochat.ChannelList;
 import com.lttldrgn.portochat.proto.Portochat.ChannelPart;
 import com.lttldrgn.portochat.proto.Portochat.Notification;
+import com.lttldrgn.portochat.proto.Portochat.Ping;
+import com.lttldrgn.portochat.proto.Portochat.Pong;
 import com.lttldrgn.portochat.proto.Portochat.PortoChatMessage;
 import com.lttldrgn.portochat.proto.Portochat.Request;
 import com.lttldrgn.portochat.proto.Portochat.UserConnectionStatus;
@@ -166,6 +168,20 @@ public class ProtoUtil {
             status.setUser(convertToUserData(user));
         }
         status.setConnected(connected);
+        return appMessage.build();
+    }
+
+    public static PortoChatMessage createPing(long timestamp) {
+        PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
+        Ping.Builder ping = appMessage.getPingBuilder();
+        ping.setTimestamp(timestamp);
+        return appMessage.build();
+    }
+
+    public static PortoChatMessage createPong(long timestamp) {
+        PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
+        Pong.Builder pong = appMessage.getPongBuilder();
+        pong.setTimestamp(timestamp);
         return appMessage.build();
     }
 }

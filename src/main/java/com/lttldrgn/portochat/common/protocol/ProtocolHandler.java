@@ -68,17 +68,10 @@ public class ProtocolHandler {
         protocolClassMap = new HashMap<>();
         protocolClassMap.put((byte)0, "com.lttldrgn.portochat.common.protocol.ProtoMessage");
         protocolClassMap.put((byte)4, "com.lttldrgn.portochat.common.protocol.ServerMessage");
-        protocolClassMap.put((byte)5, "com.lttldrgn.portochat.common.protocol.Ping");
-        protocolClassMap.put((byte)6, "com.lttldrgn.portochat.common.protocol.Pong");
-        protocolClassMap.put((byte)7, "com.lttldrgn.portochat.common.protocol.UserConnectionStatus");
         protocolClassMap.put((byte)8, "com.lttldrgn.portochat.common.protocol.SetPublicKey");
         protocolClassMap.put((byte)9, "com.lttldrgn.portochat.common.protocol.ServerSharedKey");
         protocolClassMap.put((byte)10, "com.lttldrgn.portochat.common.protocol.ServerKeyAccepted");
         protocolClassMap.put((byte)11, "com.lttldrgn.portochat.common.protocol.ChatMessage");
-        protocolClassMap.put((byte)12, "com.lttldrgn.portochat.common.protocol.UserList");
-        protocolClassMap.put((byte)13, "com.lttldrgn.portochat.common.protocol.ChannelStatus");
-        protocolClassMap.put((byte)14, "com.lttldrgn.portochat.common.protocol.ChannelList");
-        protocolClassMap.put((byte)15, "com.lttldrgn.portochat.common.protocol.ChannelJoinPart");
         protocolClassMap.put((byte)16, "com.lttldrgn.portochat.common.protocol.UserDoesNotExist");
 
         protocolHeaderMap = new HashMap<>();

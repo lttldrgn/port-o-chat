@@ -23,8 +23,6 @@ import com.lttldrgn.portochat.common.network.event.NetEvent;
 import com.lttldrgn.portochat.common.network.event.NetListener;
 import com.lttldrgn.portochat.common.protocol.ChatMessage;
 import com.lttldrgn.portochat.common.protocol.DefaultData;
-import com.lttldrgn.portochat.common.protocol.Ping;
-import com.lttldrgn.portochat.common.protocol.Pong;
 import com.lttldrgn.portochat.common.protocol.ProtoMessage;
 import com.lttldrgn.portochat.common.protocol.ProtoUtil;
 import com.lttldrgn.portochat.common.protocol.ServerKeyAccepted;
@@ -109,8 +107,8 @@ public class ServerConnection {
     }
     
     public void sendPing() {
-        Ping ping = new Ping();
-        socket.writeData(ping);
+        ProtoMessage pingMessage = new ProtoMessage(ProtoUtil.createPing(System.currentTimeMillis()));
+        socket.writeData(pingMessage);
     }
     
     /**
@@ -175,10 +173,7 @@ public class ServerConnection {
                 logger.fine(defaultData.toString());
             }
             
-            if (defaultData instanceof Pong) {
-                System.out.println(messages.getString("ServerConnection.msg.ServerLag") + 
-                        ((Pong)defaultData).getCalculatedLag() + messages.getString("ServerConnection.msg.Ms"));
-            } else if (defaultData instanceof ServerMessage) {
+            if (defaultData instanceof ServerMessage) {
                 ServerMessage message = (ServerMessage) defaultData;
                 switch (message.getMessageEnum()) {
                     case USERNAME_SET:
@@ -216,11 +211,20 @@ public class ServerConnection {
                         for (ServerDataListener listener : listeners) {
                             listener.userListReceived(users, channel);
                         }
+                        break;
+                    case PING:
+                        // Send a pong
+                        long time = protoMessage.getMessage().getPing().getTimestamp();
+                        ProtoMessage pongMessage = new ProtoMessage(ProtoUtil.createPong(time));
+                        socket.writeData(pongMessage);
+                        break;
+                    case PONG:
+                        long pingTime = protoMessage.getMessage().getPong().getTimestamp();
+                        System.out.println(messages.getString("ServerConnection.msg.ServerLag") +
+                                (System.currentTimeMillis() - pingTime) +
+                                messages.getString("ServerConnection.msg.Ms"));
+                        break;
                 }
-            } else if (defaultData instanceof Ping) { 
-                Pong pong = new Pong();
-                pong.setTimestamp(((Ping) defaultData).getTimestamp());
-                socket.writeData(pong);
             } else if (defaultData instanceof UserDoesNotExist) { 
                 for (ServerDataListener listener : listeners) {
                     listener.userDoesNotExist(((UserDoesNotExist)defaultData).getUser());

@@ -22,8 +22,10 @@ message PortoChatMessage {
     oneof ApplicationMessage {
         ChannelList channelList = 2;
         Notification notification = 3;
-        Request request = 4;
-        UserList userList = 5;
+        Ping ping = 4;
+        Pong pong = 5;
+        Request request = 6;
+        UserList userList = 7;
     }
 }
 
@@ -78,4 +80,11 @@ message UserList {
 message UserConnectionStatus {
     UserData user = 1;
     bool connected = 2;
+}
+
+message Ping {
+    int64 timestamp = 1;
+}
+message Pong {
+    int64 timestamp = 1;
 }
