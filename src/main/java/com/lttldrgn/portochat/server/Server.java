@@ -369,7 +369,7 @@ public class Server {
         ProtoMessage protoMessage = new ProtoMessage(ProtoUtil.createChatMessage(
                 chatMessage.getSenderId(),
                 chatMessage.getDestinationId(),
-                chatMessage.getIsAction(),
+                chatMessage.getIsChannel(),
                 chatMessage.getMessage(),
                 chatMessage.getIsAction()));
         if (chatMessage.getIsChannel()) {

@@ -998,11 +998,15 @@ public class Client extends JFrame implements ActionListener,
     public boolean sendMessage(String recipient, boolean isChannel, boolean action, String message) {
         boolean sent = true;
         if (connection != null) {
-            User user = ServerDataStorage.getInstance().getUserByName(recipient);
-            if (user != null) {
-                connection.sendMessage(user.getId(), isChannel, action, message);
+            if (isChannel) {
+                connection.sendMessage(recipient, isChannel, action, message);
             } else {
-                JOptionPane.showMessageDialog(this, recipient + " not found in user list", "No such user", JOptionPane.ERROR_MESSAGE);
+                User user = ServerDataStorage.getInstance().getUserByName(recipient);
+                if (user != null) {
+                    connection.sendMessage(user.getId(), isChannel, action, message);
+                } else {
+                    JOptionPane.showMessageDialog(this, recipient + " not found in user list", "No such user", JOptionPane.ERROR_MESSAGE);
+                }
             }
         } else {
             sent = false;
