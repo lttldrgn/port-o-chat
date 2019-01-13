@@ -20,6 +20,7 @@ import com.lttldrgn.portochat.common.User;
 import com.lttldrgn.portochat.proto.Portochat.ChannelJoin;
 import com.lttldrgn.portochat.proto.Portochat.ChannelList;
 import com.lttldrgn.portochat.proto.Portochat.ChannelPart;
+import com.lttldrgn.portochat.proto.Portochat.ChatMessage;
 import com.lttldrgn.portochat.proto.Portochat.Notification;
 import com.lttldrgn.portochat.proto.Portochat.Ping;
 import com.lttldrgn.portochat.proto.Portochat.Pong;
@@ -138,7 +139,7 @@ public class ProtoUtil {
 
     private static UserData convertToUserData(User user) {
         UserData.Builder userData = UserData.newBuilder();
-        userData.setId(user.getName());
+        userData.setId(user.getId());
         userData.setName(user.getName());
         userData.setHost(user.getHost());
         return userData.build();
@@ -182,6 +183,28 @@ public class ProtoUtil {
         PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
         Pong.Builder pong = appMessage.getPongBuilder();
         pong.setTimestamp(timestamp);
+        return appMessage.build();
+    }
+
+    /**
+     * Create a Chat message
+     * @param senderId Id of the sender
+     * @param destinationId ID of the destination (user or channel)
+     * @param isChannel Set true if destined for a channel
+     * @param message Message to send
+     * @param action Set true if the message is an action
+     * @return PortoChatMessage containing the chat message
+     */
+    public static PortoChatMessage createChatMessage(String senderId, String destinationId, boolean isChannel, String message, boolean action) {
+        PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
+        ChatMessage.Builder chatMessage = appMessage.getChatMessageBuilder();
+        if (senderId != null) {
+            chatMessage.setSenderId(senderId);
+        }
+        chatMessage.setDestinationId(destinationId);
+        chatMessage.setIsChannel(isChannel);
+        chatMessage.setMessage(message);
+        chatMessage.setIsAction(action);
         return appMessage.build();
     }
 }

@@ -21,12 +21,21 @@ message PortoChatMessage {
     string originatorId = 1;
     oneof ApplicationMessage {
         ChannelList channelList = 2;
-        Notification notification = 3;
-        Ping ping = 4;
-        Pong pong = 5;
-        Request request = 6;
-        UserList userList = 7;
+        ChatMessage chatMessage = 3;
+        Notification notification = 4;
+        Ping ping = 5;
+        Pong pong = 6;
+        Request request = 7;
+        UserList userList = 8;
     }
+}
+
+message ChatMessage {
+    string senderId = 1;
+    string destinationId = 2;
+    bool isChannel = 3;
+    string message = 4;
+    bool isAction = 5;
 }
 
 message Request {

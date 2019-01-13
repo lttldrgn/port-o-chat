@@ -336,7 +336,7 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
     private void sendMessage(boolean action, String messageText) {
         messageText = stripHtml(messageText);
         if (serverConnectionProvider != null) {
-            if (!serverConnectionProvider.sendMessage(recipient, action, messageText)) {
+            if (!serverConnectionProvider.sendMessage(recipient, isChannel, action, messageText)) {
                 showInfoMessage(messages.getString("ChatPane.msg.NotConnected"), "disconnect");
             }
         }

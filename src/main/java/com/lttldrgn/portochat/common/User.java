@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import javax.crypto.SecretKey;
 import com.lttldrgn.portochat.common.network.handler.BufferHandler;
+import java.util.Objects;
+import java.util.UUID;
 
 /**
  *
@@ -42,21 +44,8 @@ public class User {
      * User constructor
      */
     public User() {
+        id = UUID.randomUUID().toString();
         handlers = new CopyOnWriteArrayList<>();
-    }
-    
-    /**
-     * Constructor using a DataInputStream to parse in user data
-     * 
-     * @param dis
-     * @throws IOException 
-     */
-    public User(DataInputStream dis) throws IOException {
-        boolean okToRead = dis.readBoolean();
-        if (okToRead) {
-            name = dis.readUTF();
-            host = dis.readUTF();
-        }
     }
 
     public String getId() {
@@ -138,26 +127,12 @@ public class User {
     public void removeHandler(BufferHandler handler) {
         handlers.remove(handler);
     }
-    
-    /**
-     * Static method used to write out user data to the DataOutputStream
-     * 
-     * @param user
-     * @param dos 
-     * @throws java.io.IOException 
-     */
-    public static void writeDos(User user, DataOutputStream dos) throws IOException {
-        if (user != null) {
-            dos.writeBoolean(true); //bit to see if we should read user information
-            dos.writeUTF(user.getName());
-            dos.writeUTF(user.getHost());
-        } else {
-            dos.writeBoolean(false);
-        }
-    }
 
     @Override
     public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
         if (obj == null) {
             return false;
         }
@@ -165,10 +140,13 @@ public class User {
             return false;
         }
         final User other = (User) obj;
-        if ((this.name == null) ? (other.name != null) : !this.name.equals(other.name)) {
+        if (!Objects.equals(this.id, other.id)) {
             return false;
         }
-        if ((this.host == null) ? (other.host != null) : !this.host.equals(other.host)) {
+        if (!Objects.equals(this.name, other.name)) {
+            return false;
+        }
+        if (!Objects.equals(this.host, other.host)) {
             return false;
         }
         return true;
@@ -176,15 +154,15 @@ public class User {
 
     @Override
     public int hashCode() {
-        int hash = 5;
-        hash = 83 * hash + (this.name != null ? this.name.hashCode() : 0);
-        hash = 83 * hash + (this.host != null ? this.host.hashCode() : 0);
+        int hash = 3;
+        hash = 29 * hash + Objects.hashCode(this.id);
+        hash = 29 * hash + Objects.hashCode(this.name);
+        hash = 29 * hash + Objects.hashCode(this.host);
         return hash;
     }
-    
+
     @Override
     public String toString() {
         return name + " (" + host + ")";
     }
-
 }

@@ -27,7 +27,6 @@ import java.util.logging.Logger;
 import com.lttldrgn.portochat.common.User;
 import com.lttldrgn.portochat.common.Util;
 import com.lttldrgn.portochat.common.encryption.EncryptionManager;
-import com.lttldrgn.portochat.common.protocol.ChatMessage;
 import com.lttldrgn.portochat.common.protocol.DefaultData;
 import com.lttldrgn.portochat.common.protocol.ServerMessage;
 import com.lttldrgn.portochat.common.protocol.ServerMessageEnum;
@@ -41,6 +40,7 @@ import com.lttldrgn.portochat.common.protocol.SetPublicKey;
 import com.lttldrgn.portochat.common.protocol.UserDoesNotExist;
 import com.lttldrgn.portochat.proto.Portochat;
 import com.lttldrgn.portochat.proto.Portochat.ChannelPart;
+import com.lttldrgn.portochat.proto.Portochat.ChatMessage;
 import com.lttldrgn.portochat.proto.Portochat.Notification;
 import com.lttldrgn.portochat.proto.Portochat.PortoChatMessage;
 import com.lttldrgn.portochat.proto.Portochat.Request;
@@ -149,39 +149,7 @@ public class Server {
 
             User user = userDatabase.getUserOfSocket(socket);
 
-            if (defaultData instanceof ChatMessage) {
-                ChatMessage chatMessage = ((ChatMessage) defaultData);
-
-                // Fill out who sent it
-                chatMessage.setFromUser(user);
-
-                if (chatMessage.isChannel()) {
-                    // Send to all users in channel
-                    ArrayList<Socket> userSocketList =
-                            (ArrayList<Socket>) channelDatabase.getSocketsOfUsersInChannel(
-                            chatMessage.getTo(),
-                            chatMessage.getFromUser());
-
-                    if (userSocketList != null) {
-                        for (Socket userSocket : userSocketList) {
-                            connection.writeData(userSocket, chatMessage);
-                        }
-                    } else {
-                        ServerMessage serverMessage = new ServerMessage();
-                        serverMessage.setMessageEnum(ServerMessageEnum.ERROR_CHANNEL_NON_EXISTENT);
-                        serverMessage.setAdditionalMessage(chatMessage.getTo());
-                        connection.writeData(socket, serverMessage);
-                    }
-                } else {
-                    Socket toUserSocket = userDatabase.getSocketForUser(chatMessage.getTo());
-                    if (toUserSocket != null) {
-                        connection.writeData(toUserSocket, chatMessage);
-                    } else {
-                        UserDoesNotExist userDoesNotExist = new UserDoesNotExist(chatMessage.getTo());
-                        connection.writeData(socket, userDoesNotExist);
-                    }
-                }
-            } else if (defaultData instanceof ProtoMessage) {
+            if (defaultData instanceof ProtoMessage) {
                 handleProtoMessage((ProtoMessage)defaultData, user, socket);
                 
             } else if (defaultData instanceof SetPublicKey) {
@@ -231,6 +199,9 @@ public class Server {
             case PONG:
                 logger.log(Level.INFO, "Updating {0} last seen", user);
                 user.setLastSeen(System.currentTimeMillis());
+                break;
+            case CHATMESSAGE:
+                handleChatMessage(protoMessage.getMessage().getChatMessage(), socket, user);
                 break;
             default:
                 logger.log(Level.INFO, "Message type not supported: {0}", protoMessage.getMessage().getApplicationMessageCase());
@@ -394,6 +365,41 @@ public class Server {
         logger.info(userConnection.toString());
     }
 
+    private void handleChatMessage(ChatMessage chatMessage, Socket socket, User user) {
+        ProtoMessage protoMessage = new ProtoMessage(ProtoUtil.createChatMessage(
+                chatMessage.getSenderId(),
+                chatMessage.getDestinationId(),
+                chatMessage.getIsAction(),
+                chatMessage.getMessage(),
+                chatMessage.getIsAction()));
+        if (chatMessage.getIsChannel()) {
+            // Send to all users in channel
+            ArrayList<Socket> userSocketList
+                    = (ArrayList<Socket>) channelDatabase.getSocketsOfUsersInChannel(
+                            chatMessage.getDestinationId(),
+                            user);
+
+            if (userSocketList != null) {
+                for (Socket userSocket : userSocketList) {
+                    connection.writeData(userSocket, protoMessage);
+                }
+            } else {
+                ServerMessage serverMessage = new ServerMessage();
+                serverMessage.setMessageEnum(ServerMessageEnum.ERROR_CHANNEL_NON_EXISTENT);
+                serverMessage.setAdditionalMessage(chatMessage.getDestinationId());
+                connection.writeData(socket, serverMessage);
+            }
+        } else {
+            // direct user message
+            Socket toUserSocket = userDatabase.getSocketByUserId(chatMessage.getDestinationId());
+            if (toUserSocket != null) {
+                connection.writeData(toUserSocket, protoMessage);
+            } else {
+                UserDoesNotExist userDoesNotExist = new UserDoesNotExist(chatMessage.getDestinationId());
+                connection.writeData(socket, userDoesNotExist);
+            }
+        }
+    }
     private void sendToAllSockets(List<Socket> userSocketList, DefaultData data) {
         if (userSocketList != null && userSocketList.size() > 0) {
             for (Socket userSocket : userSocketList) {

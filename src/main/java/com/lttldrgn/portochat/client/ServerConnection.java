@@ -21,7 +21,6 @@ import com.lttldrgn.portochat.common.encryption.EncryptionManager;
 import com.lttldrgn.portochat.common.network.ConnectionHandler;
 import com.lttldrgn.portochat.common.network.event.NetEvent;
 import com.lttldrgn.portochat.common.network.event.NetListener;
-import com.lttldrgn.portochat.common.protocol.ChatMessage;
 import com.lttldrgn.portochat.common.protocol.DefaultData;
 import com.lttldrgn.portochat.common.protocol.ProtoMessage;
 import com.lttldrgn.portochat.common.protocol.ProtoUtil;
@@ -34,6 +33,7 @@ import com.lttldrgn.portochat.proto.Portochat;
 import com.lttldrgn.portochat.proto.Portochat.ChannelJoin;
 import com.lttldrgn.portochat.proto.Portochat.ChannelList;
 import com.lttldrgn.portochat.proto.Portochat.ChannelPart;
+import com.lttldrgn.portochat.proto.Portochat.ChatMessage;
 import com.lttldrgn.portochat.proto.Portochat.Notification;
 import com.lttldrgn.portochat.proto.Portochat.StringList;
 import com.lttldrgn.portochat.proto.Portochat.UserList;
@@ -113,15 +113,14 @@ public class ServerConnection {
     
     /**
      * Sends a message to the defined recipient
-     * @param recipient Person or channel the message is being sent to
+     * @param recipientId Person or channel the message is being sent to
+     * @param isChannel Parameter should be true if the recipient is a channel
      * @param action True if this is an action message
      * @param message Message being sent
      */
-    public void sendMessage(String recipient, boolean action, String message) {
-        ChatMessage chatMessage = new ChatMessage();
-        chatMessage.setTo(recipient);
-        chatMessage.setAction(action);
-        chatMessage.setMessage(message);
+    public void sendMessage(String recipientId, boolean isChannel, boolean action, String message) {
+        // TODO use a real ID instead of the username
+        ProtoMessage chatMessage = new ProtoMessage(ProtoUtil.createChatMessage(username, recipientId, isChannel, message, action));
         socket.writeData(chatMessage);
     }
     
@@ -188,18 +187,14 @@ public class ServerConnection {
                         }
                         break;
                 }
-            } else if (defaultData instanceof ChatMessage) {
-                ChatMessage message = (ChatMessage)defaultData;
-                String channel = message.isChannel() ? message.getTo() : null;
-                for (ServerDataListener listener : listeners) {
-                    listener.receiveChatMessage(message.getFromUser(),
-                            message.isAction(), message.getMessage(), channel);
-                }
             } else if (defaultData instanceof ProtoMessage) {
                 ProtoMessage protoMessage = (ProtoMessage) defaultData;
                 switch (protoMessage.getMessage().getApplicationMessageCase()) {
                     case CHANNELLIST:
                         handleChannelList(protoMessage.getMessage().getChannelList());
+                        break;
+                    case CHATMESSAGE:
+                        handleChatMessage(protoMessage.getMessage().getChatMessage());
                         break;
                     case NOTIFICATION:
                         handleNotification(protoMessage.getMessage().getNotification());
@@ -208,6 +203,9 @@ public class ServerConnection {
                         UserList userList = protoMessage.getMessage().getUserList();
                         List<User> users = ProtoUtil.getUserList(userList);
                         String channel = userList.getChannel();
+                        if (channel == null || channel.isEmpty()) {
+                            ServerDataStorage.getInstance().addUsers(users);
+                        }
                         for (ServerDataListener listener : listeners) {
                             listener.userListReceived(users, channel);
                         }
@@ -251,6 +249,19 @@ public class ServerConnection {
                 listener.channelListReceived(channels);
             }
         }
+
+        private void handleChatMessage(ChatMessage message) {
+            String channel = message.getIsChannel() ? message.getDestinationId(): null;
+            // TODO once sender ID is being used, look up by ID instead of name
+            User sender = ServerDataStorage.getInstance().getUserByName(message.getSenderId());
+            if (sender != null) {
+                for (ServerDataListener listener : listeners) {
+                    listener.receiveChatMessage(sender,
+                            message.getIsAction(), message.getMessage(), channel);
+                }
+            }
+        }
+
         private void handleNotification(Notification notification) {
             switch (notification.getNotificationDataCase()) {
                 case CHANNELJOIN:
@@ -271,8 +282,12 @@ public class ServerConnection {
                     break;
                 case USERCONNECTIONSTATUS:
                     User user = ProtoUtil.convertToUser(notification.getUserConnectionStatus().getUser());
-                    boolean conenected = notification.getUserConnectionStatus().getConnected();
-                    listeners.forEach((listener) -> listener.userConnectionEvent(user, conenected));
+                    boolean connected = notification.getUserConnectionStatus().getConnected();
+                    if (connected) {
+                        ServerDataStorage.getInstance().addUser(user);
+                    } else {
+                        ServerDataStorage.getInstance().removeUser(user.getId());
+                    }
                     break;
             }
         }

@@ -81,7 +81,7 @@ import com.lttldrgn.portochat.common.User;
  * @author Brandon
  */
 public class Client extends JFrame implements ActionListener, 
-        ServerConnectionProvider, ServerDataListener {
+        ServerConnectionProvider, ServerDataListener, UserEventListener {
     private final ResourceBundle messages = ResourceBundle.getBundle("portochat/resource/MessagesBundle", java.util.Locale.getDefault());
     private static final Logger logger = Logger.getLogger(Client.class.getName());
     private static final String EXIT_COMMAND = "EXIT";
@@ -132,6 +132,7 @@ public class Client extends JFrame implements ActionListener,
     public Client() {
         this.userChannelContainerPanel = null;
         setTitle(messages.getString("Client.title.PortOChat"));
+        ServerDataStorage.getInstance().addUserEventListener(this);
     }
     
     public void checkVersion() {
@@ -899,14 +900,15 @@ public class Client extends JFrame implements ActionListener,
             }
         }
     }
-    
+
     @Override
-    public void userConnectionEvent(User user, boolean connected) {
-        if (connected) {
-            addUser(user);
-        } else {
-            removeUser(user);
-        }
+    public void userAdded(User user) {
+        addUser(user);
+    }
+
+    @Override
+    public void userRemoved(User user) {
+        removeUser(user);
     }
 
     @Override
@@ -993,10 +995,15 @@ public class Client extends JFrame implements ActionListener,
     }
     
     @Override
-    public boolean sendMessage(String recipient, boolean action, String message) {
+    public boolean sendMessage(String recipient, boolean isChannel, boolean action, String message) {
         boolean sent = true;
         if (connection != null) {
-            connection.sendMessage(recipient, action, message);
+            User user = ServerDataStorage.getInstance().getUserByName(recipient);
+            if (user != null) {
+                connection.sendMessage(user.getId(), isChannel, action, message);
+            } else {
+                JOptionPane.showMessageDialog(this, recipient + " not found in user list", "No such user", JOptionPane.ERROR_MESSAGE);
+            }
         } else {
             sent = false;
         }
