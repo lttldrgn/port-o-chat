@@ -76,5 +76,8 @@ public class ProtoMessage extends DefaultData {
             Logger.getLogger(ProtoMessage.class.getName()).log(Level.SEVERE, "Error decoding message", ex);
         }
     }
-    
+
+    public void setCanBeEncrypted(boolean canBeEncrypted) {
+        this.canBeEncrypted = canBeEncrypted;
+    }
 }
