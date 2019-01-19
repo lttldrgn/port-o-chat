@@ -24,10 +24,7 @@ import com.lttldrgn.portochat.common.network.event.NetListener;
 import com.lttldrgn.portochat.common.protocol.DefaultData;
 import com.lttldrgn.portochat.common.protocol.ProtoMessage;
 import com.lttldrgn.portochat.common.protocol.ProtoUtil;
-import com.lttldrgn.portochat.common.protocol.ServerKeyAccepted;
 import com.lttldrgn.portochat.common.protocol.ServerMessage;
-import com.lttldrgn.portochat.common.protocol.ServerSharedKey;
-import com.lttldrgn.portochat.common.protocol.SetPublicKey;
 import com.lttldrgn.portochat.common.protocol.UserDoesNotExist;
 import com.lttldrgn.portochat.proto.Portochat;
 import com.lttldrgn.portochat.proto.Portochat.ChannelJoin;
@@ -35,6 +32,7 @@ import com.lttldrgn.portochat.proto.Portochat.ChannelList;
 import com.lttldrgn.portochat.proto.Portochat.ChannelPart;
 import com.lttldrgn.portochat.proto.Portochat.ChatMessage;
 import com.lttldrgn.portochat.proto.Portochat.Notification;
+import com.lttldrgn.portochat.proto.Portochat.Request;
 import com.lttldrgn.portochat.proto.Portochat.StringList;
 import com.lttldrgn.portochat.proto.Portochat.UserList;
 import java.io.IOException;
@@ -91,11 +89,10 @@ public class ServerConnection {
      * Send the user public key to the server
      */
     public void sendUserPublicKey() {
-        SetPublicKey setKey = new SetPublicKey();
         byte encodedKey[] = encryptionManager.getClientEncodedPublicKey();
         if (encodedKey != null) {
-            setKey.setEncodedPublicKey(encodedKey);
-            socket.writeData(setKey);
+            ProtoMessage protoMessage = new ProtoMessage(ProtoUtil.createSetPublicKey(encodedKey));
+            socket.writeData(protoMessage);
         }
         
     }
@@ -199,6 +196,9 @@ public class ServerConnection {
                     case NOTIFICATION:
                         handleNotification(protoMessage.getMessage().getNotification());
                         break;
+                    case REQUEST:
+                        handleRequest(protoMessage.getMessage().getRequest());
+                        break;
                     case USERLIST:
                         UserList userList = protoMessage.getMessage().getUserList();
                         List<User> users = ProtoUtil.getUserList(userList);
@@ -227,15 +227,6 @@ public class ServerConnection {
                 for (ServerDataListener listener : listeners) {
                     listener.userDoesNotExist(((UserDoesNotExist)defaultData).getUser());
                 }
-            } else if (defaultData instanceof ServerSharedKey) {
-                ServerSharedKey sharedKey = (ServerSharedKey) defaultData;
-                SecretKey serverSecretKey =
-                encryptionManager.decodeSecretKeyWithPrivateKey(
-                        sharedKey.getEncryptedSecretKey());
-                encryptionManager.setServerSecretKey(serverSecretKey);
-                ServerKeyAccepted accepted = new ServerKeyAccepted();
-                socket.writeData(accepted);
-                sendUsername(ServerConnection.this.username);
             } else {
                 logger.log(Level.WARNING, "{0}{1}", new Object[]{messages.getString("ServerConnection.msg.UnknownMessage"), defaultData});
             }
@@ -297,6 +288,22 @@ public class ServerConnection {
                 listener.receiveChannelJoinPart(userId, channel, joined);
             }
         }
+
+        private void handleRequest(Request request) {
+            switch (request.getRequestType()) {
+                case SetServerSharedKey:
+                    setServerSecretKey(request);
+                    break;
+            }
+        }
+        private void setServerSecretKey(Request request) {
+             SecretKey serverSecretKey = encryptionManager.decodeSecretKeyWithPrivateKey(
+                     request.getByteData().toByteArray());
+             encryptionManager.setServerSecretKey(serverSecretKey);
+             ProtoMessage protoMessage = new ProtoMessage(ProtoUtil.createServerKeyAccepted(request.getRequestId()));
+             protoMessage.setCanBeEncrypted(false);
+             socket.writeData(protoMessage);
+             sendUsername(ServerConnection.this.username);
+         }
     }
-    
 }

@@ -34,9 +34,6 @@ import com.lttldrgn.portochat.common.network.event.NetEvent;
 import com.lttldrgn.portochat.common.network.event.NetListener;
 import com.lttldrgn.portochat.common.protocol.ProtoMessage;
 import com.lttldrgn.portochat.common.protocol.ProtoUtil;
-import com.lttldrgn.portochat.common.protocol.ServerKeyAccepted;
-import com.lttldrgn.portochat.common.protocol.ServerSharedKey;
-import com.lttldrgn.portochat.common.protocol.SetPublicKey;
 import com.lttldrgn.portochat.common.protocol.UserDoesNotExist;
 import com.lttldrgn.portochat.proto.Portochat;
 import com.lttldrgn.portochat.proto.Portochat.ChannelPart;
@@ -44,6 +41,7 @@ import com.lttldrgn.portochat.proto.Portochat.ChatMessage;
 import com.lttldrgn.portochat.proto.Portochat.Notification;
 import com.lttldrgn.portochat.proto.Portochat.PortoChatMessage;
 import com.lttldrgn.portochat.proto.Portochat.Request;
+import com.lttldrgn.portochat.proto.Portochat.Response;
 import com.lttldrgn.portochat.proto.Portochat.UserConnectionStatus;
 import com.lttldrgn.portochat.server.network.ServerConnectionHandler;
 
@@ -152,24 +150,6 @@ public class Server {
             if (defaultData instanceof ProtoMessage) {
                 handleProtoMessage((ProtoMessage)defaultData, user, socket);
                 
-            } else if (defaultData instanceof SetPublicKey) {
-                SetPublicKey pubKey = (SetPublicKey) defaultData;
-                user.setSecretKey(encryptionManager.generateServerSecretKey());
-                user.setClientPublicKey(encryptionManager.getClientPublicKey(pubKey.getEncodedPublicKey()));
-                if (logger.isLoggable(Level.FINEST)) {
-                    logger.log(Level.FINEST, "public: {0}",
-                            Util.byteArrayToHexString(user.getClientPublicKey().getEncoded()));
-                }
-
-                // Encode the private key using the client's public key
-                byte[] encodedEncryptedSecretKey =
-                        encryptionManager.encryptSecretKeyWithPublicKey(
-                        user.getSecretKey(), user.getClientPublicKey());
-                ServerSharedKey sharedKey = new ServerSharedKey();
-                sharedKey.setEncryptedSecretKey(encodedEncryptedSecretKey);
-                connection.writeData(socket, sharedKey);
-            } else if (defaultData instanceof ServerKeyAccepted) {
-                userDatabase.setSocketIsEncrypted(socket, true);
             } else {
                 logger.log(Level.WARNING, "Unhandled message: {0}", defaultData);
             }
@@ -188,6 +168,12 @@ public class Server {
                 Request request = protoMessage.getMessage().getRequest();
                 if (request != null) {
                     handleRequest(user, request, socket);
+                }
+                break;
+            case RESPONSE:
+                Response response = protoMessage.getMessage().getResponse();
+                if (response != null) {
+                    handleResponse(response, user, socket);
                 }
                 break;
             case PING:
@@ -230,6 +216,8 @@ public class Server {
             case SetUserName:
                 handleSetUserNameRequest(user, request.getStringRequestData().getValue(), socket);
                 break;
+            case SetUserPublicKey:
+                handleSetUserPublicKey(user, request, socket);
             case UserList:
             {
                 PortoChatMessage userList = ProtoUtil.createUserList(userDatabase.getUserList(), null);
@@ -243,6 +231,13 @@ public class Server {
         }
     }
 
+    private void handleResponse(Response response, User user, Socket socket) {
+        switch (response.getResponseType()) {
+            case ServerKeyAccepted:
+                userDatabase.setSocketIsEncrypted(socket, true);
+                break;
+        }
+    }
     private void handleSetUserNameRequest(User user, String newName, Socket socket) {
         // Set user info
         String oldUserName = user.getName();
@@ -283,6 +278,23 @@ public class Server {
             serverMessage.setAdditionalMessage(newName);
         }
         connection.writeData(socket, serverMessage);
+    }
+
+    private void handleSetUserPublicKey(User user, Request request, Socket socket) {
+
+        user.setSecretKey(encryptionManager.generateServerSecretKey());
+        user.setClientPublicKey(encryptionManager.getClientPublicKey(request.getByteData().toByteArray()));
+        if (logger.isLoggable(Level.FINEST)) {
+            logger.log(Level.FINEST, "public: {0}",
+                    Util.byteArrayToHexString(user.getClientPublicKey().getEncoded()));
+        }
+
+        // Encode the private key using the client's public key
+        byte[] encodedEncryptedSecretKey
+                = encryptionManager.encryptSecretKeyWithPublicKey(
+                        user.getSecretKey(), user.getClientPublicKey());
+        ProtoMessage protoMessage = new ProtoMessage(ProtoUtil.createSetServerSharedKey(encodedEncryptedSecretKey));
+        connection.writeData(socket, protoMessage);
     }
 
     private void sendToChannelUsers(String channel, User filterUser, DefaultData data) {

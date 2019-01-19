@@ -16,6 +16,7 @@
  */
 package com.lttldrgn.portochat.common.protocol;
 
+import com.google.protobuf.ByteString;
 import com.lttldrgn.portochat.common.User;
 import com.lttldrgn.portochat.proto.Portochat.ChannelJoin;
 import com.lttldrgn.portochat.proto.Portochat.ChannelList;
@@ -26,6 +27,7 @@ import com.lttldrgn.portochat.proto.Portochat.Ping;
 import com.lttldrgn.portochat.proto.Portochat.Pong;
 import com.lttldrgn.portochat.proto.Portochat.PortoChatMessage;
 import com.lttldrgn.portochat.proto.Portochat.Request;
+import com.lttldrgn.portochat.proto.Portochat.Response;
 import com.lttldrgn.portochat.proto.Portochat.UserConnectionStatus;
 import com.lttldrgn.portochat.proto.Portochat.UserData;
 import com.lttldrgn.portochat.proto.Portochat.UserList;
@@ -205,6 +207,33 @@ public class ProtoUtil {
         chatMessage.setIsChannel(isChannel);
         chatMessage.setMessage(message);
         chatMessage.setIsAction(action);
+        return appMessage.build();
+    }
+
+    public static PortoChatMessage createSetPublicKey(byte[] encodedKey) {
+        PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
+        Request.Builder request = appMessage.getRequestBuilder();
+        request.setRequestType(Request.RequestType.SetUserPublicKey);
+        request.setByteData(ByteString.copyFrom(encodedKey));
+        return appMessage.build();
+    }
+
+    public static PortoChatMessage createSetServerSharedKey(byte[] encodedKey) {
+        PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
+        Request.Builder request = appMessage.getRequestBuilder();
+        request.setRequestId(UUID.randomUUID().toString());
+        request.setRequestType(Request.RequestType.SetServerSharedKey);
+        request.setByteData(ByteString.copyFrom(encodedKey));
+        return appMessage.build();
+    }
+
+    public static PortoChatMessage createServerKeyAccepted(String requestId) {
+        PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
+        Response.Builder response = appMessage.getResponseBuilder();
+        if (requestId != null && !requestId.isEmpty()) {
+            response.setRequestId(requestId);
+        }
+        response.setResponseType(Response.ResponseType.ServerKeyAccepted);
         return appMessage.build();
     }
 }

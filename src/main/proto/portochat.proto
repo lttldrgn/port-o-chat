@@ -26,7 +26,8 @@ message PortoChatMessage {
         Ping ping = 5;
         Pong pong = 6;
         Request request = 7;
-        UserList userList = 8;
+        Response response = 8;
+        UserList userList = 9;
     }
 }
 
@@ -43,15 +44,25 @@ message Request {
         ChannelList = 0;
         ChannelUserList = 1;
         ChannelJoin = 2;
-        SetUserName = 3;
-        UserList = 4;
+        SetServerSharedKey = 3; // request to client to start using encryption
+        SetUserName = 4;
+        SetUserPublicKey = 5;
+        UserList = 6;
     }
     string requestId = 1;
     RequestType requestType = 2;
     oneof RequestData {
         StringData stringRequestData = 3;
-
+        bytes byteData = 4;
     }
+}
+
+message Response {
+    enum ResponseType {
+        ServerKeyAccepted = 0;
+    }
+    string requestId = 1;
+    ResponseType responseType = 2;
 }
 
 message Notification {
