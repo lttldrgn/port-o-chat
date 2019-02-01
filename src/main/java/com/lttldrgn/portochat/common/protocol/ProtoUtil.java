@@ -22,6 +22,7 @@ import com.lttldrgn.portochat.proto.Portochat.ChannelJoin;
 import com.lttldrgn.portochat.proto.Portochat.ChannelList;
 import com.lttldrgn.portochat.proto.Portochat.ChannelPart;
 import com.lttldrgn.portochat.proto.Portochat.ChatMessage;
+import com.lttldrgn.portochat.proto.Portochat.ErrorMessage;
 import com.lttldrgn.portochat.proto.Portochat.Notification;
 import com.lttldrgn.portochat.proto.Portochat.Ping;
 import com.lttldrgn.portochat.proto.Portochat.Pong;
@@ -234,6 +235,50 @@ public class ProtoUtil {
             response.setRequestId(requestId);
         }
         response.setResponseType(Response.ResponseType.ServerKeyAccepted);
+        return appMessage.build();
+    }
+
+    /**
+     * Creates a user does not exist message
+     * @param user Object representing the destination user of a message that does not exist
+     * @return PortoChatMessage with a UserDoesNotExist notification
+     */
+    public static PortoChatMessage createUserDoesNotExist(User user) {
+        PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
+        appMessage.getNotificationBuilder().getUserDoesNotExistBuilder().setUser(convertToUserData(user));
+        return appMessage.build();
+    }
+
+    /**
+     * Create a UserNameSet notification
+     * @param name Name that was set
+     * @return PortoChatMessage
+     */
+    public static PortoChatMessage createUserNameSetNotification(String name) {
+        PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
+        appMessage.getNotificationBuilder().getUserNameSetBuilder().setName(name);
+        return appMessage.build();
+    }
+
+    /**
+     * Create a UserNameInUse error
+     * @param name User name in use
+     * @return PortoChatMessage
+     */
+    public static PortoChatMessage createUserNameInUseError(String name) {
+        PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
+        appMessage.getErrorMessageBuilder().setErrorType(ErrorMessage.ErrorType.UserNameInUse).setAdditionalMessage(name);
+        return appMessage.build();
+    }
+
+    /**
+     * Create a ChannelDoesNotExist error message
+     * @param channelId Channel ID that message was addressed to
+     * @return PortoChatMessage
+     */
+    public static PortoChatMessage createChannelDoesNotExistError(String channelId) {
+        PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
+        appMessage.getErrorMessageBuilder().setErrorType(ErrorMessage.ErrorType.ChannelDoesNotExist).setAdditionalMessage(channelId);
         return appMessage.build();
     }
 }

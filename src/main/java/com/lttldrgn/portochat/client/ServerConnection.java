@@ -24,13 +24,12 @@ import com.lttldrgn.portochat.common.network.event.NetListener;
 import com.lttldrgn.portochat.common.protocol.DefaultData;
 import com.lttldrgn.portochat.common.protocol.ProtoMessage;
 import com.lttldrgn.portochat.common.protocol.ProtoUtil;
-import com.lttldrgn.portochat.common.protocol.ServerMessage;
-import com.lttldrgn.portochat.common.protocol.UserDoesNotExist;
 import com.lttldrgn.portochat.proto.Portochat;
 import com.lttldrgn.portochat.proto.Portochat.ChannelJoin;
 import com.lttldrgn.portochat.proto.Portochat.ChannelList;
 import com.lttldrgn.portochat.proto.Portochat.ChannelPart;
 import com.lttldrgn.portochat.proto.Portochat.ChatMessage;
+import com.lttldrgn.portochat.proto.Portochat.ErrorMessage;
 import com.lttldrgn.portochat.proto.Portochat.Notification;
 import com.lttldrgn.portochat.proto.Portochat.Request;
 import com.lttldrgn.portochat.proto.Portochat.StringList;
@@ -169,22 +168,7 @@ public class ServerConnection {
                 logger.fine(defaultData.toString());
             }
             
-            if (defaultData instanceof ServerMessage) {
-                ServerMessage message = (ServerMessage) defaultData;
-                switch (message.getMessageEnum()) {
-                    case USERNAME_SET:
-                        for (ServerDataListener listener : listeners) {
-                            listener.handleServerConnection(message.getAdditionalMessage(), true);
-                        }
-                        break;
-                        
-                    case ERROR_USERNAME_IN_USE:
-                        for (ServerDataListener listener : listeners) {
-                            listener.handleServerConnection(message.getAdditionalMessage(), false);
-                        }
-                        break;
-                }
-            } else if (defaultData instanceof ProtoMessage) {
+            if (defaultData instanceof ProtoMessage) {
                 ProtoMessage protoMessage = (ProtoMessage) defaultData;
                 switch (protoMessage.getMessage().getApplicationMessageCase()) {
                     case CHANNELLIST:
@@ -192,6 +176,9 @@ public class ServerConnection {
                         break;
                     case CHATMESSAGE:
                         handleChatMessage(protoMessage.getMessage().getChatMessage());
+                        break;
+                    case ERRORMESSAGE:
+                        handleErrorMessage(protoMessage.getMessage().getErrorMessage());
                         break;
                     case NOTIFICATION:
                         handleNotification(protoMessage.getMessage().getNotification());
@@ -223,10 +210,6 @@ public class ServerConnection {
                                 messages.getString("ServerConnection.msg.Ms"));
                         break;
                 }
-            } else if (defaultData instanceof UserDoesNotExist) { 
-                for (ServerDataListener listener : listeners) {
-                    listener.userDoesNotExist(((UserDoesNotExist)defaultData).getUser());
-                }
             } else {
                 logger.log(Level.WARNING, "{0}{1}", new Object[]{messages.getString("ServerConnection.msg.UnknownMessage"), defaultData});
             }
@@ -250,6 +233,19 @@ public class ServerConnection {
                     listener.receiveChatMessage(sender,
                             message.getIsAction(), message.getMessage(), channel);
                 }
+            }
+        }
+
+        private void handleErrorMessage(ErrorMessage errorMessage) {
+            switch (errorMessage.getErrorType()) {
+                case ChannelDoesNotExist:
+                    // TODO log to console
+                    break;
+                case UserNameInUse:
+                    for (ServerDataListener listener : listeners) {
+                        listener.handleServerConnection(errorMessage.getAdditionalMessage(), false);
+                    }
+                    break;
             }
         }
 
@@ -278,6 +274,17 @@ public class ServerConnection {
                         ServerDataStorage.getInstance().addUser(user);
                     } else {
                         ServerDataStorage.getInstance().removeUser(user.getId());
+                    }
+                    break;
+                case USERDOESNOTEXIST:
+                    User nonExistent = ProtoUtil.convertToUser(notification.getUserDoesNotExist().getUser());
+                    for (ServerDataListener listener : listeners) {
+                        listener.userDoesNotExist(nonExistent.getName());
+                    }
+                    break;
+                case USERNAMESET:
+                    for (ServerDataListener listener : listeners) {
+                        listener.handleServerConnection(notification.getUserNameSet().getName(), true);
                     }
                     break;
             }

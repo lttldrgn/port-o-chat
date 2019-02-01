@@ -67,8 +67,6 @@ public class ProtocolHandler {
     private void initialize() {
         protocolClassMap = new HashMap<>();
         protocolClassMap.put((byte)0, "com.lttldrgn.portochat.common.protocol.ProtoMessage");
-        protocolClassMap.put((byte)1, "com.lttldrgn.portochat.common.protocol.ServerMessage");
-        protocolClassMap.put((byte)2, "com.lttldrgn.portochat.common.protocol.UserDoesNotExist");
 
         protocolHeaderMap = new HashMap<>();
         for (Map.Entry<Byte, String> entry : protocolClassMap.entrySet()) {

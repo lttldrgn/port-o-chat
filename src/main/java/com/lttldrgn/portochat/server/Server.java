@@ -28,13 +28,10 @@ import com.lttldrgn.portochat.common.User;
 import com.lttldrgn.portochat.common.Util;
 import com.lttldrgn.portochat.common.encryption.EncryptionManager;
 import com.lttldrgn.portochat.common.protocol.DefaultData;
-import com.lttldrgn.portochat.common.protocol.ServerMessage;
-import com.lttldrgn.portochat.common.protocol.ServerMessageEnum;
 import com.lttldrgn.portochat.common.network.event.NetEvent;
 import com.lttldrgn.portochat.common.network.event.NetListener;
 import com.lttldrgn.portochat.common.protocol.ProtoMessage;
 import com.lttldrgn.portochat.common.protocol.ProtoUtil;
-import com.lttldrgn.portochat.common.protocol.UserDoesNotExist;
 import com.lttldrgn.portochat.proto.Portochat;
 import com.lttldrgn.portochat.proto.Portochat.ChannelPart;
 import com.lttldrgn.portochat.proto.Portochat.ChatMessage;
@@ -257,7 +254,6 @@ public class Server {
                         success ? "successful!" : "unsuccessful!"});
         }
 
-        ServerMessage serverMessage = new ServerMessage();
         if (success) {
             user.setLastSeen(System.currentTimeMillis());
             if (!rename) {
@@ -271,13 +267,12 @@ public class Server {
                 // update channel database
                 channelDatabase.renameUser(oldUserName, newName);
             }
-            serverMessage.setMessageEnum(ServerMessageEnum.USERNAME_SET);
-            serverMessage.setAdditionalMessage(newName);
+            ProtoMessage usernameSet = new ProtoMessage(ProtoUtil.createUserNameSetNotification(newName));
+            connection.writeData(socket, usernameSet);
         } else {
-            serverMessage.setMessageEnum(ServerMessageEnum.ERROR_USERNAME_IN_USE);
-            serverMessage.setAdditionalMessage(newName);
+            ProtoMessage usernameInUse = new ProtoMessage(ProtoUtil.createUserNameInUseError(newName));
+            connection.writeData(socket, usernameInUse);
         }
-        connection.writeData(socket, serverMessage);
     }
 
     private void handleSetUserPublicKey(User user, Request request, Socket socket) {
@@ -396,10 +391,8 @@ public class Server {
                     connection.writeData(userSocket, protoMessage);
                 }
             } else {
-                ServerMessage serverMessage = new ServerMessage();
-                serverMessage.setMessageEnum(ServerMessageEnum.ERROR_CHANNEL_NON_EXISTENT);
-                serverMessage.setAdditionalMessage(chatMessage.getDestinationId());
-                connection.writeData(socket, serverMessage);
+                ProtoMessage doesNotExist = new ProtoMessage(ProtoUtil.createChannelDoesNotExistError(chatMessage.getDestinationId()));
+                connection.writeData(socket, doesNotExist);
             }
         } else {
             // direct user message
@@ -407,8 +400,8 @@ public class Server {
             if (toUserSocket != null) {
                 connection.writeData(toUserSocket, protoMessage);
             } else {
-                UserDoesNotExist userDoesNotExist = new UserDoesNotExist(chatMessage.getDestinationId());
-                connection.writeData(socket, userDoesNotExist);
+                ProtoMessage doesNotExist = new ProtoMessage(ProtoUtil.createUserDoesNotExist(user));
+                connection.writeData(socket, doesNotExist);
             }
         }
     }

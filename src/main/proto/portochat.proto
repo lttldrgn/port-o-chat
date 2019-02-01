@@ -22,12 +22,13 @@ message PortoChatMessage {
     oneof ApplicationMessage {
         ChannelList channelList = 2;
         ChatMessage chatMessage = 3;
-        Notification notification = 4;
-        Ping ping = 5;
-        Pong pong = 6;
-        Request request = 7;
-        Response response = 8;
-        UserList userList = 9;
+        ErrorMessage errorMessage = 4;
+        Notification notification = 5;
+        Ping ping = 6;
+        Pong pong = 7;
+        Request request = 8;
+        Response response = 9;
+        UserList userList = 10;
     }
 }
 
@@ -37,6 +38,15 @@ message ChatMessage {
     bool isChannel = 3;
     string message = 4;
     bool isAction = 5;
+}
+
+message ErrorMessage {
+    enum ErrorType {
+        UserNameInUse = 0;
+        ChannelDoesNotExist = 1;
+    }
+    ErrorType errorType = 1;
+    string additionalMessage = 2;
 }
 
 message Request {
@@ -72,6 +82,8 @@ message Notification {
         ChannelAdded channelAdded = 3;
         ChannelRemoved channelRemoved = 4;
         UserConnectionStatus userConnectionStatus = 5;
+        UserDoesNotExist userDoesNotExist = 6;
+        UserNameSet userNameSet = 7;
     }
 }
 
@@ -100,6 +112,14 @@ message UserList {
 message UserConnectionStatus {
     UserData user = 1;
     bool connected = 2;
+}
+
+message UserDoesNotExist {
+    UserData user = 1;
+}
+
+message UserNameSet {
+    string name = 1;
 }
 
 message Ping {
