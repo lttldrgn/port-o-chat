@@ -94,7 +94,6 @@ public class Client extends JFrame implements ActionListener,
     private static final String COMBINED_VIEW = "COMBINED_VIEW";
     private static final String SPLIT_VIEW = "SPLIT_VIEW";
     private static final String SHOW_ABOUT_DIALOG = "SHOW_ABOUT_DIALOG";
-    private final HashMap<String, User> userIdMap = new HashMap<>();
     private final HashMap<String, ChatPane> chatPaneMap = new HashMap<>();
     private final HashMap<String, ChatPane> channelPaneMap = new HashMap<>();
     private final DefaultListModel<String> contactListModel = new DefaultListModel<>();
@@ -112,6 +111,7 @@ public class Client extends JFrame implements ActionListener,
     private StatusPane statusPane = null;
     private String myUserName = null;
     private ServerConnection connection = null;
+    private final ServerDataStorage serverData;
     private boolean connected = false;
     
     // previous state
@@ -132,7 +132,8 @@ public class Client extends JFrame implements ActionListener,
     public Client() {
         this.userChannelContainerPanel = null;
         setTitle(messages.getString("Client.title.PortOChat"));
-        ServerDataStorage.getInstance().addUserEventListener(this);
+        serverData = ServerDataStorage.getInstance();
+        serverData.addUserEventListener(this);
     }
     
     public void checkVersion() {
@@ -198,13 +199,7 @@ public class Client extends JFrame implements ActionListener,
                 if (e.getClickCount() >= 2) {
                     String contact = (String) contactList.getSelectedValue();
                     if (contact != null) {
-                        ChatPane pane = chatPaneMap.get(contact);
-                        if (pane == null) {
-                            pane = createChatPane(contact);
-                            updateCurrentView();
-                        }
-                        
-                        tabbedChatPane.setSelectedComponent(pane);
+                        showUserChatPane(contact);
                     }
                 }
             }
@@ -379,11 +374,8 @@ public class Client extends JFrame implements ActionListener,
     private void updateCurrentView() {
         if (currentView == View.SPLIT) {
             // make sure dialog is visible
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    chatContainerDialog.setVisible(true);
-                }
+            SwingUtilities.invokeLater(() -> {
+                chatContainerDialog.setVisible(true);
             });
         }
     }
@@ -411,7 +403,23 @@ public class Client extends JFrame implements ActionListener,
             updateCurrentView();
         }
     }
-    
+
+    /**
+     * Show and bring into focus the chat pane for the contact.  Will be created
+     * if it does not exist.  Method should always be called from the EDT.
+     * @param contact User contact name
+     */
+    void showUserChatPane(String contact) {
+        ChatPane pane = chatPaneMap.get(contact);
+        if (pane == null) {
+            pane = createChatPane(contact);
+            updateCurrentView();
+        }
+
+        tabbedChatPane.setSelectedComponent(pane);
+        pane.setFocus();
+    }
+
     /**
      * Joins specified channel if not already joined
      * @param channel Channel to join
@@ -769,7 +777,6 @@ public class Client extends JFrame implements ActionListener,
 
     private void addUser(final User user) {
         SwingUtilities.invokeLater(() -> {
-            userIdMap.putIfAbsent(user.getName(), user);
             if (!contactListModel.contains(user.getName())) {
                 contactListModel.addElement(user.getName());
             }
@@ -784,7 +791,6 @@ public class Client extends JFrame implements ActionListener,
                     disconnectFromServer();
                     return;
                 }
-                userIdMap.remove(user.getName());
                 if (contactListModel.contains(user.getName())) {
                     contactListModel.removeElement(user.getName());
                 }
@@ -802,21 +808,15 @@ public class Client extends JFrame implements ActionListener,
     }
     
     private void addChannelToList(final String channel) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                if (!channelListModel.contains(channel))
-                    channelListModel.addElement(channel);
-            }
+        SwingUtilities.invokeLater(() -> {
+            if (!channelListModel.contains(channel))
+                channelListModel.addElement(channel);
         });
     }
     
     private void removeChannelFromList(final String channel) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                channelListModel.removeElement(channel);
-            }
+        SwingUtilities.invokeLater(() -> {
+            channelListModel.removeElement(channel);
         });
     }
     
@@ -840,14 +840,13 @@ public class Client extends JFrame implements ActionListener,
             }
             Component pane = tabbedChatPane.getComponentAt(tabIndex);
             if (pane instanceof ChatPane) {
-                ((ChatPane)pane).setFocus();
+                SwingUtilities.invokeLater(() ->
+                    ((ChatPane)pane).setFocus()
+                );
             }
         } else {
-            SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                    setTabColor(tabIndex, color);
-                }
+            SwingUtilities.invokeLater(() -> {
+                setTabColor(tabIndex, color);
             });
         }
     }
@@ -968,9 +967,8 @@ public class Client extends JFrame implements ActionListener,
     }
 
     @Override
-    public void receiveChannelJoinPart(String userId, String channel,
-        boolean join) {
-        User user = userIdMap.get(userId);
+    public void receiveChannelJoinPart(String userId, String channel, boolean join) {
+        User user = serverData.getUserById(userId);
         ChatPane pane = channelPaneMap.get(channel);
         if (pane != null) {
             pane.userJoinedEvent(user, join);
@@ -1001,7 +999,7 @@ public class Client extends JFrame implements ActionListener,
             if (isChannel) {
                 connection.sendMessage(recipient, isChannel, action, message);
             } else {
-                User user = ServerDataStorage.getInstance().getUserByName(recipient);
+                User user = serverData.getUserByName(recipient);
                 if (user != null) {
                     connection.sendMessage(user.getId(), isChannel, action, message);
                 } else {

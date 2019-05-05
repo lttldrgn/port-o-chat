@@ -50,7 +50,8 @@ public class ConnectionHandler {
     private Socket clientSocket = null;
     private List<NetListener> listeners = null;
     private LinkedBlockingQueue<NetData> writeQueue = null;
-    
+
+    private IncomingThread incomingThread = null;
     private OutgoingThread outgoingThread = null;
     protected UserDatabase userDatabase = null;
     private User serverUser = null;
@@ -93,7 +94,6 @@ public class ConnectionHandler {
      * Calling this method disconnects this socket from the remote host
      */
     public void disconnect() {
-
         if (outgoingThread != null) {
             outgoingThread.interrupt();
         }
@@ -106,9 +106,7 @@ public class ConnectionHandler {
      * @param socket The socket
      */
     protected void startProcessingThreads(Socket socket) {
-
-        //TODO: this will create numerous threads.. and for servers how do these close?
-        IncomingThread incomingThread = new IncomingThread(socket);
+        incomingThread = new IncomingThread(socket);
         incomingThread.start();
 
         if (outgoingThread == null) {
@@ -198,6 +196,7 @@ public class ConnectionHandler {
      * Cleans up everything after socket is disconnected
      */
     protected synchronized void cleanup() {
+        incomingThread.shutdown();
         if (clientSocket != null) {
             try {
                 clientSocket.close();
@@ -206,7 +205,6 @@ public class ConnectionHandler {
             } finally {
                 clientSocket = null;
             }
-
         }
 
         writeQueue.clear();
@@ -236,6 +234,7 @@ public class ConnectionHandler {
         private final Socket incomingSocket;
         private DataInputStream inputStream;
         private User user = null;
+        private volatile boolean processingIncoming = true;
 
         public IncomingThread(Socket incomingSocket) {
             super("IncomingThread");
@@ -267,18 +266,26 @@ public class ConnectionHandler {
                     logger.log(Level.WARNING, "Read too much data");
                 }
             } catch (IOException ex) {
-                logger.log(Level.SEVERE, "Error reading stream", ex);
+                if (processingIncoming) {
+                    // unexpected error so log error
+                    logger.log(Level.SEVERE, "Error reading stream", ex);
+                }
                 buffer = null;
             }
             return buffer;
         }
-        
+
+        void shutdown() {
+            this.processingIncoming = false;
+            this.interrupt();
+        }
+
         @Override
         public void run() {
 
             byte[] buffer;
 
-            while ((buffer = readMessage()) != null) {
+            while (processingIncoming && (buffer = readMessage()) != null) {
 
                 for (BufferHandler handler : getHandlers(incomingSocket)) {
 
@@ -351,7 +358,7 @@ public class ConnectionHandler {
      * This class is used to processIncoming outgoing messages
      */
     private class OutgoingThread extends Thread {
-
+        private volatile boolean processingOutbound = true;
         public OutgoingThread() {
             super("Outgoing Thread");
         }
@@ -361,7 +368,6 @@ public class ConnectionHandler {
             User user = null;
             // Write the data
             try {
-                boolean processingOutbound = true;
                 while (processingOutbound) {
                     NetData netData = writeQueue.take();
 
@@ -418,12 +424,18 @@ public class ConnectionHandler {
                     }
                 }
             } catch (InterruptedException ex) {
-                // Thread was interrupted so exit this thread
-                reportError(user, Level.FINE,
-                        "Exiting outgoing thread due to interruption", ex);
+                // if still processing then this is unexpected so log as SEVERE, otherwise FINE
+                Level level = processingOutbound ? Level.SEVERE : Level.FINE;
+                reportError(user, level, "Exiting outgoing thread due to interruption", ex);
             } finally {
                 cleanup();
             }
+        }
+
+        @Override
+        public void interrupt() {
+            processingOutbound = false;
+            super.interrupt();
         }
     }
 

@@ -44,7 +44,7 @@ import javax.crypto.SecretKey;
 
 /**
  * Handles all the client interaction with the server
- * 
+ *
  */
 public class ServerConnection {
     private static final Logger logger = 
@@ -55,17 +55,17 @@ public class ServerConnection {
     private ClientHandler clientHandler = null;
     private String username = null;
     private EncryptionManager encryptionManager = null;
-    
+
     public ServerConnection() {
         encryptionManager = EncryptionManager.getInstance();
     }
-    
-    public boolean connectToServer(String serverAddress, int port) 
+
+    public boolean connectToServer(String serverAddress, int port)
             throws IOException {
         boolean successful;
         socket = new ConnectionHandler("Client");
         successful = socket.connect(serverAddress, port);
-        
+
         if (successful) {
             clientHandler = new ClientHandler();
             socket.addListener(clientHandler);
@@ -73,17 +73,17 @@ public class ServerConnection {
         }
         return successful;
     }
-    
+
     public void disconnect() {
         socket.disconnect();
         socket.removeListener(clientHandler);
         socket = null;
     }
-    
+
     public void setUsername(String username) {
         this.username = username;
     }
-    
+
     /**
      * Send the user public key to the server
      */
@@ -93,22 +93,23 @@ public class ServerConnection {
             ProtoMessage protoMessage = new ProtoMessage(ProtoUtil.createSetPublicKey(encodedKey));
             socket.writeData(protoMessage);
         }
-        
+
     }
-    
+
     public void sendUsername(String newUsername) {
         Portochat.PortoChatMessage request = ProtoUtil.createSetUserNameRequest(newUsername);
         ProtoMessage message = new ProtoMessage(request);
         socket.writeData(message);
     }
-    
+
     public void sendPing() {
         ProtoMessage pingMessage = new ProtoMessage(ProtoUtil.createPing(System.currentTimeMillis()));
         socket.writeData(pingMessage);
     }
-    
+
     /**
      * Sends a message to the defined recipient
+     *
      * @param recipientId Person or channel the message is being sent to
      * @param isChannel Parameter should be true if the recipient is a channel
      * @param action True if this is an action message
@@ -119,31 +120,32 @@ public class ServerConnection {
         ProtoMessage chatMessage = new ProtoMessage(ProtoUtil.createChatMessage(username, recipientId, isChannel, message, action));
         socket.writeData(chatMessage);
     }
-    
+
     public void sendUserListRequest() {
         Portochat.PortoChatMessage message = ProtoUtil.createUserListRequest();
         ProtoMessage protoMessage = new ProtoMessage(message);
         socket.writeData(protoMessage);
     }
-    
+
     public void joinChannel(String channel) {
         Portochat.PortoChatMessage request = ProtoUtil.createChannelJoinRequest(channel);
         ProtoMessage protoMessage = new ProtoMessage(request);
         socket.writeData(protoMessage);
     }
-    
+
     public void partChannel(String channel) {
+        // TODO change username to ID
         Portochat.PortoChatMessage notification = ProtoUtil.createChannelPartNotification(channel, username);
         ProtoMessage protoMessage = new ProtoMessage(notification);
         socket.writeData(protoMessage);
     }
-    
+
     public void requestListOfChannels() {
         Portochat.PortoChatMessage message = ProtoUtil.createChannelListRequest();
         ProtoMessage protoMessage = new ProtoMessage(message);
         socket.writeData(protoMessage);
     }
-    
+
     public void requestUsersInChannel(String channel) {
         Portochat.PortoChatMessage message = ProtoUtil.createChannelUserListRequest(channel);
         ProtoMessage protoMessage = new ProtoMessage(message);
@@ -153,21 +155,22 @@ public class ServerConnection {
     public void addDataListener(ServerDataListener listener) {
         listeners.add(listener);
     }
-    
+
     public void removeDataListener(ServerDataListener listener) {
         listeners.remove(listener);
     }
-    
-     private class ClientHandler implements NetListener {
+
+    private class ClientHandler implements NetListener {
+        private final ResourceBundle messages = ResourceBundle.getBundle(
+                "portochat/resource/MessagesBundle", java.util.Locale.getDefault());
 
         @Override
         public void incomingMessage(NetEvent event) {
-            ResourceBundle messages = ResourceBundle.getBundle("portochat/resource/MessagesBundle", java.util.Locale.getDefault());
             DefaultData defaultData = event.getData();
             if (logger.isLoggable(Level.FINE)) {
                 logger.fine(defaultData.toString());
             }
-            
+
             if (defaultData instanceof ProtoMessage) {
                 ProtoMessage protoMessage = (ProtoMessage) defaultData;
                 switch (protoMessage.getMessage().getApplicationMessageCase()) {
@@ -225,7 +228,7 @@ public class ServerConnection {
         }
 
         private void handleChatMessage(ChatMessage message) {
-            String channel = message.getIsChannel() ? message.getDestinationId(): null;
+            String channel = message.getIsChannel() ? message.getDestinationId() : null;
             // TODO once sender ID is being used, look up by ID instead of name
             User sender = ServerDataStorage.getInstance().getUserByName(message.getSenderId());
             if (sender != null) {
@@ -303,14 +306,15 @@ public class ServerConnection {
                     break;
             }
         }
+
         private void setServerSecretKey(Request request) {
-             SecretKey serverSecretKey = encryptionManager.decodeSecretKeyWithPrivateKey(
-                     request.getByteData().toByteArray());
-             encryptionManager.setServerSecretKey(serverSecretKey);
-             ProtoMessage protoMessage = new ProtoMessage(ProtoUtil.createServerKeyAccepted(request.getRequestId()));
-             protoMessage.setCanBeEncrypted(false);
-             socket.writeData(protoMessage);
-             sendUsername(ServerConnection.this.username);
-         }
+            SecretKey serverSecretKey = encryptionManager.decodeSecretKeyWithPrivateKey(
+                    request.getByteData().toByteArray());
+            encryptionManager.setServerSecretKey(serverSecretKey);
+            ProtoMessage protoMessage = new ProtoMessage(ProtoUtil.createServerKeyAccepted(request.getRequestId()));
+            protoMessage.setCanBeEncrypted(false);
+            socket.writeData(protoMessage);
+            sendUsername(ServerConnection.this.username);
+        }
     }
 }

@@ -24,7 +24,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -80,18 +79,20 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
     private boolean isChannel = false;
     private Element chatTextElement = null; // element that chat text is inserted
     private HTMLDocument htdoc = null;
+    private final Client rootWindow;
 
     /**
      * Creates a Chat Pane
-     * @param serverProvider Provider of the server connection
+     * @param client Provider of the server connection
      * @param recipient Recipient of messages coming from this chat pane, either
      * a user name or channel name
      * @param myName 
      * @param channel True if this chat pane is a channel
      */
-    private ChatPane(ServerConnectionProvider serverProvider, String recipient, 
+    private ChatPane(Client rootWindow, String recipient,
             String myName, boolean isChannel) {
-        serverConnectionProvider = serverProvider;
+        this.rootWindow = rootWindow;
+        serverConnectionProvider = rootWindow;
         this.recipient = recipient;
         this.myUserName = myName;
         this.isChannel = isChannel;
@@ -117,6 +118,17 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
             participantListModel = new DefaultListModel<>();
             participantList = new JList<>(participantListModel);
 
+            participantList.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (e.getClickCount() >= 2) {
+                        String contact = (String) participantList.getSelectedValue();
+                        if (contact != null) {
+                            rootWindow.showUserChatPane(contact);
+                        }
+                    }
+                }
+            });
             c.gridx = 1;
             c.weightx = 0.2;
             JScrollPane participantScroll = new JScrollPane(participantList);
@@ -228,11 +240,8 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
 
         JMenuItem clear = new JMenuItem(messages.getString("ChatPane.menu.Clear"));
         viewPaneRightClickMenu.add(clear);
-        clear.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                resetViewPane();
-            }
+        clear.addActionListener((ActionEvent e) -> {
+            resetViewPane();
         });
 
         viewPane.addMouseListener(new MouseAdapter() {
@@ -365,7 +374,7 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
     }
     /**
      * Creates a Chat Pane
-     * @param serverConnectionProvider Provider of server connection
+     * @param rootWindow Client root window
      * @param recipient Recipient of messages coming from this chat pane, either
      * a user name or channel name
      * @param myName 
@@ -373,12 +382,12 @@ public class ChatPane extends JPanel implements PropertyChangeListener {
      * @return new ChatPane
      */
     public static ChatPane createChatPane(
-            ServerConnectionProvider serverConnectionProvider,
+            Client rootWindow,
             String recipient,
             String myName,
             boolean isChannel) {
 
-        ChatPane channelPane = new ChatPane(serverConnectionProvider,
+        ChatPane channelPane = new ChatPane(rootWindow,
                 recipient, myName, isChannel);
         channelPane.init();
         return channelPane;

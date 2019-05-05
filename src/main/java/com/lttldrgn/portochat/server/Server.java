@@ -310,7 +310,7 @@ public class Server {
         channelDatabase.addUserToChannel(channel, user);
 
         // notify all apps
-        Portochat.PortoChatMessage join = ProtoUtil.createChannelJoinNotification(channel, user.getName());
+        Portochat.PortoChatMessage join = ProtoUtil.createChannelJoinNotification(channel, user.getId());
         ProtoMessage protoMessage = new ProtoMessage(join);
         sendToChannelUsers(channel, user, protoMessage);
     }
@@ -338,7 +338,7 @@ public class Server {
         } else {
             // notify users in channel of part event
             Portochat.PortoChatMessage newPart =
-                    ProtoUtil.createChannelPartNotification(channel, channelPart.getUserId());
+                    ProtoUtil.createChannelPartNotification(channel, user.getId());
             ProtoMessage protoMessage = new ProtoMessage(newPart);
             sendToChannelUsers(channel, user, protoMessage);
         }

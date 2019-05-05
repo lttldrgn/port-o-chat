@@ -107,9 +107,9 @@ public class ProtoUtil {
     public static PortoChatMessage createChannelPartNotification(String channel, String userId) {
         PortoChatMessage.Builder appMessage = PortoChatMessage.newBuilder();
         Notification.Builder notification = Notification.newBuilder();
-        ChannelPart.Builder channelJoinPart = notification.getChannelPartBuilder();
-        channelJoinPart.setChannel(channel);
-        channelJoinPart.setUserId(userId);
+        ChannelPart.Builder channelPart = notification.getChannelPartBuilder();
+        channelPart.setChannel(channel);
+        channelPart.setUserId(userId);
         appMessage.setNotification(notification);
         return appMessage.build();
     }
