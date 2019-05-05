@@ -1,0 +1,130 @@
+syntax = "proto3";
+
+package portochat;
+
+option java_package = "com.lttldrgn.portochat.proto";
+
+message StringData {
+    string value = 1;
+}
+
+message StringList {
+    repeated string values = 1;
+}
+
+message UserData {
+    string id = 1;
+    string name = 2;
+    string host = 3;
+}
+message PortoChatMessage {
+    string originatorId = 1;
+    oneof ApplicationMessage {
+        ChannelList channelList = 2;
+        ChatMessage chatMessage = 3;
+        ErrorMessage errorMessage = 4;
+        Notification notification = 5;
+        Ping ping = 6;
+        Pong pong = 7;
+        Request request = 8;
+        Response response = 9;
+        UserList userList = 10;
+    }
+}
+
+message ChatMessage {
+    string senderId = 1;
+    string destinationId = 2;
+    bool isChannel = 3;
+    string message = 4;
+    bool isAction = 5;
+}
+
+message ErrorMessage {
+    enum ErrorType {
+        UserNameInUse = 0;
+        ChannelDoesNotExist = 1;
+    }
+    ErrorType errorType = 1;
+    string additionalMessage = 2;
+}
+
+message Request {
+    enum RequestType {
+        ChannelList = 0;
+        ChannelUserList = 1;
+        ChannelJoin = 2;
+        SetServerSharedKey = 3; // request to client to start using encryption
+        SetUserName = 4;
+        SetUserPublicKey = 5;
+        UserList = 6;
+    }
+    string requestId = 1;
+    RequestType requestType = 2;
+    oneof RequestData {
+        StringData stringRequestData = 3;
+        bytes byteData = 4;
+    }
+}
+
+message Response {
+    enum ResponseType {
+        ServerKeyAccepted = 0;
+    }
+    string requestId = 1;
+    ResponseType responseType = 2;
+}
+
+message Notification {
+    oneof NotificationData {
+        ChannelJoin channelJoin = 1;
+        ChannelPart channelPart = 2;
+        ChannelAdded channelAdded = 3;
+        ChannelRemoved channelRemoved = 4;
+        UserConnectionStatus userConnectionStatus = 5;
+        UserDoesNotExist userDoesNotExist = 6;
+        UserNameSet userNameSet = 7;
+    }
+}
+
+message ChannelJoin {
+    string channel = 1;
+    string userId = 2;
+}
+message ChannelPart {
+    string channel = 1;
+    string userId = 2;
+}
+message ChannelAdded {
+    string channel = 1;
+}
+message ChannelRemoved {
+    string channel = 1;
+}
+message ChannelList {
+    StringList channels = 1;
+}
+message UserList {
+    repeated UserData users = 1;
+    string channel = 2;
+}
+
+message UserConnectionStatus {
+    UserData user = 1;
+    bool connected = 2;
+}
+
+message UserDoesNotExist {
+    UserData user = 1;
+}
+
+message UserNameSet {
+    string name = 1;
+}
+
+message Ping {
+    int64 timestamp = 1;
+}
+message Pong {
+    int64 timestamp = 1;
+}

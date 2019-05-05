@@ -198,7 +198,19 @@ public class UserDatabase {
         }
         return socket;
     }
-    
+
+    public Socket getSocketByUserId(String userId) {
+        Socket socket = null;
+
+        for (User user : userMap.keySet()) {
+            if (user.getId().equals(userId)) {
+                socket = userMap.get(user);
+                break;
+            }
+        }
+        return socket;
+    }
+
     /**
      * Returns the user using the specified socket
      * 

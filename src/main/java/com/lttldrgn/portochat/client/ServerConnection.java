@@ -16,35 +16,31 @@
  */
 package com.lttldrgn.portochat.client;
 
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import com.lttldrgn.portochat.common.User;
 import com.lttldrgn.portochat.common.encryption.EncryptionManager;
-import com.lttldrgn.portochat.common.protocol.ChannelJoinPart;
-import com.lttldrgn.portochat.common.protocol.ChannelList;
-import com.lttldrgn.portochat.common.protocol.ChannelStatus;
-import com.lttldrgn.portochat.common.protocol.ChatMessage;
-import com.lttldrgn.portochat.common.protocol.DefaultData;
-import com.lttldrgn.portochat.common.protocol.Ping;
-import com.lttldrgn.portochat.common.protocol.Pong;
-import com.lttldrgn.portochat.common.protocol.ServerMessage;
-import com.lttldrgn.portochat.common.protocol.UserConnectionStatus;
-import com.lttldrgn.portochat.common.protocol.request.SetUsernameRequest;
-import com.lttldrgn.portochat.common.protocol.UserList;
 import com.lttldrgn.portochat.common.network.ConnectionHandler;
 import com.lttldrgn.portochat.common.network.event.NetEvent;
 import com.lttldrgn.portochat.common.network.event.NetListener;
+import com.lttldrgn.portochat.common.protocol.DefaultData;
+import com.lttldrgn.portochat.common.protocol.ProtoMessage;
+import com.lttldrgn.portochat.common.protocol.ProtoUtil;
+import com.lttldrgn.portochat.proto.Portochat;
+import com.lttldrgn.portochat.proto.Portochat.ChannelJoin;
+import com.lttldrgn.portochat.proto.Portochat.ChannelList;
+import com.lttldrgn.portochat.proto.Portochat.ChannelPart;
+import com.lttldrgn.portochat.proto.Portochat.ChatMessage;
+import com.lttldrgn.portochat.proto.Portochat.ErrorMessage;
+import com.lttldrgn.portochat.proto.Portochat.Notification;
+import com.lttldrgn.portochat.proto.Portochat.Request;
+import com.lttldrgn.portochat.proto.Portochat.StringList;
+import com.lttldrgn.portochat.proto.Portochat.UserList;
+import java.io.IOException;
+import java.util.List;
 import java.util.ResourceBundle;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.crypto.SecretKey;
-import com.lttldrgn.portochat.common.protocol.ServerKeyAccepted;
-import com.lttldrgn.portochat.common.protocol.ServerSharedKey;
-import com.lttldrgn.portochat.common.protocol.SetPublicKey;
-import com.lttldrgn.portochat.common.protocol.UserDoesNotExist;
-import com.lttldrgn.portochat.common.protocol.request.ChannelListRequest;
-import com.lttldrgn.portochat.common.protocol.request.ChannelUserListRequest;
-import com.lttldrgn.portochat.common.protocol.request.UserListRequest;
 
 /**
  * Handles all the client interaction with the server
@@ -92,67 +88,66 @@ public class ServerConnection {
      * Send the user public key to the server
      */
     public void sendUserPublicKey() {
-        SetPublicKey setKey = new SetPublicKey();
         byte encodedKey[] = encryptionManager.getClientEncodedPublicKey();
         if (encodedKey != null) {
-            setKey.setEncodedPublicKey(encodedKey);
-            socket.writeData(setKey);
+            ProtoMessage protoMessage = new ProtoMessage(ProtoUtil.createSetPublicKey(encodedKey));
+            socket.writeData(protoMessage);
         }
         
     }
     
     public void sendUsername(String newUsername) {
-        SetUsernameRequest request = new SetUsernameRequest();
-        request.setUser(newUsername);
-        socket.writeData(request);
+        Portochat.PortoChatMessage request = ProtoUtil.createSetUserNameRequest(newUsername);
+        ProtoMessage message = new ProtoMessage(request);
+        socket.writeData(message);
     }
     
     public void sendPing() {
-        Ping ping = new Ping();
-        socket.writeData(ping);
+        ProtoMessage pingMessage = new ProtoMessage(ProtoUtil.createPing(System.currentTimeMillis()));
+        socket.writeData(pingMessage);
     }
     
     /**
      * Sends a message to the defined recipient
-     * @param recipient Person or channel the message is being sent to
+     * @param recipientId Person or channel the message is being sent to
+     * @param isChannel Parameter should be true if the recipient is a channel
      * @param action True if this is an action message
      * @param message Message being sent
      */
-    public void sendMessage(String recipient, boolean action, String message) {
-        ChatMessage chatMessage = new ChatMessage();
-        chatMessage.setTo(recipient);
-        chatMessage.setAction(action);
-        chatMessage.setMessage(message);
+    public void sendMessage(String recipientId, boolean isChannel, boolean action, String message) {
+        // TODO use a real ID instead of the username
+        ProtoMessage chatMessage = new ProtoMessage(ProtoUtil.createChatMessage(username, recipientId, isChannel, message, action));
         socket.writeData(chatMessage);
     }
     
     public void sendUserListRequest() {
-        UserListRequest request = new UserListRequest();
-        socket.writeData(request);
+        Portochat.PortoChatMessage message = ProtoUtil.createUserListRequest();
+        ProtoMessage protoMessage = new ProtoMessage(message);
+        socket.writeData(protoMessage);
     }
     
     public void joinChannel(String channel) {
-        ChannelJoinPart channelJoinPart = new ChannelJoinPart();
-        channelJoinPart.setChannel(channel);
-        channelJoinPart.setJoined(true);
-        socket.writeData(channelJoinPart);
+        Portochat.PortoChatMessage request = ProtoUtil.createChannelJoinRequest(channel);
+        ProtoMessage protoMessage = new ProtoMessage(request);
+        socket.writeData(protoMessage);
     }
     
     public void partChannel(String channel) {
-        ChannelJoinPart channelJoinPart = new ChannelJoinPart();
-        channelJoinPart.setChannel(channel);
-        channelJoinPart.setJoined(false);
-        socket.writeData(channelJoinPart);
+        Portochat.PortoChatMessage notification = ProtoUtil.createChannelPartNotification(channel, username);
+        ProtoMessage protoMessage = new ProtoMessage(notification);
+        socket.writeData(protoMessage);
     }
     
     public void requestListOfChannels() {
-        ChannelListRequest request = new ChannelListRequest();
-        socket.writeData(request);
+        Portochat.PortoChatMessage message = ProtoUtil.createChannelListRequest();
+        ProtoMessage protoMessage = new ProtoMessage(message);
+        socket.writeData(protoMessage);
     }
     
     public void requestUsersInChannel(String channel) {
-        ChannelUserListRequest request = new ChannelUserListRequest(channel);
-        socket.writeData(request);        
+        Portochat.PortoChatMessage message = ProtoUtil.createChannelUserListRequest(channel);
+        ProtoMessage protoMessage = new ProtoMessage(message);
+        socket.writeData(protoMessage);
     }
 
     public void addDataListener(ServerDataListener listener) {
@@ -173,83 +168,149 @@ public class ServerConnection {
                 logger.fine(defaultData.toString());
             }
             
-            if (defaultData instanceof Pong) {
-                System.out.println(messages.getString("ServerConnection.msg.ServerLag") + 
-                        ((Pong)defaultData).getCalculatedLag() + messages.getString("ServerConnection.msg.Ms"));
-            } else if (defaultData instanceof ServerMessage) {
-                ServerMessage message = (ServerMessage) defaultData;
-                switch (message.getMessageEnum()) {
-                    case USERNAME_SET:
+            if (defaultData instanceof ProtoMessage) {
+                ProtoMessage protoMessage = (ProtoMessage) defaultData;
+                switch (protoMessage.getMessage().getApplicationMessageCase()) {
+                    case CHANNELLIST:
+                        handleChannelList(protoMessage.getMessage().getChannelList());
+                        break;
+                    case CHATMESSAGE:
+                        handleChatMessage(protoMessage.getMessage().getChatMessage());
+                        break;
+                    case ERRORMESSAGE:
+                        handleErrorMessage(protoMessage.getMessage().getErrorMessage());
+                        break;
+                    case NOTIFICATION:
+                        handleNotification(protoMessage.getMessage().getNotification());
+                        break;
+                    case REQUEST:
+                        handleRequest(protoMessage.getMessage().getRequest());
+                        break;
+                    case USERLIST:
+                        UserList userList = protoMessage.getMessage().getUserList();
+                        List<User> users = ProtoUtil.getUserList(userList);
+                        String channel = userList.getChannel();
+                        if (channel == null || channel.isEmpty()) {
+                            ServerDataStorage.getInstance().addUsers(users);
+                        }
                         for (ServerDataListener listener : listeners) {
-                            listener.handleServerConnection(message.getAdditionalMessage(), true);
+                            listener.userListReceived(users, channel);
                         }
                         break;
-                        
-                    case ERROR_USERNAME_IN_USE:
-                        for (ServerDataListener listener : listeners) {
-                            listener.handleServerConnection(message.getAdditionalMessage(), false);
-                        }
+                    case PING:
+                        // Send a pong
+                        long time = protoMessage.getMessage().getPing().getTimestamp();
+                        ProtoMessage pongMessage = new ProtoMessage(ProtoUtil.createPong(time));
+                        socket.writeData(pongMessage);
+                        break;
+                    case PONG:
+                        long pingTime = protoMessage.getMessage().getPong().getTimestamp();
+                        System.out.println(messages.getString("ServerConnection.msg.ServerLag") +
+                                (System.currentTimeMillis() - pingTime) +
+                                messages.getString("ServerConnection.msg.Ms"));
                         break;
                 }
-            } else if (defaultData instanceof ChatMessage) {
-                ChatMessage message = (ChatMessage)defaultData;
-                String channel = message.isChannel() ? message.getTo() : null;
-                for (ServerDataListener listener : listeners) {
-                    listener.receiveChatMessage(message.getFromUser(),
-                            message.isAction(), message.getMessage(), channel);
-                }
-            } else if (defaultData instanceof UserList) {
-                UserList userList = (UserList) defaultData;
-                String channel = userList.getChannel();
-                for (ServerDataListener listener : listeners) {
-                    listener.userListReceived(userList.getUserList(), channel);
-                }
-            } else if (defaultData instanceof UserConnectionStatus) {
-                // if user is null it's the server disconnecting
-                UserConnectionStatus user = (UserConnectionStatus) defaultData;
-                for (ServerDataListener listener : listeners) {
-                    listener.userConnectionEvent(user.getUser(), user.isConnected());
-                }
-            } else if (defaultData instanceof ChannelList) {
-                // Received a channel list
-                ChannelList channelList = (ChannelList) defaultData;
-                List<String> channels = channelList.getChannelList();
-                for (ServerDataListener listener : listeners) {
-                    listener.channelListReceived(channels);
-                }
-            } else if (defaultData instanceof ChannelJoinPart) {
-                ChannelJoinPart joinPart = (ChannelJoinPart) defaultData;
-                for (ServerDataListener listener : listeners) {
-                    listener.receiveChannelJoinPart(joinPart.getUser(),
-                            joinPart.getChannel(), joinPart.hasJoined());
-                }
-            } else if (defaultData instanceof ChannelStatus) {
-                ChannelStatus status = (ChannelStatus) defaultData;
-                for (ServerDataListener listener : listeners) {
-                    listener.channelStatusReceived(status.getChannel(), 
-                            status.isCreated());
-                }
-            } else if (defaultData instanceof Ping) { 
-                Pong pong = new Pong();
-                pong.setTimestamp(((Ping) defaultData).getTimestamp());
-                socket.writeData(pong);
-            } else if (defaultData instanceof UserDoesNotExist) { 
-                for (ServerDataListener listener : listeners) {
-                    listener.userDoesNotExist(((UserDoesNotExist)defaultData).getUser());
-                }
-            } else if (defaultData instanceof ServerSharedKey) {
-                ServerSharedKey sharedKey = (ServerSharedKey) defaultData;
-                SecretKey serverSecretKey =
-                encryptionManager.decodeSecretKeyWithPrivateKey(
-                        sharedKey.getEncryptedSecretKey());
-                encryptionManager.setServerSecretKey(serverSecretKey);
-                ServerKeyAccepted accepted = new ServerKeyAccepted();
-                socket.writeData(accepted);
-                sendUsername(ServerConnection.this.username);
             } else {
                 logger.log(Level.WARNING, "{0}{1}", new Object[]{messages.getString("ServerConnection.msg.UnknownMessage"), defaultData});
             }
         }
+
+        private void handleChannelList(ChannelList channelList) {
+            // Received a channel list
+            StringList stringList = channelList.getChannels();
+            List<String> channels = stringList.getValuesList();
+            for (ServerDataListener listener : listeners) {
+                listener.channelListReceived(channels);
+            }
+        }
+
+        private void handleChatMessage(ChatMessage message) {
+            String channel = message.getIsChannel() ? message.getDestinationId(): null;
+            // TODO once sender ID is being used, look up by ID instead of name
+            User sender = ServerDataStorage.getInstance().getUserByName(message.getSenderId());
+            if (sender != null) {
+                for (ServerDataListener listener : listeners) {
+                    listener.receiveChatMessage(sender,
+                            message.getIsAction(), message.getMessage(), channel);
+                }
+            }
+        }
+
+        private void handleErrorMessage(ErrorMessage errorMessage) {
+            switch (errorMessage.getErrorType()) {
+                case ChannelDoesNotExist:
+                    // TODO log to console
+                    break;
+                case UserNameInUse:
+                    for (ServerDataListener listener : listeners) {
+                        listener.handleServerConnection(errorMessage.getAdditionalMessage(), false);
+                    }
+                    break;
+            }
+        }
+
+        private void handleNotification(Notification notification) {
+            switch (notification.getNotificationDataCase()) {
+                case CHANNELJOIN:
+                    ChannelJoin join = notification.getChannelJoin();
+                    handleChannelJoinPart(join.getUserId(), join.getChannel(), true);
+                    break;
+                case CHANNELPART:
+                    ChannelPart part = notification.getChannelPart();
+                    handleChannelJoinPart(part.getUserId(), part.getChannel(), false);
+                    break;
+                case CHANNELADDED:
+                    String channelAdded = notification.getChannelAdded().getChannel();
+                    listeners.forEach((listener) -> listener.channelStatusReceived(channelAdded, true));
+                    break;
+                case CHANNELREMOVED:
+                    String channelRemoved = notification.getChannelRemoved().getChannel();
+                    listeners.forEach((listener) -> listener.channelStatusReceived(channelRemoved, false));
+                    break;
+                case USERCONNECTIONSTATUS:
+                    User user = ProtoUtil.convertToUser(notification.getUserConnectionStatus().getUser());
+                    boolean connected = notification.getUserConnectionStatus().getConnected();
+                    if (connected) {
+                        ServerDataStorage.getInstance().addUser(user);
+                    } else {
+                        ServerDataStorage.getInstance().removeUser(user.getId());
+                    }
+                    break;
+                case USERDOESNOTEXIST:
+                    User nonExistent = ProtoUtil.convertToUser(notification.getUserDoesNotExist().getUser());
+                    for (ServerDataListener listener : listeners) {
+                        listener.userDoesNotExist(nonExistent.getName());
+                    }
+                    break;
+                case USERNAMESET:
+                    for (ServerDataListener listener : listeners) {
+                        listener.handleServerConnection(notification.getUserNameSet().getName(), true);
+                    }
+                    break;
+            }
+        }
+
+        private void handleChannelJoinPart(String userId, String channel, boolean joined) {
+            for (ServerDataListener listener : listeners) {
+                listener.receiveChannelJoinPart(userId, channel, joined);
+            }
+        }
+
+        private void handleRequest(Request request) {
+            switch (request.getRequestType()) {
+                case SetServerSharedKey:
+                    setServerSecretKey(request);
+                    break;
+            }
+        }
+        private void setServerSecretKey(Request request) {
+             SecretKey serverSecretKey = encryptionManager.decodeSecretKeyWithPrivateKey(
+                     request.getByteData().toByteArray());
+             encryptionManager.setServerSecretKey(serverSecretKey);
+             ProtoMessage protoMessage = new ProtoMessage(ProtoUtil.createServerKeyAccepted(request.getRequestId()));
+             protoMessage.setCanBeEncrypted(false);
+             socket.writeData(protoMessage);
+             sendUsername(ServerConnection.this.username);
+         }
     }
-    
 }

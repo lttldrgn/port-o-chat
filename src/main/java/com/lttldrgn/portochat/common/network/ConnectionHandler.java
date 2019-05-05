@@ -29,11 +29,12 @@ import com.lttldrgn.portochat.common.User;
 import com.lttldrgn.portochat.common.Util;
 import com.lttldrgn.portochat.common.encryption.EncryptionManager;
 import com.lttldrgn.portochat.common.protocol.DefaultData;
-import com.lttldrgn.portochat.common.protocol.UserConnectionStatus;
 import com.lttldrgn.portochat.common.network.event.NetEvent;
 import com.lttldrgn.portochat.common.network.event.NetListener;
 import com.lttldrgn.portochat.common.network.handler.BufferHandler;
 import com.lttldrgn.portochat.common.network.handler.ChatHandler;
+import com.lttldrgn.portochat.common.protocol.ProtoMessage;
+import com.lttldrgn.portochat.common.protocol.ProtoUtil;
 import com.lttldrgn.portochat.server.UserDatabase;
 
 /**
@@ -328,22 +329,21 @@ public class ConnectionHandler {
          * 
          */
         protected void sendUserDisconnect() {
-            UserConnectionStatus userConnection = new UserConnectionStatus();
+            User theUser = null;
             if (!isClientSocket) {
+                theUser = user;
                 // this is a server so report which user has disconnected
-                if (user == null) {
+                if (theUser == null) {
                     // Hasn't set a username yet
-                    user = new User();
-                    user.setName("unknown");
-                    user.setHost(incomingSocket.getInetAddress().getHostName());
+                    theUser = new User();
+                    theUser.setName("unknown");
+                    theUser.setHost(incomingSocket.getInetAddress().getHostName());
                 }
-                userConnection.setUser(user);
             } else {
                 EncryptionManager.getInstance().setServerSecretKey(null);
             }
-            userConnection.setConnected(false);
-            userConnection.populate();
-            fireIncomingMessage(incomingSocket, userConnection);
+            ProtoMessage userConnectStatus = new ProtoMessage(ProtoUtil.createUserConnectionStatus(theUser, false));
+            fireIncomingMessage(incomingSocket, userConnectStatus);
         }
     }
 

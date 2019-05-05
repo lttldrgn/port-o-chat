@@ -3,3 +3,4 @@
 /dist/
 /.nb-gradle/
 .gradle
+src/main/java/com/lttldrgn/portochat/proto

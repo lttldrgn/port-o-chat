@@ -1,9 +1,35 @@
 apply plugin: 'application'
+apply plugin: 'com.google.protobuf'
 version = '1.0'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 mainClassName = "com.lttldrgn.portochat.client.ClientLauncher"
+
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.7'
+  }
+}
+
+repositories {
+    mavenCentral()
+}
+dependencies {
+    compile 'com.google.protobuf:protobuf-java:3.5.1'
+}
+
+protobuf {
+    generatedFilesBaseDir = "$projectDir/src/"
+    // Configure the protoc executable
+    protoc {
+        // Download from repositories
+        artifact = 'com.google.protobuf:protoc:3.0.0'
+    }
+}
 
 task fullJar(type: Jar) {
 	manifest {
@@ -41,4 +67,10 @@ task debugServer(type: JavaExec) {
     debug = true
     classpath = sourceSets.main.runtimeClasspath
     main = 'com.lttldrgn.portochat.server.ServerLauncher'
+}
+
+allprojects {
+  tasks.withType(JavaCompile) {
+    options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+  }
 }

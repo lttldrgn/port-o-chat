@@ -81,7 +81,7 @@ import com.lttldrgn.portochat.common.User;
  * @author Brandon
  */
 public class Client extends JFrame implements ActionListener, 
-        ServerConnectionProvider, ServerDataListener {
+        ServerConnectionProvider, ServerDataListener, UserEventListener {
     private final ResourceBundle messages = ResourceBundle.getBundle("portochat/resource/MessagesBundle", java.util.Locale.getDefault());
     private static final Logger logger = Logger.getLogger(Client.class.getName());
     private static final String EXIT_COMMAND = "EXIT";
@@ -94,13 +94,14 @@ public class Client extends JFrame implements ActionListener,
     private static final String COMBINED_VIEW = "COMBINED_VIEW";
     private static final String SPLIT_VIEW = "SPLIT_VIEW";
     private static final String SHOW_ABOUT_DIALOG = "SHOW_ABOUT_DIALOG";
+    private final HashMap<String, User> userIdMap = new HashMap<>();
     private final HashMap<String, ChatPane> chatPaneMap = new HashMap<>();
     private final HashMap<String, ChatPane> channelPaneMap = new HashMap<>();
-    private final DefaultListModel contactListModel = new DefaultListModel();
-    private final DefaultListModel channelListModel = new DefaultListModel();
+    private final DefaultListModel<String> contactListModel = new DefaultListModel<>();
+    private final DefaultListModel<String> channelListModel = new DefaultListModel<>();
     private JDialog chatContainerDialog = null;
-    private final JList contactList = new JList(contactListModel);
-    private final JList channelList = new JList(channelListModel);
+    private final JList<String> contactList = new JList<>(contactListModel);
+    private final JList<String> channelList = new JList<>(channelListModel);
     private final JMenuItem connectMenu = new JMenuItem(messages.getString("Client.menu.Connect"));
     private final JMenuItem createChannelMenu = new JMenuItem(messages.getString("Client.menu.CreateChannel"));
     private final JMenuItem disconnect = new JMenuItem(messages.getString("Client.menu.Disconnect"));
@@ -131,6 +132,7 @@ public class Client extends JFrame implements ActionListener,
     public Client() {
         this.userChannelContainerPanel = null;
         setTitle(messages.getString("Client.title.PortOChat"));
+        ServerDataStorage.getInstance().addUserEventListener(this);
     }
     
     public void checkVersion() {
@@ -766,11 +768,10 @@ public class Client extends JFrame implements ActionListener,
     }
 
     private void addUser(final User user) {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                if (!contactListModel.contains(user.getName()))
-                    contactListModel.addElement(user.getName());
+        SwingUtilities.invokeLater(() -> {
+            userIdMap.putIfAbsent(user.getName(), user);
+            if (!contactListModel.contains(user.getName())) {
+                contactListModel.addElement(user.getName());
             }
         });
     }
@@ -783,9 +784,10 @@ public class Client extends JFrame implements ActionListener,
                     disconnectFromServer();
                     return;
                 }
-                
-                if (contactListModel.contains(user.getName()))
+                userIdMap.remove(user.getName());
+                if (contactListModel.contains(user.getName())) {
                     contactListModel.removeElement(user.getName());
+                }
                 
                 //Remove from channel lists as well
                 Set<String> channelPaneList = channelPaneMap.keySet();
@@ -886,7 +888,7 @@ public class Client extends JFrame implements ActionListener,
     @Override
     public void userListReceived(final List<User> users, String channel) {
     
-        if (channel == null) {
+        if (channel == null || channel.isEmpty()) {
             // this is a server list
             for (User user: users) {
                 addUser(user);
@@ -898,14 +900,15 @@ public class Client extends JFrame implements ActionListener,
             }
         }
     }
-    
+
     @Override
-    public void userConnectionEvent(User user, boolean connected) {
-        if (connected) {
-            addUser(user);
-        } else {
-            removeUser(user);
-        }
+    public void userAdded(User user) {
+        addUser(user);
+    }
+
+    @Override
+    public void userRemoved(User user) {
+        removeUser(user);
     }
 
     @Override
@@ -965,8 +968,9 @@ public class Client extends JFrame implements ActionListener,
     }
 
     @Override
-    public void receiveChannelJoinPart(User user, String channel,
+    public void receiveChannelJoinPart(String userId, String channel,
         boolean join) {
+        User user = userIdMap.get(userId);
         ChatPane pane = channelPaneMap.get(channel);
         if (pane != null) {
             pane.userJoinedEvent(user, join);
@@ -991,10 +995,19 @@ public class Client extends JFrame implements ActionListener,
     }
     
     @Override
-    public boolean sendMessage(String recipient, boolean action, String message) {
+    public boolean sendMessage(String recipient, boolean isChannel, boolean action, String message) {
         boolean sent = true;
         if (connection != null) {
-            connection.sendMessage(recipient, action, message);
+            if (isChannel) {
+                connection.sendMessage(recipient, isChannel, action, message);
+            } else {
+                User user = ServerDataStorage.getInstance().getUserByName(recipient);
+                if (user != null) {
+                    connection.sendMessage(user.getId(), isChannel, action, message);
+                } else {
+                    JOptionPane.showMessageDialog(this, recipient + " not found in user list", "No such user", JOptionPane.ERROR_MESSAGE);
+                }
+            }
         } else {
             sent = false;
         }

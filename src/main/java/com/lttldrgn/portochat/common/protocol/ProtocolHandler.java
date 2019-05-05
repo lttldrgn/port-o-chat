@@ -66,23 +66,7 @@ public class ProtocolHandler {
      */
     private void initialize() {
         protocolClassMap = new HashMap<>();
-        protocolClassMap.put((byte)0, "com.lttldrgn.portochat.common.protocol.request.UserListRequest");
-        protocolClassMap.put((byte)1, "com.lttldrgn.portochat.common.protocol.request.ChannelListRequest");
-        protocolClassMap.put((byte)2, "com.lttldrgn.portochat.common.protocol.request.ChannelUserListRequest");
-        protocolClassMap.put((byte)3, "com.lttldrgn.portochat.common.protocol.request.SetUsernameRequest");
-        protocolClassMap.put((byte)4, "com.lttldrgn.portochat.common.protocol.ServerMessage");
-        protocolClassMap.put((byte)5, "com.lttldrgn.portochat.common.protocol.Ping");
-        protocolClassMap.put((byte)6, "com.lttldrgn.portochat.common.protocol.Pong");
-        protocolClassMap.put((byte)7, "com.lttldrgn.portochat.common.protocol.UserConnectionStatus");
-        protocolClassMap.put((byte)8, "com.lttldrgn.portochat.common.protocol.SetPublicKey");
-        protocolClassMap.put((byte)9, "com.lttldrgn.portochat.common.protocol.ServerSharedKey");
-        protocolClassMap.put((byte)10, "com.lttldrgn.portochat.common.protocol.ServerKeyAccepted");
-        protocolClassMap.put((byte)11, "com.lttldrgn.portochat.common.protocol.ChatMessage");
-        protocolClassMap.put((byte)12, "com.lttldrgn.portochat.common.protocol.UserList");
-        protocolClassMap.put((byte)13, "com.lttldrgn.portochat.common.protocol.ChannelStatus");
-        protocolClassMap.put((byte)14, "com.lttldrgn.portochat.common.protocol.ChannelList");
-        protocolClassMap.put((byte)15, "com.lttldrgn.portochat.common.protocol.ChannelJoinPart");
-        protocolClassMap.put((byte)16, "com.lttldrgn.portochat.common.protocol.UserDoesNotExist");
+        protocolClassMap.put((byte)0, "com.lttldrgn.portochat.common.protocol.ProtoMessage");
 
         protocolHeaderMap = new HashMap<>();
         for (Map.Entry<Byte, String> entry : protocolClassMap.entrySet()) {
@@ -107,8 +91,8 @@ public class ProtocolHandler {
             String protocolClassString = protocolClassMap.get(data[index]);
             if (protocolClassString != null) {
                 try {
-                    Class protocolClass = Class.forName(protocolClassString);
-                    Constructor cons = protocolClass.getConstructor();
+                    Class<?> protocolClass = Class.forName(protocolClassString);
+                    Constructor<?> cons = protocolClass.getConstructor();
                     byte[] chunk;
                     chunk = Arrays.copyOfRange(data, index, data.length);
                     DataInputStream dis = new DataInputStream(
