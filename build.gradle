@@ -1,19 +1,21 @@
-apply plugin: 'application'
-apply plugin: 'com.google.protobuf'
-version = '1.0'
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-mainClassName = "com.lttldrgn.portochat.client.ClientLauncher"
-
 buildscript {
   repositories {
     mavenCentral()
   }
   dependencies {
-    classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.7'
+
   }
 }
+plugins {
+    id 'application'
+    id "com.google.protobuf" version "0.8.12"
+}
+
+version = '1.0'
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+mainClassName = "com.lttldrgn.portochat.client.ClientLauncher"
 
 repositories {
     mavenCentral()
