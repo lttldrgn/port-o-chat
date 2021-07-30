@@ -33,10 +33,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.util.Collection;
@@ -53,7 +49,6 @@ import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultListModel;
 import javax.swing.JDialog;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -75,6 +70,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import com.lttldrgn.portochat.client.util.VersionChecker;
 import com.lttldrgn.portochat.common.User;
+import com.lttldrgn.portochat.server.ServerLauncherGUI;
 
 /**
  *
@@ -123,7 +119,6 @@ public class Client extends JFrame implements ActionListener,
     private final NotificationTimerListener timerListener = new NotificationTimerListener();
     private final Timer notificationTimer = new Timer(1500, timerListener);
     
-    private Process serverProcess = null;
     private View currentView = View.COMBINED;
     private enum View {
         COMBINED, SPLIT;
@@ -137,15 +132,11 @@ public class Client extends JFrame implements ActionListener,
     }
     
     public void checkVersion() {
-        VersionChecker.checkVersion(new VersionChecker.VersionResultCallback() {
-
-            @Override
-            public void onResult(VersionChecker.VersionResultEnum result) {
-                switch(result) {
-                    case OUT_OF_DATE:
-                        JOptionPane.showMessageDialog(Client.this, "A newer version is available");
-                        break;
-                }
+        VersionChecker.checkVersion((VersionChecker.VersionResultEnum result) -> {
+            switch(result) {
+                case OUT_OF_DATE:
+                    JOptionPane.showMessageDialog(Client.this, "A newer version is available");
+                    break;
             }
         });
     }
@@ -221,13 +212,9 @@ public class Client extends JFrame implements ActionListener,
         tabbedChatPane.setPreferredSize(new Dimension(550, 550));
         chatContainerPanel.add(tabbedChatPane);
         
-        tabbedChatPane.addChangeListener(new ChangeListener() {
-
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                int tabIndex = tabbedChatPane.getSelectedIndex();
-                setTabColor(tabIndex, Color.black);
-            }
+        tabbedChatPane.addChangeListener((ChangeEvent e) -> {
+            int tabIndex = tabbedChatPane.getSelectedIndex();
+            setTabColor(tabIndex, Color.black);
         });
         
         addWindowFocusListener(timerListener);
@@ -661,75 +648,12 @@ public class Client extends JFrame implements ActionListener,
         statusPane.showMessage(messages.getString("Client.msg.DisconnectedFromServer"), "disconnect");
     }
     
+    private ServerLauncherGUI serverLauncher;
     private void startServer() {
-        if (serverProcess != null) {
-            return;
+        if (serverLauncher == null) {
+            serverLauncher = ServerLauncherGUI.getServerLauncherGUI();
         }
-    
-        final ProcessBuilder pb = new ProcessBuilder("java", "-cp", 
-                "PortOChat.jar", "portochat.server.ServerLauncherGUI");
-            
-        // get current working directory so we can find the jar
-        File f = new File(".");
-        String jarDirectory = "."; // PortOChat.jar directory location
-        try {
-            jarDirectory = f.getCanonicalPath();
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, null, ex);
-        }
-        
-        // check for PortOChat.jar
-        File jarFile = new File(jarDirectory + File.separator + "PortOChat.jar");
-        if (!jarFile.exists()) {
-            // allow user to select directory where PortOChat.jar resides
-            JOptionPane.showMessageDialog(this, messages.getString("Client.msg.CouldNotFindPortOChatjarSelectDirectoryWhereItResides"));
-            JFileChooser chooser = new JFileChooser(jarDirectory);
-            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-
-            if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-                try {
-                    jarDirectory = chooser.getSelectedFile().getCanonicalPath();
-                } catch (IOException ex) {
-                    logger.log(Level.SEVERE, messages.getString("Client.msg.ErrorGettingPath"), ex);
-                }
-            } else {
-                // user canceled so abort
-                return;
-            }
-        }
-        
-        // get the current directory
-        pb.directory(new File(jarDirectory));
-
-        try {
-            pb.redirectErrorStream(true);
-            serverProcess = pb.start();
-
-        } catch (IOException ex) {
-            logger.log(Level.SEVERE, messages.getString("Client.msg.ErrorStartingServer"), ex);
-        }
-        if (serverProcess == null) {
-            JOptionPane.showMessageDialog(this, messages.getString("Client.msg.CouldntLaunchProcessSeeLogForError"));
-            return;
-        }
-        final BufferedReader reader = new BufferedReader(
-                new InputStreamReader(serverProcess.getInputStream()));
-
-        Thread t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        System.out.println(line);
-                    }
-                } catch (IOException ex) {
-                    logger.log(Level.INFO, messages.getString("Client.msg.IOExceptionReadingStream"), ex);
-                }
-                serverProcess = null;
-            }
-        }, "Process Drainer");
-        t.start();
+        serverLauncher.setVisible(true);
     }
     
     @Override
