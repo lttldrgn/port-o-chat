@@ -8,7 +8,7 @@ buildscript {
 }
 plugins {
     id 'application'
-    id "com.google.protobuf" version "0.8.12"
+    id "com.google.protobuf" version "0.8.17"
 }
 
 version = '1.0'
@@ -21,7 +21,7 @@ repositories {
     mavenCentral()
 }
 dependencies {
-    compile 'com.google.protobuf:protobuf-java:3.5.1'
+    implementation 'com.google.protobuf:protobuf-java:3.17.3'
 }
 
 protobuf {
@@ -36,11 +36,11 @@ protobuf {
 task fullJar(type: Jar) {
 	manifest {
         attributes 'Implementation-Title': 'Gradle Jar File',
-            'Implementation-Version': version,
+            'Implementation-Version': archiveVersion,
             'Main-Class': mainClassName
     }
-    baseName = 'Port-O-Chat'
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } 
+    archiveBaseName = 'Port-O-Chat'
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     } {
 //        exclude ""
     }

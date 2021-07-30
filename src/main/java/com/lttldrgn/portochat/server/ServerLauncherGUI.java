@@ -20,18 +20,17 @@ import com.lttldrgn.portochat.common.Settings;
  * @author Brandon
  */
 public class ServerLauncherGUI extends JFrame implements ActionListener {
-    private Server server;
-    private JButton stopStartButton = new JButton("Start Server");
-    private JTextField portEntryField = new JTextField(5);
+    private final Server server;
+    private final JButton stopStartButton = new JButton("Start Server");
+    private final JTextField portEntryField = new JTextField(5);
     // TODO: Show console with server output
-    private JTextArea console = new JTextArea();
+    private final JTextArea console = new JTextArea();
     //private PrintStream out = new PrintStream();
     private boolean running = false;
     
     private ServerLauncherGUI() {
         super("Port-O-Chat Server");
-        server = ServerLauncher.launchServer();
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        server = new Server();
     }
     
     private void init() {
@@ -56,6 +55,7 @@ public class ServerLauncherGUI extends JFrame implements ActionListener {
     
     public static void main(String args[]) {
        ServerLauncherGUI gui = getServerLauncherGUI();
+       gui.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
        gui.setVisible(true);
        System.out.println("Server Launched");
     }

@@ -19,13 +19,10 @@ package com.lttldrgn.portochat.server;
 import com.lttldrgn.portochat.common.Settings;
 
 /**
- * This class is used to launch the server
+ * This class is used to launch the server from the CLI
  * @author Mike
  */
 public class ServerLauncher {
-    public static Server launchServer () {
-        return new Server();
-    }
     
     public static void main (String args[]) {
         int port = Settings.DEFAULT_SERVER_PORT;
@@ -37,7 +34,7 @@ public class ServerLauncher {
                         port);
             }
         }
-        Server server = launchServer();
+        Server server = new Server();
         server.bind(port);
     }
 }
