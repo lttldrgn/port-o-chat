@@ -5,7 +5,8 @@ Port-o-chat is a small and portable chat client and server for LANs or small int
 
 * Person to person chat
 * Group chat through channels
-* Easily run your own local server 
+* Easily run your own local server
+* Client/server message encryption (not end to end)
 
 ## Why another chat client?
 
@@ -13,7 +14,7 @@ Because we could, and we were bored? It started as an experiment to see if we co
 Since then, this project has served as a platform for tinkering with code concepts such as networking, data serialization and encryption.
 
 ## Build Requirements
-* Required: JDK 1.8
+* Required: JDK 17
 
 ## Runtime Requirements
-* JRE 1.8 or higher
+* JRE 17 or higher
