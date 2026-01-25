@@ -57,18 +57,18 @@ task deploy(type: Copy, dependsOn:'build') {
 task debug(type: JavaExec) {
     debug = true
     classpath = sourceSets.main.runtimeClasspath
-    main = mainClassName
+    mainClass = mainClassName
 }
 
 task runServer(type: JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
-    main = 'com.lttldrgn.portochat.server.ServerLauncher'
+    mainClass = 'com.lttldrgn.portochat.server.ServerLauncher'
 }
 
 task debugServer(type: JavaExec) {
     debug = true
     classpath = sourceSets.main.runtimeClasspath
-    main = 'com.lttldrgn.portochat.server.ServerLauncher'
+    mainClass = 'com.lttldrgn.portochat.server.ServerLauncher'
 }
 
 allprojects {
