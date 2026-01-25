@@ -31,7 +31,6 @@ dependencies {
 }
 
 protobuf {
-    //generatedFilesBaseDir = "$projectDir/src/"
     // Configure the protoc executable
     protoc {
         // Download from repositories
