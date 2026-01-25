@@ -12,10 +12,16 @@ plugins {
 }
 
 version = '1.0'
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-mainClassName = "com.lttldrgn.portochat.client.ClientLauncher"
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+ext {
+    mainClassName = "com.lttldrgn.portochat.client.ClientLauncher"
+}
+application {
+    mainClass = rootProject.ext.mainClassName
+}
 
 repositories {
     mavenCentral()
@@ -37,7 +43,7 @@ task fullJar(type: Jar) {
 	manifest {
         attributes 'Implementation-Title': 'Gradle Jar File',
             'Implementation-Version': archiveVersion,
-            'Main-Class': mainClassName
+            'Main-Class': rootProject.ext.mainClassName
     }
     archiveBaseName = 'Port-O-Chat'
     from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
